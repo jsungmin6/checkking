@@ -73,3 +73,13 @@ input {
   font-family: inherit;
   outline: none;
 }
+
+.room-grid {
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 768px) {
+  .room-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}

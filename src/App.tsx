@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { useAuth } from "./hooks/useAuth";
 import LoginScreen from "./screens/LoginScreen";
+import HomeScreen from "./screens/HomeScreen";
 import type { ScreenName, User } from "./types";
 
 export default function App() {
@@ -8,8 +9,9 @@ export default function App() {
   const [screen, setScreen] = useState<ScreenName>("home");
   const [activeRoomId, setActiveRoomId] = useState<number | null>(null);
 
-  // updateNickname is used in later tasks (ProfileScreen)
+  // updateNickname and logout are used in later tasks (ProfileScreen)
   void updateNickname;
+  void logout;
 
   const navigateTo = useCallback((s: ScreenName, roomId?: number) => {
     setScreen(s);
@@ -41,11 +43,13 @@ export default function App() {
   switch (screen) {
     case "home":
       return (
-        <div className="page" style={{ padding: 16 }}>
-          <h2>내 방</h2>
-          <p style={{ color: "var(--text-secondary)" }}>{user.nickname}님, 환영합니다! (화면 구현 예정)</p>
-          <button onClick={logout} style={{ marginTop: 16, color: "var(--text-secondary)" }}>로그아웃</button>
-        </div>
+        <HomeScreen
+          user={user}
+          onNavigateProfile={() => navigateTo("profile")}
+          onNavigateCreateRoom={() => navigateTo("createRoom")}
+          onNavigateJoinRoom={() => navigateTo("joinRoom")}
+          onNavigateRoom={(id) => navigateTo("room", id)}
+        />
       );
     default:
       return (
