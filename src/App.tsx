@@ -103,6 +103,19 @@ export default function App() {
           }}
         />
       );
+    case "settings":
+      if (!activeRoomId) { setScreen("home"); return null; }
+      return (
+        <SettingsScreen classroomId={activeRoomId} user={user}
+          onTabChange={(tab) => {
+            if (tab === "today") navigateTo("room", activeRoomId);
+            else if (tab === "ranking") navigateTo("ranking");
+            else if (tab === "stats") navigateTo("stats");
+          }}
+          onLeave={() => navigateTo("home")}
+          onDelete={() => navigateTo("home")}
+        />
+      );
     default:
       return (
         <div className="page" style={{ padding: 16 }}>
