@@ -5,6 +5,7 @@ import HomeScreen from "./screens/HomeScreen";
 import ProfileScreen from "./screens/ProfileScreen";
 import CreateRoomScreen from "./screens/CreateRoomScreen";
 import JoinRoomScreen from "./screens/JoinRoomScreen";
+import RoomScreen from "./screens/RoomScreen";
 import type { ScreenName, User } from "./types";
 
 export default function App() {
@@ -63,6 +64,20 @@ export default function App() {
       return <CreateRoomScreen onBack={() => navigateTo("home")} onCreated={(id) => navigateTo("room", id)} />;
     case "joinRoom":
       return <JoinRoomScreen onBack={() => navigateTo("home")} onJoined={(id) => navigateTo("room", id)} />;
+    case "room":
+      if (!activeRoomId) { setScreen("home"); return null; }
+      return (
+        <RoomScreen
+          classroomId={activeRoomId}
+          user={user}
+          onBack={() => navigateTo("home")}
+          onTabChange={(tab) => {
+            if (tab === "ranking") navigateTo("ranking");
+            else if (tab === "stats") navigateTo("stats");
+            else if (tab === "settings") navigateTo("settings");
+          }}
+        />
+      );
     default:
       return (
         <div className="page" style={{ padding: 16 }}>
