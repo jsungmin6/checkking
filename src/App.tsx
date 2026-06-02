@@ -3,6 +3,8 @@ import { useAuth } from "./hooks/useAuth";
 import LoginScreen from "./screens/LoginScreen";
 import HomeScreen from "./screens/HomeScreen";
 import ProfileScreen from "./screens/ProfileScreen";
+import CreateRoomScreen from "./screens/CreateRoomScreen";
+import JoinRoomScreen from "./screens/JoinRoomScreen";
 import type { ScreenName, User } from "./types";
 
 export default function App() {
@@ -57,6 +59,10 @@ export default function App() {
           onNicknameUpdate={updateNickname}
         />
       );
+    case "createRoom":
+      return <CreateRoomScreen onBack={() => navigateTo("home")} onCreated={(id) => navigateTo("room", id)} />;
+    case "joinRoom":
+      return <JoinRoomScreen onBack={() => navigateTo("home")} onJoined={(id) => navigateTo("room", id)} />;
     default:
       return (
         <div className="page" style={{ padding: 16 }}>
