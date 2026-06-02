@@ -2,16 +2,13 @@ import { useState, useCallback } from "react";
 import { useAuth } from "./hooks/useAuth";
 import LoginScreen from "./screens/LoginScreen";
 import HomeScreen from "./screens/HomeScreen";
+import ProfileScreen from "./screens/ProfileScreen";
 import type { ScreenName, User } from "./types";
 
 export default function App() {
   const { user, loading, loginWithKakao, loginWithToss, logout, updateNickname } = useAuth();
   const [screen, setScreen] = useState<ScreenName>("home");
   const [activeRoomId, setActiveRoomId] = useState<number | null>(null);
-
-  // updateNickname and logout are used in later tasks (ProfileScreen)
-  void updateNickname;
-  void logout;
 
   const navigateTo = useCallback((s: ScreenName, roomId?: number) => {
     setScreen(s);
@@ -49,6 +46,15 @@ export default function App() {
           onNavigateCreateRoom={() => navigateTo("createRoom")}
           onNavigateJoinRoom={() => navigateTo("joinRoom")}
           onNavigateRoom={(id) => navigateTo("room", id)}
+        />
+      );
+    case "profile":
+      return (
+        <ProfileScreen
+          user={user}
+          onBack={() => navigateTo("home")}
+          onLogout={() => { logout(); setScreen("login"); }}
+          onNicknameUpdate={updateNickname}
         />
       );
     default:
