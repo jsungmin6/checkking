@@ -6,6 +6,9 @@ import ProfileScreen from "./screens/ProfileScreen";
 import CreateRoomScreen from "./screens/CreateRoomScreen";
 import JoinRoomScreen from "./screens/JoinRoomScreen";
 import RoomScreen from "./screens/RoomScreen";
+import RankingScreen from "./screens/RankingScreen";
+import StatsScreen from "./screens/StatsScreen";
+import SettingsScreen from "./screens/SettingsScreen";
 import type { ScreenName, User } from "./types";
 
 export default function App() {
@@ -74,6 +77,28 @@ export default function App() {
           onTabChange={(tab) => {
             if (tab === "ranking") navigateTo("ranking");
             else if (tab === "stats") navigateTo("stats");
+            else if (tab === "settings") navigateTo("settings");
+          }}
+        />
+      );
+    case "ranking":
+      if (!activeRoomId) { setScreen("home"); return null; }
+      return (
+        <RankingScreen classroomId={activeRoomId} user={user}
+          onTabChange={(tab) => {
+            if (tab === "today") navigateTo("room", activeRoomId);
+            else if (tab === "stats") navigateTo("stats");
+            else if (tab === "settings") navigateTo("settings");
+          }}
+        />
+      );
+    case "stats":
+      if (!activeRoomId) { setScreen("home"); return null; }
+      return (
+        <StatsScreen classroomId={activeRoomId}
+          onTabChange={(tab) => {
+            if (tab === "today") navigateTo("room", activeRoomId);
+            else if (tab === "ranking") navigateTo("ranking");
             else if (tab === "settings") navigateTo("settings");
           }}
         />
