@@ -10,6 +10,47 @@ interface CreateRoomScreenProps {
 
 type Step = 1 | 2 | 3;
 
+const selectStyle: React.CSSProperties = {
+  padding: "10px 4px",
+  fontSize: 18,
+  fontWeight: 600,
+  borderRadius: 8,
+  border: "1px solid var(--border-light)",
+  background: "var(--bg-card)",
+  color: "var(--text-primary)",
+  textAlign: "center",
+  appearance: "none",
+  WebkitAppearance: "none",
+};
+
+function TimeSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [h, m] = value ? value.split(":") : ["", ""];
+
+  const update = (newH: string, newM: string) => {
+    if (newH && newM) onChange(`${newH}:${newM}`);
+    else if (newH) onChange(`${newH}:00`);
+    else onChange("");
+  };
+
+  return (
+    <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+      <select value={h} onChange={(e) => update(e.target.value, m || "00")} style={{ ...selectStyle, width: 60 }}>
+        <option value="">시</option>
+        {Array.from({ length: 24 }, (_, i) => String(i).padStart(2, "0")).map((v) => (
+          <option key={v} value={v}>{v}</option>
+        ))}
+      </select>
+      <span style={{ color: "var(--text-secondary)", fontSize: 18 }}>:</span>
+      <select value={m} onChange={(e) => update(h || "00", e.target.value)} style={{ ...selectStyle, width: 60 }}>
+        <option value="">분</option>
+        {["00", "10", "20", "30", "40", "50"].map((v) => (
+          <option key={v} value={v}>{v}</option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
 const VALIDATION_OPTIONS: { type: ValidationType; label: string; desc: string; disabled?: boolean }[] = [
   { type: "NONE", label: "검증 없음", desc: "누구나 어디서든 출석" },
   { type: "GPS", label: "GPS 위치 확인", desc: "지정 위치 반경 내에서만" },
@@ -282,12 +323,16 @@ export default function CreateRoomScreen({ onBack, onCreated }: CreateRoomScreen
           <div style={{ display: "flex", alignItems: "center", gap: 12, justifyContent: "center", marginBottom: 32 }}>
             <div>
               <div style={{ color: "var(--text-secondary)", fontSize: 12, marginBottom: 4 }}>시작</div>
-              <input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} style={{ width: 100, padding: 10, textAlign: "center", fontSize: 16, borderRadius: 8, border: "1px solid var(--border-light)", background: "var(--bg-card)", color: "var(--text-primary)" }} />
+              <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+                <TimeSelect value={startTime} onChange={setStartTime} />
+              </div>
             </div>
             <div style={{ fontSize: 20, color: "var(--text-secondary)", marginTop: 16 }}>~</div>
             <div>
               <div style={{ color: "var(--text-secondary)", fontSize: 12, marginBottom: 4 }}>종료</div>
-              <input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} style={{ width: 100, padding: 10, textAlign: "center", fontSize: 16, borderRadius: 8, border: "1px solid var(--border-light)", background: "var(--bg-card)", color: "var(--text-primary)" }} />
+              <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+                <TimeSelect value={endTime} onChange={setEndTime} />
+              </div>
             </div>
           </div>
           <button onClick={handleCreate} disabled={loading} style={{ width: "100%", padding: 14, borderRadius: 10, background: "var(--accent-green)", color: "#fff", fontSize: 15, fontWeight: 600, opacity: loading ? 0.6 : 1 }}>
