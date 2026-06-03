@@ -15,6 +15,8 @@ export function useAuth() {
   const [state, setState] = useState<AuthState>({ user: null, loading: true, error: null });
 
   useEffect(() => {
+    console.log("[등교왕] useAuth 초기화 시작");
+
     // sessionStorage에서 카카오 인가코드 확인
     const kakaoCode = sessionStorage.getItem(KAKAO_CODE_KEY);
     const kakaoTime = sessionStorage.getItem("kakao_auth_time");
@@ -26,31 +28,45 @@ export function useAuth() {
     // 5분 이내 코드만 사용
     const isExpired = kakaoTime && (Date.now() - Number(kakaoTime)) > 5 * 60 * 1000;
 
+    if (kakaoCode) {
+      console.log(`[등교왕] 카카오 코드 발견 (길이: ${kakaoCode.length}, 만료: ${isExpired}, 경과: ${kakaoTime ? Math.round((Date.now() - Number(kakaoTime)) / 1000) + "초" : "시간없음"})`);
+    }
+
     if (kakaoCode && !isExpired) {
+      console.log("[등교왕] 카카오 코드로 로그인 시도");
       api<AuthResponse>("/auth/login/kakao", {
         method: "POST",
         body: JSON.stringify({ authorizationCode: kakaoCode, redirectUri: KAKAO_REDIRECT_URI }),
       })
         .then((data) => {
+          console.log("[등교왕] 카카오 로그인 성공:", data.user.nickname);
           localStorage.setItem(TOKEN_KEYS.ACCESS, data.accessToken);
           localStorage.setItem(TOKEN_KEYS.REFRESH, data.refreshToken);
           setState({ user: data.user, loading: false, error: null });
         })
         .catch((e) => {
+          console.error("[등교왕] 카카오 로그인 실패:", e);
           setState({ user: null, loading: false, error: e instanceof Error ? e.message : "카카오 로그인 실패" });
         });
       return;
     }
 
+    if (kakaoCode && isExpired) {
+      console.log("[등교왕] 카카오 코드 만료됨, 무시");
+    }
+
     // 저장된 토큰으로 세션 복원
     const token = localStorage.getItem(TOKEN_KEYS.ACCESS);
     if (!token) {
+      console.log("[등교왕] 저장된 토큰 없음 → 로그인 화면");
       setState({ user: null, loading: false, error: null });
       return;
     }
 
+    console.log("[등교왕] 저장된 토큰으로 세션 복원 시도");
     api<Profile>("/users/me")
       .then((profile) => {
+        console.log("[등교왕] 세션 복원 성공:", profile.nickname);
         setState({
           user: {
             userId: profile.userId,
@@ -61,13 +77,15 @@ export function useAuth() {
           error: null,
         });
       })
-      .catch(() => {
+      .catch((e) => {
+        console.error("[등교왕] 세션 복원 실패:", e);
         clearTokens();
         setState({ user: null, loading: false, error: null });
       });
   }, []);
 
   const loginWithKakao = useCallback(async (authorizationCode: string) => {
+    console.log("[등교왕] loginWithKakao 호출");
     const data = await api<AuthResponse>("/auth/login/kakao", {
       method: "POST",
       body: JSON.stringify({ authorizationCode, redirectUri: KAKAO_REDIRECT_URI }),
@@ -79,6 +97,7 @@ export function useAuth() {
   }, []);
 
   const loginWithToss = useCallback(async (authorizationCode: string, referrer: string) => {
+    console.log("[등교왕] loginWithToss 호출");
     const data = await api<AuthResponse>("/auth/login/toss", {
       method: "POST",
       body: JSON.stringify({ authorizationCode, referrer }),
@@ -90,6 +109,7 @@ export function useAuth() {
   }, []);
 
   const logout = useCallback(() => {
+    console.log("[등교왕] 로그아웃");
     clearTokens();
     setState({ user: null, loading: false, error: null });
   }, []);
