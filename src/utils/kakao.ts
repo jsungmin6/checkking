@@ -25,30 +25,25 @@ function ensureInitialized() {
   }
 }
 
-// REST API 키 기반 카카오 인가 URL 생성
-function getKakaoAuthUrl(redirectUri: string): string {
-  return `https://kauth.kakao.com/oauth/authorize?client_id=${KAKAO_JS_KEY}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code`;
-}
-
 export async function startKakaoLogin() {
+  const redirectUri = KAKAO_REDIRECT_URI;
+  console.log("[등교왕] 카카오 로그인 시작, capacitor:", isCapacitor(), "redirect:", redirectUri);
+
   if (isCapacitor()) {
-    // iOS Capacitor: 인앱 브라우저로 카카오 로그인
-    // 리다이렉트 URI를 라이브 URL로 설정하고 앱으로 돌아오는 방식
+    // iOS Capacitor: 외부 Safari 브라우저로 카카오 로그인
+    // Safari에서 카카오 로그인 → 카카오톡 앱 인증 → 리다이렉트 → 앱으로 복귀
     const { Browser } = await import("@capacitor/browser");
-    const redirectUri = KAKAO_REDIRECT_URI;
-    console.log("[등교왕] iOS 카카오 로그인 시작, redirect:", redirectUri);
+    const authUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${KAKAO_JS_KEY}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code`;
+    console.log("[등교왕] iOS Safari로 카카오 로그인:", authUrl);
 
-    // 브라우저가 리다이렉트 URI로 돌아오면 감지
-    const listener = await Browser.addListener("browserFinished", () => {
-      console.log("[등교왕] iOS 인앱 브라우저 닫힘");
-      listener.remove();
+    await Browser.open({
+      url: authUrl,
+      presentationStyle: "popover",
     });
-
-    await Browser.open({ url: getKakaoAuthUrl(redirectUri) });
   } else {
-    // 웹 브라우저: 기존 리다이렉트 방식
+    // 웹 브라우저: 카카오 JS SDK 사용
     ensureInitialized();
-    window.Kakao.Auth.authorize({ redirectUri: KAKAO_REDIRECT_URI });
+    window.Kakao.Auth.authorize({ redirectUri });
   }
 }
 
