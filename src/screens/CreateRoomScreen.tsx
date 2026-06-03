@@ -10,10 +10,10 @@ interface CreateRoomScreenProps {
 
 type Step = 1 | 2 | 3;
 
-const VALIDATION_OPTIONS: { type: ValidationType; label: string; desc: string }[] = [
+const VALIDATION_OPTIONS: { type: ValidationType; label: string; desc: string; disabled?: boolean }[] = [
   { type: "NONE", label: "검증 없음", desc: "누구나 어디서든 출석" },
   { type: "GPS", label: "GPS 위치 확인", desc: "지정 위치 반경 내에서만" },
-  { type: "WIFI", label: "Wi-Fi 확인", desc: "지정 Wi-Fi에 연결되어야" },
+  { type: "WIFI", label: "Wi-Fi 확인", desc: "지원 예정 (iOS 앱 전용)", disabled: true },
 ];
 
 declare global {
@@ -185,8 +185,10 @@ export default function CreateRoomScreen({ onBack, onCreated }: CreateRoomScreen
 
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {VALIDATION_OPTIONS.map((opt) => (
-              <div key={opt.type} onClick={() => { setValidationType(opt.type); setGpsConfig(null); setGpsError(null); setAddressText(""); }} style={{
-                background: "var(--bg-card)", borderRadius: 12, padding: 16, textAlign: "center", cursor: "pointer",
+              <div key={opt.type} onClick={() => { if (!opt.disabled) { setValidationType(opt.type); setGpsConfig(null); setGpsError(null); setAddressText(""); } }} style={{
+                background: "var(--bg-card)", borderRadius: 12, padding: 16, textAlign: "center",
+                cursor: opt.disabled ? "not-allowed" : "pointer",
+                opacity: opt.disabled ? 0.4 : 1,
                 border: validationType === opt.type ? "2px solid var(--accent-blue)" : "1px solid var(--border-light)",
               }}>
                 <div style={{ fontWeight: 600 }}>{opt.label}</div>
