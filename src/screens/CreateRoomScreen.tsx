@@ -19,8 +19,7 @@ const selectStyle: React.CSSProperties = {
   background: "var(--bg-card)",
   color: "var(--text-primary)",
   textAlign: "center",
-  appearance: "none",
-  WebkitAppearance: "none",
+  textAlignLast: "center",
 };
 
 function TimeSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
@@ -338,7 +337,7 @@ export default function CreateRoomScreen({ onBack, onCreated }: CreateRoomScreen
           <button onClick={handleCreate} disabled={loading} style={{ width: "100%", padding: 14, borderRadius: 10, background: "var(--accent-green)", color: "#fff", fontSize: 15, fontWeight: 600, opacity: loading ? 0.6 : 1 }}>
             {loading ? "생성 중..." : "방 생성 완료!"}
           </button>
-          <div onClick={handleCreate} style={{ color: "var(--text-muted)", fontSize: 12, marginTop: 12, cursor: "pointer" }}>건너뛰기 (나중에 설정)</div>
+          <button onClick={handleCreate} style={{ width: "100%", padding: 12, borderRadius: 10, border: "1px solid var(--border-light)", background: "transparent", color: "var(--text-secondary)", fontSize: 14, marginTop: 10, cursor: "pointer" }}>건너뛰기 (나중에 설정)</button>
         </div>
       )}
     </div>
