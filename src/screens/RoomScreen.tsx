@@ -51,8 +51,22 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
       });
       await fetchData();
     } catch (e) {
-      if (e instanceof ApiError) setCheckInError(e.message);
-      else setCheckInError("출석에 실패했습니다");
+      if (e instanceof ApiError) {
+        const messages: Record<string, string> = {
+          GPS_VERIFICATION_FAILED: "현재 위치가 출석 허용 범위 밖입니다",
+          WIFI_VERIFICATION_FAILED: "지정된 Wi-Fi에 연결되어 있지 않습니다",
+          MISSING_GPS_DATA: "GPS 위치 정보를 가져올 수 없습니다. 위치 권한을 확인해주세요",
+          MISSING_WIFI_DATA: "Wi-Fi 정보를 가져올 수 없습니다",
+          NOT_CHECK_IN_TIME: "출석 가능 시간이 아닙니다",
+          ALREADY_CHECKED_IN: "오늘 이미 출석했습니다",
+          NOT_MEMBER: "이 방의 멤버가 아닙니다",
+        };
+        setCheckInError(messages[e.code] ?? e.message);
+      } else {
+        const msg = e instanceof Error ? e.message : "출석에 실패했습니다";
+        if (msg.includes("위치")) setCheckInError("GPS 위치를 가져올 수 없습니다. 위치 권한을 확인해주세요");
+        else setCheckInError(msg);
+      }
     } finally {
       setCheckingIn(false);
     }
