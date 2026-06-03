@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import TabBar from "../components/TabBar";
 import { api, ApiError } from "../utils/api";
 import type { TabName } from "../components/TabBar";
-import type { Classroom, ClassroomMember, User } from "../types";
+import type { Classroom, ClassroomMember, User, ValidationType, ClassroomSettingsRequest } from "../types";
 
 interface SettingsScreenProps {
   classroomId: number;
@@ -12,11 +12,59 @@ interface SettingsScreenProps {
   onDelete: () => void;
 }
 
+const selectStyle: React.CSSProperties = {
+  padding: "10px 4px",
+  fontSize: 16,
+  fontWeight: 600,
+  borderRadius: 8,
+  border: "1px solid var(--border-light)",
+  background: "var(--bg-primary)",
+  color: "var(--text-primary)",
+  textAlign: "center",
+  textAlignLast: "center",
+  appearance: "none",
+  WebkitAppearance: "none",
+  MozAppearance: "none",
+};
+
+function TimeSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [h, m] = value ? value.split(":") : ["", ""];
+  const update = (newH: string, newM: string) => {
+    if (newH && newM) onChange(`${newH}:${newM}`);
+    else if (newH) onChange(`${newH}:00`);
+    else onChange("");
+  };
+  return (
+    <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+      <select value={h} onChange={(e) => update(e.target.value, m || "00")} style={{ ...selectStyle, width: 55 }}>
+        <option value="">시</option>
+        {Array.from({ length: 24 }, (_, i) => String(i).padStart(2, "0")).map((v) => (
+          <option key={v} value={v}>{v}</option>
+        ))}
+      </select>
+      <span style={{ color: "var(--text-secondary)", fontSize: 16 }}>:</span>
+      <select value={m} onChange={(e) => update(h || "00", e.target.value)} style={{ ...selectStyle, width: 55 }}>
+        <option value="">분</option>
+        {["00", "10", "20", "30", "40", "50"].map((v) => (
+          <option key={v} value={v}>{v}</option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
 export default function SettingsScreen({ classroomId, user, onTabChange, onLeave, onDelete }: SettingsScreenProps) {
   const [classroom, setClassroom] = useState<Classroom | null>(null);
   const [members, setMembers] = useState<ClassroomMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [showMembers, setShowMembers] = useState(false);
+
+  // 편집 상태
+  const [editingSettings, setEditingSettings] = useState(false);
+  const [editValidationType, setEditValidationType] = useState<ValidationType>("NONE");
+  const [editStartTime, setEditStartTime] = useState("");
+  const [editEndTime, setEditEndTime] = useState("");
+  const [saving, setSaving] = useState(false);
 
   const isOwner = classroom?.ownerId === user.userId;
 
@@ -28,6 +76,46 @@ export default function SettingsScreen({ classroomId, user, onTabChange, onLeave
       .then(([c, m]) => { setClassroom(c); setMembers(m.members); })
       .finally(() => setLoading(false));
   }, [classroomId]);
+
+  const startEditing = () => {
+    if (!classroom) return;
+    setEditValidationType(classroom.validationType);
+    setEditStartTime(classroom.checkInStartTime ?? "");
+    setEditEndTime(classroom.checkInEndTime ?? "");
+    setEditingSettings(true);
+  };
+
+  const handleSaveSettings = async () => {
+    if (!classroom) return;
+    const timeInvalid = editStartTime && editEndTime && editStartTime >= editEndTime;
+    if (timeInvalid) { alert("종료 시간이 시작 시간보다 빠릅니다"); return; }
+
+    setSaving(true);
+    try {
+      const settings: ClassroomSettingsRequest = {
+        validationType: editValidationType,
+        gpsConfig: classroom.gpsConfig,
+        wifiConfig: classroom.wifiConfig,
+        checkInStartTime: editStartTime || null,
+        checkInEndTime: editEndTime || null,
+      };
+      await api(`/classrooms/${classroomId}/settings`, {
+        method: "PUT",
+        body: JSON.stringify(settings),
+      });
+      setClassroom({
+        ...classroom,
+        validationType: editValidationType,
+        checkInStartTime: editStartTime || null,
+        checkInEndTime: editEndTime || null,
+      });
+      setEditingSettings(false);
+    } catch (e) {
+      alert(e instanceof ApiError ? e.message : "저장 실패");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const handleCopyCode = () => {
     if (classroom) {
@@ -81,7 +169,7 @@ export default function SettingsScreen({ classroomId, user, onTabChange, onLeave
 
   const rowStyle = (first?: boolean, last?: boolean): React.CSSProperties => ({
     background: "var(--bg-card)", padding: "14px 16px",
-    display: "flex", justifyContent: "space-between", fontSize: 14,
+    display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 14,
     borderRadius: first && last ? 8 : first ? "8px 8px 0 0" : last ? "0 0 8px 8px" : 0,
     borderBottom: last ? "none" : "1px solid var(--bg-primary)",
   });
@@ -117,17 +205,71 @@ export default function SettingsScreen({ classroomId, user, onTabChange, onLeave
 
         {isOwner && (
           <>
-            <div style={{ fontSize: 12, color: "var(--text-secondary)", margin: "16px 0 8px" }}>방장 설정</div>
-            <div style={rowStyle(true)}>
-              <span>출석 검증 방식</span>
-              <span style={{ color: "var(--text-secondary)" }}>{classroom.validationType}</span>
+            <div style={{ fontSize: 12, color: "var(--text-secondary)", margin: "16px 0 8px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span>방장 설정</span>
+              {!editingSettings && (
+                <span onClick={startEditing} style={{ color: "var(--accent-blue)", cursor: "pointer", fontSize: 12 }}>수정</span>
+              )}
             </div>
-            <div style={rowStyle(false, true)}>
-              <span>출석 가능 시간</span>
-              <span style={{ color: "var(--text-secondary)" }}>
-                {classroom.checkInStartTime && classroom.checkInEndTime ? `${classroom.checkInStartTime}~${classroom.checkInEndTime}` : "24시간"}
-              </span>
-            </div>
+
+            {!editingSettings ? (
+              <>
+                <div style={rowStyle(true)}>
+                  <span>출석 검증 방식</span>
+                  <span style={{ color: "var(--text-secondary)" }}>
+                    {classroom.validationType === "NONE" ? "검증 없음" : classroom.validationType === "GPS" ? "GPS" : classroom.validationType}
+                  </span>
+                </div>
+                <div style={rowStyle(false, true)}>
+                  <span>출석 가능 시간</span>
+                  <span style={{ color: "var(--text-secondary)" }}>
+                    {classroom.checkInStartTime && classroom.checkInEndTime ? `${classroom.checkInStartTime}~${classroom.checkInEndTime}` : "24시간"}
+                  </span>
+                </div>
+              </>
+            ) : (
+              <div style={{ background: "var(--bg-card)", borderRadius: 8, padding: 16 }}>
+                <div style={{ fontSize: 13, marginBottom: 12 }}>출석 검증 방식</div>
+                <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+                  {(["NONE", "GPS"] as ValidationType[]).map((t) => (
+                    <button key={t} onClick={() => setEditValidationType(t)} style={{
+                      flex: 1, padding: 10, borderRadius: 8, fontSize: 13, fontWeight: 600,
+                      background: editValidationType === t ? "var(--accent-blue)" : "transparent",
+                      color: editValidationType === t ? "#fff" : "var(--text-secondary)",
+                      border: editValidationType === t ? "none" : "1px solid var(--border-light)",
+                    }}>
+                      {t === "NONE" ? "검증 없음" : "GPS"}
+                    </button>
+                  ))}
+                </div>
+
+                <div style={{ fontSize: 13, marginBottom: 8 }}>출석 가능 시간</div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                  <TimeSelect value={editStartTime} onChange={setEditStartTime} />
+                  <span style={{ color: "var(--text-secondary)" }}>~</span>
+                  <TimeSelect value={editEndTime} onChange={setEditEndTime} />
+                </div>
+                <div style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 16 }}>비워두면 24시간 출석 가능</div>
+
+                {editStartTime && editEndTime && editStartTime >= editEndTime && (
+                  <div style={{ color: "var(--accent-red)", fontSize: 12, marginBottom: 12 }}>종료 시간이 시작 시간보다 빠릅니다</div>
+                )}
+
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button onClick={handleSaveSettings} disabled={saving} style={{
+                    flex: 1, padding: 10, borderRadius: 8, background: "var(--accent-blue)", color: "#fff", fontSize: 13, fontWeight: 600,
+                    opacity: saving ? 0.5 : 1,
+                  }}>
+                    {saving ? "저장 중..." : "저장"}
+                  </button>
+                  <button onClick={() => setEditingSettings(false)} style={{
+                    flex: 1, padding: 10, borderRadius: 8, border: "1px solid var(--border-light)", background: "transparent", color: "var(--text-secondary)", fontSize: 13,
+                  }}>
+                    취소
+                  </button>
+                </div>
+              </div>
+            )}
           </>
         )}
 
