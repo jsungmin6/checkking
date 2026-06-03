@@ -318,31 +318,41 @@ export default function CreateRoomScreen({ onBack, onCreated }: CreateRoomScreen
         </div>
       )}
 
-      {step === 3 && (
-        <div style={{ padding: "24px 16px", textAlign: "center" }}>
-          <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>Step 3. 출석 시간 (선택)</div>
-          <div style={{ color: "var(--text-secondary)", fontSize: 13, marginBottom: 24 }}>비워두면 24시간 출석 가능</div>
-          <div style={{ display: "flex", alignItems: "center", gap: 12, justifyContent: "center", marginBottom: 32 }}>
-            <div>
-              <div style={{ color: "var(--text-secondary)", fontSize: 12, marginBottom: 4 }}>시작</div>
-              <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
-                <TimeSelect value={startTime} onChange={setStartTime} />
+      {step === 3 && (() => {
+        const timeInvalid = startTime && endTime && startTime >= endTime;
+        return (
+          <div style={{ padding: "24px 16px", textAlign: "center" }}>
+            <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>Step 3. 출석 시간 (선택)</div>
+            <div style={{ color: "var(--text-secondary)", fontSize: 13, marginBottom: 24 }}>비워두면 24시간 출석 가능</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, justifyContent: "center", marginBottom: 12 }}>
+              <div>
+                <div style={{ color: "var(--text-secondary)", fontSize: 12, marginBottom: 4 }}>시작</div>
+                <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+                  <TimeSelect value={startTime} onChange={setStartTime} />
+                </div>
+              </div>
+              <div style={{ fontSize: 20, color: "var(--text-secondary)", marginTop: 16 }}>~</div>
+              <div>
+                <div style={{ color: "var(--text-secondary)", fontSize: 12, marginBottom: 4 }}>종료</div>
+                <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+                  <TimeSelect value={endTime} onChange={setEndTime} />
+                </div>
               </div>
             </div>
-            <div style={{ fontSize: 20, color: "var(--text-secondary)", marginTop: 16 }}>~</div>
-            <div>
-              <div style={{ color: "var(--text-secondary)", fontSize: 12, marginBottom: 4 }}>종료</div>
-              <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
-                <TimeSelect value={endTime} onChange={setEndTime} />
+            {timeInvalid && (
+              <div style={{ color: "var(--accent-red)", fontSize: 13, marginBottom: 16 }}>
+                종료 시간이 시작 시간보다 빠릅니다
               </div>
+            )}
+            <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 10 }}>
+              <button onClick={handleCreate} disabled={loading || !!timeInvalid} style={{ width: "100%", padding: 14, borderRadius: 10, background: "var(--accent-green)", color: "#fff", fontSize: 15, fontWeight: 600, opacity: loading || timeInvalid ? 0.5 : 1 }}>
+                {loading ? "생성 중..." : "방 생성 완료!"}
+              </button>
+              <button onClick={() => { setStartTime(""); setEndTime(""); handleCreate(); }} style={{ width: "100%", padding: 12, borderRadius: 10, border: "1px solid var(--border-light)", background: "transparent", color: "var(--text-secondary)", fontSize: 14, cursor: "pointer" }}>건너뛰기 (나중에 설정)</button>
             </div>
           </div>
-          <button onClick={handleCreate} disabled={loading} style={{ width: "100%", padding: 14, borderRadius: 10, background: "var(--accent-green)", color: "#fff", fontSize: 15, fontWeight: 600, opacity: loading ? 0.6 : 1 }}>
-            {loading ? "생성 중..." : "방 생성 완료!"}
-          </button>
-          <button onClick={handleCreate} style={{ width: "100%", padding: 12, borderRadius: 10, border: "1px solid var(--border-light)", background: "transparent", color: "var(--text-secondary)", fontSize: 14, marginTop: 10, cursor: "pointer" }}>건너뛰기 (나중에 설정)</button>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }
