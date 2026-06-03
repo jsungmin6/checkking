@@ -1,5 +1,5 @@
 import { useCallback, useState, useEffect } from "react";
-import { TOKEN_KEYS } from "../constants";
+import { TOKEN_KEYS, KAKAO_REDIRECT_URI } from "../constants";
 import { api, clearTokens } from "../utils/api";
 import type { AuthResponse, User, Profile } from "../types";
 
@@ -38,7 +38,7 @@ export function useAuth() {
   const loginWithKakao = useCallback(async (authorizationCode: string) => {
     const data = await api<AuthResponse>("/auth/login/kakao", {
       method: "POST",
-      body: JSON.stringify({ authorizationCode }),
+      body: JSON.stringify({ authorizationCode, redirectUri: KAKAO_REDIRECT_URI }),
     });
     localStorage.setItem(TOKEN_KEYS.ACCESS, data.accessToken);
     localStorage.setItem(TOKEN_KEYS.REFRESH, data.refreshToken);
