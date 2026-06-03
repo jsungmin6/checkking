@@ -58,6 +58,7 @@ export default function SettingsScreen({ classroomId, user, onTabChange, onLeave
   const [members, setMembers] = useState<ClassroomMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [showMembers, setShowMembers] = useState(false);
+  const [fetchError, setFetchError] = useState(false);
 
   // 편집 상태
   const [editingSettings, setEditingSettings] = useState(false);
@@ -69,11 +70,14 @@ export default function SettingsScreen({ classroomId, user, onTabChange, onLeave
   const isOwner = classroom?.ownerId === user.userId;
 
   useEffect(() => {
+    setLoading(true);
+    setFetchError(false);
     Promise.all([
       api<Classroom>(`/classrooms/${classroomId}`),
       api<{ members: ClassroomMember[] }>(`/classrooms/${classroomId}/members`),
     ])
       .then(([c, m]) => { setClassroom(c); setMembers(m.members); })
+      .catch(() => setFetchError(true))
       .finally(() => setLoading(false));
   }, [classroomId]);
 
@@ -156,11 +160,23 @@ export default function SettingsScreen({ classroomId, user, onTabChange, onLeave
     } catch (e) { alert(e instanceof ApiError ? e.message : "삭제 실패"); }
   };
 
-  if (loading || !classroom) {
+  if (loading) {
     return (
       <div className="page" style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
         <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
           <span style={{ color: "var(--text-secondary)" }}>불러오는 중...</span>
+        </div>
+        <TabBar active="settings" onSelect={onTabChange} />
+      </div>
+    );
+  }
+
+  if (fetchError || !classroom) {
+    return (
+      <div className="page" style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12 }}>
+          <span style={{ color: "var(--text-secondary)" }}>설정을 불러올 수 없습니다</span>
+          <button onClick={() => window.location.reload()} style={{ padding: "8px 20px", borderRadius: 8, background: "var(--accent-blue)", color: "#fff", fontSize: 13 }}>다시 시도</button>
         </div>
         <TabBar active="settings" onSelect={onTabChange} />
       </div>

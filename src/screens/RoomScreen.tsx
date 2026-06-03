@@ -19,11 +19,13 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
   const [classroom, setClassroom] = useState<Classroom | null>(null);
   const [today, setToday] = useState<TodayAttendance | null>(null);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
   const [checkingIn, setCheckingIn] = useState(false);
   const [checkInError, setCheckInError] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     try {
+      setFetchError(false);
       const [c, t] = await Promise.all([
         api<Classroom>(`/classrooms/${classroomId}`),
         api<TodayAttendance>(`/classrooms/${classroomId}/attendance/today`),
@@ -31,7 +33,7 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
       setClassroom(c);
       setToday(t);
     } catch {
-      // error handling
+      setFetchError(true);
     } finally {
       setLoading(false);
     }
@@ -72,10 +74,19 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
     }
   };
 
-  if (loading || !classroom || !today) {
+  if (loading) {
     return (
       <div className="page" style={{ alignItems: "center", justifyContent: "center" }}>
         <div style={{ color: "var(--text-secondary)" }}>불러오는 중...</div>
+      </div>
+    );
+  }
+
+  if (fetchError || !classroom || !today) {
+    return (
+      <div className="page" style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12 }}>
+        <span style={{ color: "var(--text-secondary)" }}>정보를 불러올 수 없습니다</span>
+        <button onClick={() => { setLoading(true); fetchData(); }} style={{ padding: "8px 20px", borderRadius: 8, background: "var(--accent-blue)", color: "#fff", fontSize: 13 }}>다시 시도</button>
       </div>
     );
   }
