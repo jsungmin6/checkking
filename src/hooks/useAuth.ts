@@ -17,20 +17,26 @@ export function useAuth() {
   useEffect(() => {
     // sessionStorage에서 카카오 인가코드 확인
     const kakaoCode = sessionStorage.getItem(KAKAO_CODE_KEY);
-    if (kakaoCode) {
-      // removeItem은 API 호출 후에 (StrictMode 2회 실행 대응)
+    const kakaoTime = sessionStorage.getItem("kakao_auth_time");
+
+    // 즉시 삭제 (실패해도 재시도하지 않음)
+    sessionStorage.removeItem(KAKAO_CODE_KEY);
+    sessionStorage.removeItem("kakao_auth_time");
+
+    // 5분 이내 코드만 사용
+    const isExpired = kakaoTime && (Date.now() - Number(kakaoTime)) > 5 * 60 * 1000;
+
+    if (kakaoCode && !isExpired) {
       api<AuthResponse>("/auth/login/kakao", {
         method: "POST",
         body: JSON.stringify({ authorizationCode: kakaoCode, redirectUri: KAKAO_REDIRECT_URI }),
       })
         .then((data) => {
-          sessionStorage.removeItem(KAKAO_CODE_KEY);
           localStorage.setItem(TOKEN_KEYS.ACCESS, data.accessToken);
           localStorage.setItem(TOKEN_KEYS.REFRESH, data.refreshToken);
           setState({ user: data.user, loading: false, error: null });
         })
         .catch((e) => {
-          sessionStorage.removeItem(KAKAO_CODE_KEY);
           setState({ user: null, loading: false, error: e instanceof Error ? e.message : "카카오 로그인 실패" });
         });
       return;

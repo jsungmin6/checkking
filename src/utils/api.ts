@@ -63,6 +63,12 @@ export class ApiError extends Error {
   }
 }
 
+function fetchWithTimeout(url: string, options: RequestInit, timeoutMs = 15000): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  return fetch(url, { ...options, signal: controller.signal }).finally(() => clearTimeout(timer));
+}
+
 export async function api<T>(
   path: string,
   options: RequestInit = {}
@@ -77,13 +83,21 @@ export async function api<T>(
     headers["Authorization"] = `Bearer ${token}`;
   }
 
-  let res = await fetch(`${API_BASE_URL}${path}`, { ...options, headers });
+  let res: Response;
+  try {
+    res = await fetchWithTimeout(`${API_BASE_URL}${path}`, { ...options, headers });
+  } catch (e) {
+    if (e instanceof DOMException && e.name === "AbortError") {
+      throw new ApiError("TIMEOUT", "서버 응답 시간이 초과되었습니다", 0);
+    }
+    throw e;
+  }
 
   if (res.status === 401 && token) {
     const refreshed = await tryRefreshToken();
     if (refreshed) {
       headers["Authorization"] = `Bearer ${getAccessToken()}`;
-      res = await fetch(`${API_BASE_URL}${path}`, { ...options, headers });
+      res = await fetchWithTimeout(`${API_BASE_URL}${path}`, { ...options, headers });
     }
   }
 

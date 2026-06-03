@@ -12,13 +12,12 @@
     <script>
       // 카카오 리다이렉트 코드 캡처 (React 로드 전에 실행)
       (function() {
-        var fullUrl = window.location.href;
         var params = new URLSearchParams(window.location.search);
         var code = params.get('code');
-        // 항상 로그 저장 (디버그용)
         if (code) {
           sessionStorage.setItem('kakao_auth_code', code);
-          var url = new URL(fullUrl);
+          sessionStorage.setItem('kakao_auth_time', String(Date.now()));
+          var url = new URL(window.location.href);
           url.searchParams.delete('code');
           window.history.replaceState({}, '', url.toString());
         }
