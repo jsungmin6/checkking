@@ -1,5 +1,6 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useAuth } from "./hooks/useAuth";
+import { getKakaoCodeFromUrl, clearKakaoCodeFromUrl } from "./utils/kakao";
 import LoginScreen from "./screens/LoginScreen";
 import HomeScreen from "./screens/HomeScreen";
 import ProfileScreen from "./screens/ProfileScreen";
@@ -15,6 +16,21 @@ export default function App() {
   const { user, loading, loginWithKakao, loginWithToss, logout, updateNickname } = useAuth();
   const [screen, setScreen] = useState<ScreenName>("home");
   const [activeRoomId, setActiveRoomId] = useState<number | null>(null);
+  const [kakaoLoading, setKakaoLoading] = useState(false);
+  const [kakaoError, setKakaoError] = useState<string | null>(null);
+
+  // 카카오 리다이렉트 후 ?code= 파라미터 처리
+  useEffect(() => {
+    const code = getKakaoCodeFromUrl();
+    if (!code) return;
+
+    clearKakaoCodeFromUrl();
+    setKakaoLoading(true);
+    loginWithKakao(code)
+      .then(() => setScreen("home"))
+      .catch((e) => setKakaoError(e instanceof Error ? e.message : "카카오 로그인 실패"))
+      .finally(() => setKakaoLoading(false));
+  }, [loginWithKakao]);
 
   const navigateTo = useCallback((s: ScreenName, roomId?: number) => {
     setScreen(s);
@@ -25,7 +41,7 @@ export default function App() {
     setScreen("home");
   }, []);
 
-  if (loading) {
+  if (loading || kakaoLoading) {
     return (
       <div className="page" style={{ alignItems: "center", justifyContent: "center" }}>
         <div style={{
@@ -33,13 +49,14 @@ export default function App() {
           border: "3px solid var(--accent-blue)", borderTopColor: "transparent",
           animation: "spin 1s linear infinite",
         }} />
+        {kakaoLoading && <div style={{ color: "var(--text-secondary)", marginTop: 16, fontSize: 14 }}>카카오 로그인 중...</div>}
       </div>
     );
   }
 
   if (!user) {
     return (
-      <LoginScreen onLogin={handleLogin} loginWithKakao={loginWithKakao} loginWithToss={loginWithToss} />
+      <LoginScreen onLogin={handleLogin} loginWithToss={loginWithToss} kakaoError={kakaoError} />
     );
   }
 
