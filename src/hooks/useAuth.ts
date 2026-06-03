@@ -6,15 +6,40 @@ import type { AuthResponse, User, Profile } from "../types";
 interface AuthState {
   user: User | null;
   loading: boolean;
+  error: string | null;
 }
 
+const KAKAO_CODE_KEY = "kakao_auth_code";
+
 export function useAuth() {
-  const [state, setState] = useState<AuthState>({ user: null, loading: true });
+  const [state, setState] = useState<AuthState>({ user: null, loading: true, error: null });
 
   useEffect(() => {
+    // sessionStorage에서 카카오 인가코드 확인
+    const kakaoCode = sessionStorage.getItem(KAKAO_CODE_KEY);
+    if (kakaoCode) {
+      // removeItem은 API 호출 후에 (StrictMode 2회 실행 대응)
+      api<AuthResponse>("/auth/login/kakao", {
+        method: "POST",
+        body: JSON.stringify({ authorizationCode: kakaoCode, redirectUri: KAKAO_REDIRECT_URI }),
+      })
+        .then((data) => {
+          sessionStorage.removeItem(KAKAO_CODE_KEY);
+          localStorage.setItem(TOKEN_KEYS.ACCESS, data.accessToken);
+          localStorage.setItem(TOKEN_KEYS.REFRESH, data.refreshToken);
+          setState({ user: data.user, loading: false, error: null });
+        })
+        .catch((e) => {
+          sessionStorage.removeItem(KAKAO_CODE_KEY);
+          setState({ user: null, loading: false, error: e instanceof Error ? e.message : "카카오 로그인 실패" });
+        });
+      return;
+    }
+
+    // 저장된 토큰으로 세션 복원
     const token = localStorage.getItem(TOKEN_KEYS.ACCESS);
     if (!token) {
-      setState({ user: null, loading: false });
+      setState({ user: null, loading: false, error: null });
       return;
     }
 
@@ -27,11 +52,12 @@ export function useAuth() {
             loginType: profile.loginType,
           },
           loading: false,
+          error: null,
         });
       })
       .catch(() => {
         clearTokens();
-        setState({ user: null, loading: false });
+        setState({ user: null, loading: false, error: null });
       });
   }, []);
 
@@ -42,7 +68,7 @@ export function useAuth() {
     });
     localStorage.setItem(TOKEN_KEYS.ACCESS, data.accessToken);
     localStorage.setItem(TOKEN_KEYS.REFRESH, data.refreshToken);
-    setState({ user: data.user, loading: false });
+    setState({ user: data.user, loading: false, error: null });
     return data;
   }, []);
 
@@ -53,13 +79,13 @@ export function useAuth() {
     });
     localStorage.setItem(TOKEN_KEYS.ACCESS, data.accessToken);
     localStorage.setItem(TOKEN_KEYS.REFRESH, data.refreshToken);
-    setState({ user: data.user, loading: false });
+    setState({ user: data.user, loading: false, error: null });
     return data;
   }, []);
 
   const logout = useCallback(() => {
     clearTokens();
-    setState({ user: null, loading: false });
+    setState({ user: null, loading: false, error: null });
   }, []);
 
   const updateNickname = useCallback((nickname: string) => {
@@ -72,6 +98,7 @@ export function useAuth() {
   return {
     user: state.user,
     loading: state.loading,
+    authError: state.error,
     loginWithKakao,
     loginWithToss,
     logout,
