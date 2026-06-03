@@ -5,7 +5,7 @@ import type { User } from "../types";
 interface LoginScreenProps {
   onLogin: (user: User) => void;
   loginWithKakao: (code: string) => Promise<{ user: User }>;
-  loginWithToss: (token: string) => Promise<{ user: User }>;
+  loginWithToss: (code: string, referrer: string) => Promise<{ user: User }>;
 }
 
 export default function LoginScreen({ onLogin, loginWithKakao, loginWithToss }: LoginScreenProps) {
@@ -16,9 +16,10 @@ export default function LoginScreen({ onLogin, loginWithKakao, loginWithToss }: 
     setLoading(true);
     setError(null);
     try {
-      // TODO: 카카오 SDK 연동 — 현재는 개발용 mock
-      const mockCode = "dev_kakao_code";
-      const data = await loginWithKakao(mockCode);
+      // TODO: iOS에서 카카오 SDK 연동 (Capacitor 플러그인)
+      // const { authorizationCode } = await KakaoSDK.login();
+      const authorizationCode = "dev_kakao_code";
+      const data = await loginWithKakao(authorizationCode);
       onLogin(data.user);
     } catch (e) {
       setError(e instanceof Error ? e.message : "카카오 로그인에 실패했습니다");
@@ -31,9 +32,9 @@ export default function LoginScreen({ onLogin, loginWithKakao, loginWithToss }: 
     setLoading(true);
     setError(null);
     try {
-      // TODO: 토스 SDK 연동 — 현재는 개발용 mock
-      const mockToken = "dev_toss_token";
-      const data = await loginWithToss(mockToken);
+      const { appLogin } = await import("@apps-in-toss/web-framework");
+      const { authorizationCode, referrer } = await appLogin();
+      const data = await loginWithToss(authorizationCode, referrer);
       onLogin(data.user);
     } catch (e) {
       setError(e instanceof Error ? e.message : "토스 로그인에 실패했습니다");

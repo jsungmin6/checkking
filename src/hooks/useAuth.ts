@@ -46,10 +46,10 @@ export function useAuth() {
     return data;
   }, []);
 
-  const loginWithToss = useCallback(async (accessToken: string) => {
+  const loginWithToss = useCallback(async (authorizationCode: string, referrer: string) => {
     const data = await api<AuthResponse>("/auth/login/toss", {
       method: "POST",
-      body: JSON.stringify({ accessToken }),
+      body: JSON.stringify({ authorizationCode, referrer }),
     });
     localStorage.setItem(TOKEN_KEYS.ACCESS, data.accessToken);
     localStorage.setItem(TOKEN_KEYS.REFRESH, data.refreshToken);
