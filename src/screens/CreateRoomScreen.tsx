@@ -20,6 +20,9 @@ const selectStyle: React.CSSProperties = {
   color: "var(--text-primary)",
   textAlign: "center",
   textAlignLast: "center",
+  appearance: "none",
+  WebkitAppearance: "none",
+  MozAppearance: "none",
 };
 
 function TimeSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
