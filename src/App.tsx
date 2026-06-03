@@ -19,7 +19,7 @@ export default function App() {
   const [kakaoLoading, setKakaoLoading] = useState(false);
   const [kakaoError, setKakaoError] = useState<string | null>(null);
 
-  // 카카오 리다이렉트 후 ?code= 파라미터 처리
+  // 카카오 리다이렉트 후 ?code= 파라미터 처리 (마운트 시 1회만)
   useEffect(() => {
     const code = getKakaoCodeFromUrl();
     if (!code) return;
@@ -30,7 +30,8 @@ export default function App() {
       .then(() => setScreen("home"))
       .catch((e) => setKakaoError(e instanceof Error ? e.message : "카카오 로그인 실패"))
       .finally(() => setKakaoLoading(false));
-  }, [loginWithKakao]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const navigateTo = useCallback((s: ScreenName, roomId?: number) => {
     setScreen(s);
