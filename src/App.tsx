@@ -47,7 +47,6 @@ export default function App() {
     case "home":
       return (
         <HomeScreen
-          user={user}
           onNavigateProfile={() => navigateTo("profile")}
           onNavigateCreateRoom={() => navigateTo("createRoom")}
           onNavigateJoinRoom={() => navigateTo("joinRoom")}
@@ -58,7 +57,7 @@ export default function App() {
       return (
         <ProfileScreen
           user={user}
-          onBack={() => navigateTo("home")}
+          onNavigateHome={() => navigateTo("home")}
           onLogout={() => { logout(); setScreen("login"); }}
           onNicknameUpdate={updateNickname}
         />

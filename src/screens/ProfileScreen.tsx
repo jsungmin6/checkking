@@ -1,16 +1,16 @@
 import { useState } from "react";
-import BackHeader from "../components/BackHeader";
+import HomeTabBar from "../components/HomeTabBar";
 import { api } from "../utils/api";
 import type { User } from "../types";
 
 interface ProfileScreenProps {
   user: User;
-  onBack: () => void;
+  onNavigateHome: () => void;
   onLogout: () => void;
   onNicknameUpdate: (nickname: string) => void;
 }
 
-export default function ProfileScreen({ user, onBack, onLogout, onNicknameUpdate }: ProfileScreenProps) {
+export default function ProfileScreen({ user, onNavigateHome, onLogout, onNicknameUpdate }: ProfileScreenProps) {
   const [editing, setEditing] = useState(false);
   const [nickname, setNickname] = useState(user.nickname);
   const [saving, setSaving] = useState(false);
@@ -50,39 +50,48 @@ export default function ProfileScreen({ user, onBack, onLogout, onNicknameUpdate
   const loginTypeLabel = user.loginType === "KAKAO" ? "카카오" : "토스";
 
   return (
-    <div className="page animate-fade-in">
-      <BackHeader title="내 계정" onBack={onBack} />
-      <div style={{ padding: 16, textAlign: "center" }}>
-        <div style={{ width: 72, height: 72, borderRadius: "50%", background: "var(--accent-blue)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, margin: "0 auto" }}>{user.nickname.charAt(0)}</div>
-        <div style={{ fontSize: 17, fontWeight: 600, marginTop: 10 }}>{user.nickname}</div>
-        <div style={{ color: "var(--text-secondary)", fontSize: 13 }}>{loginTypeLabel} 로그인</div>
+    <div className="page" style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
+      <div style={{ padding: "20px 20px 12px", background: "var(--bg-card)", borderBottom: "1px solid var(--border-color)" }}>
+        <div style={{ fontSize: 22, fontWeight: 700 }}>내 정보</div>
       </div>
-      <div style={{ padding: "0 16px" }}>
-        <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 8 }}>프로필</div>
-        <div style={{ background: "var(--bg-card)", borderRadius: "var(--radius-card)", overflow: "hidden", boxShadow: "var(--shadow-card)" }}>
-          <div style={{ padding: "14px 16px", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 14 }}>
-            <span>닉네임</span>
-            {editing ? (
-              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                <input value={nickname} onChange={(e) => setNickname(e.target.value)} style={{ width: 120, padding: "6px 8px", borderRadius: 6, border: "1px solid var(--border-light)", background: "var(--bg-secondary)", color: "var(--text-primary)", fontSize: 14 }} />
-                <span onClick={handleSaveNickname} style={{ color: "var(--accent-blue)", cursor: "pointer", fontSize: 13, opacity: saving ? 0.5 : 1 }}>{saving ? "..." : "저장"}</span>
-                <span onClick={() => { setEditing(false); setNickname(user.nickname); setError(null); }} style={{ color: "var(--text-secondary)", cursor: "pointer", fontSize: 13 }}>취소</span>
-              </div>
-            ) : (
-              <span onClick={() => setEditing(true)} style={{ color: "var(--accent-blue)", cursor: "pointer" }}>{user.nickname} ✏️</span>
-            )}
-          </div>
-          <div style={{ padding: "14px 16px", display: "flex", justifyContent: "space-between", fontSize: 14, borderTop: "1px solid var(--border-light)" }}>
-            <span>로그인 방식</span>
-            <span style={{ color: "var(--text-secondary)" }}>{loginTypeLabel}</span>
-          </div>
+
+      <div style={{ flex: 1, overflow: "auto" }}>
+        <div style={{ padding: 24, textAlign: "center" }}>
+          <div style={{ width: 72, height: 72, borderRadius: "50%", background: "var(--accent-blue)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, margin: "0 auto" }}>{user.nickname.charAt(0)}</div>
+          <div style={{ fontSize: 18, fontWeight: 600, marginTop: 12 }}>{user.nickname}</div>
+          <div style={{ color: "var(--text-secondary)", fontSize: 14, marginTop: 4 }}>{loginTypeLabel} 로그인</div>
         </div>
-        {error && <div style={{ color: "var(--accent-red)", fontSize: 12, marginTop: 8 }}>{error}</div>}
+
+        <div style={{ padding: "0 16px" }}>
+          <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 8 }}>프로필</div>
+          <div style={{ background: "var(--bg-card)", borderRadius: "var(--radius-card)", overflow: "hidden", boxShadow: "var(--shadow-card)" }}>
+            <div style={{ padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 15 }}>
+              <span>닉네임</span>
+              {editing ? (
+                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                  <input value={nickname} onChange={(e) => setNickname(e.target.value)} style={{ width: 120, padding: "8px 10px", borderRadius: "var(--radius-input)", border: "1px solid var(--border-color)", background: "var(--bg-secondary)", color: "var(--text-primary)", fontSize: 14 }} />
+                  <span onClick={handleSaveNickname} style={{ color: "var(--accent-blue)", cursor: "pointer", fontSize: 14, fontWeight: 600, opacity: saving ? 0.5 : 1 }}>{saving ? "..." : "저장"}</span>
+                  <span onClick={() => { setEditing(false); setNickname(user.nickname); setError(null); }} style={{ color: "var(--text-secondary)", cursor: "pointer", fontSize: 14 }}>취소</span>
+                </div>
+              ) : (
+                <span onClick={() => setEditing(true)} style={{ color: "var(--accent-blue)", cursor: "pointer", fontWeight: 500 }}>{user.nickname} ✏️</span>
+              )}
+            </div>
+            <div style={{ padding: "16px 20px", display: "flex", justifyContent: "space-between", fontSize: 15, borderTop: "1px solid var(--border-light)" }}>
+              <span>로그인 방식</span>
+              <span style={{ color: "var(--text-secondary)" }}>{loginTypeLabel}</span>
+            </div>
+          </div>
+          {error && <div style={{ color: "var(--accent-red)", fontSize: 13, marginTop: 8 }}>{error}</div>}
+        </div>
+
+        <div style={{ padding: "32px 16px", display: "flex", flexDirection: "column", gap: 10 }}>
+          <button onClick={onLogout} style={{ width: "100%", padding: 14, borderRadius: "var(--radius-button)", border: "1px solid var(--border-color)", background: "var(--bg-card)", color: "var(--text-secondary)", fontSize: 15 }}>로그아웃</button>
+          <button onClick={handleDeleteAccount} style={{ width: "100%", padding: 14, borderRadius: "var(--radius-button)", border: "1px solid var(--accent-danger)", background: "var(--bg-card)", color: "var(--accent-danger)", fontSize: 15 }}>회원 탈퇴</button>
+        </div>
       </div>
-      <div style={{ padding: "24px 16px", display: "flex", flexDirection: "column", gap: 8, marginTop: "auto" }}>
-        <button onClick={onLogout} style={{ width: "100%", padding: 12, borderRadius: 8, border: "1px solid var(--border-light)", background: "transparent", color: "var(--text-secondary)", fontSize: 14 }}>로그아웃</button>
-        <button onClick={handleDeleteAccount} style={{ width: "100%", padding: 12, borderRadius: 8, border: "1px solid var(--accent-danger)", background: "transparent", color: "var(--accent-danger)", fontSize: 14 }}>회원 탈퇴</button>
-      </div>
+
+      <HomeTabBar active="profile" onSelect={(tab) => { if (tab === "home") onNavigateHome(); }} />
     </div>
   );
 }
