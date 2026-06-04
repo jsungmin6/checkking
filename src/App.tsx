@@ -12,7 +12,7 @@ import SettingsScreen from "./screens/SettingsScreen";
 import type { ScreenName, User } from "./types";
 
 export default function App() {
-  const { user, loading, authError, loginWithToss, logout, updateNickname } = useAuth();
+  const { user, loading, authError, loginWithKakaoToken, loginWithToss, logout, updateNickname } = useAuth();
   const [screen, setScreen] = useState<ScreenName>("home");
   const [activeRoomId, setActiveRoomId] = useState<number | null>(null);
 
@@ -39,7 +39,7 @@ export default function App() {
 
   if (!user) {
     return (
-      <LoginScreen onLogin={handleLogin} loginWithToss={loginWithToss} kakaoError={authError} />
+      <LoginScreen onLogin={handleLogin} loginWithKakaoToken={loginWithKakaoToken} loginWithToss={loginWithToss} kakaoError={authError} />
     );
   }
 

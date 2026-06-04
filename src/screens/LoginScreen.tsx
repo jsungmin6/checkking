@@ -5,18 +5,32 @@ import type { User } from "../types";
 
 interface LoginScreenProps {
   onLogin: (user: User) => void;
+  loginWithKakaoToken: (accessToken: string) => Promise<void>;
   loginWithToss: (code: string, referrer: string) => Promise<{ user: User }>;
   kakaoLoading?: boolean;
   kakaoError?: string | null;
 }
 
-export default function LoginScreen({ onLogin, loginWithToss, kakaoLoading, kakaoError }: LoginScreenProps) {
+export default function LoginScreen({ onLogin, loginWithKakaoToken, loginWithToss, kakaoLoading, kakaoError }: LoginScreenProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleKakaoLogin = () => {
-    startKakaoLogin();
-    // 카카오 로그인 페이지로 리다이렉트됨 — 돌아오면 App.tsx에서 code 파라미터 처리
+  const handleKakaoLogin = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await startKakaoLogin();
+      if (result) {
+        // iOS: 네이티브 SDK가 access_token 반환
+        console.log("[등교왕] iOS 카카오 access_token 획득");
+        await loginWithKakaoToken(result.accessToken);
+      }
+      // 웹: 리다이렉트되므로 여기에 도달하지 않음
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "카카오 로그인에 실패했습니다");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleTossLogin = async () => {
