@@ -71,6 +71,14 @@ export default function ProfileScreen({ user, onNavigateHome, onLogout, onNickna
             </div>
           </div>
           {error && <div style={{ color: "var(--accent-red)", fontSize: 13, marginTop: 8 }}>{error}</div>}
+
+          <div style={{ marginTop: 16, fontSize: 12, color: "var(--text-secondary)", marginBottom: 8 }}>계정</div>
+          <div style={{ background: "var(--bg-card)", borderRadius: "var(--radius-card)", padding: "16px 20px", boxShadow: "var(--shadow-card)", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 15 }}>
+            <span>등급</span>
+            <span style={{ color: user.accountType === "PREMIUM" ? "var(--accent-blue)" : "var(--text-secondary)", fontWeight: 600 }}>
+              {user.accountType === "PREMIUM" ? "프리미엄" : "일반"}
+            </span>
+          </div>
         </div>
 
         <div style={{ padding: "32px 16px", display: "flex", flexDirection: "column", gap: 10 }}>

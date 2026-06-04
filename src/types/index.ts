@@ -23,10 +23,13 @@ export type ApiResponse<T> = ApiSuccess<T> | ApiError;
 
 // === Auth ===
 
+export type AccountType = "FREE" | "PREMIUM";
+
 export interface User {
   userId: number;
   nickname: string;
   loginType: LoginType;
+  accountType?: AccountType;
 }
 
 export interface AuthResponse {
