@@ -104,7 +104,6 @@ export default function RankingScreen({ classroomId, user, onTabChange, onBack }
                   <div style={{ fontSize: 10, color: "var(--accent-silver)" }}>2nd</div>
                   <div style={{ fontSize: 20 }}>🥈</div>
                   <div style={{ fontSize: 12 }}>{top3[1].nickname}</div>
-                  <div style={{ fontSize: 10, color: "var(--text-secondary)" }}>{top3[1].avgRank}위</div>
                 </div>
               )}
               {top3[0] && (
@@ -112,7 +111,6 @@ export default function RankingScreen({ classroomId, user, onTabChange, onBack }
                   <div style={{ fontSize: 10, color: "var(--accent-gold)" }}>1st</div>
                   <div style={{ fontSize: 24 }}>🏆</div>
                   <div style={{ fontSize: 13, fontWeight: 600 }}>{top3[0].nickname}</div>
-                  <div style={{ fontSize: 10, color: "var(--accent-gold)" }}>{top3[0].avgRank}위</div>
                 </div>
               )}
               {top3[2] && (
@@ -120,7 +118,6 @@ export default function RankingScreen({ classroomId, user, onTabChange, onBack }
                   <div style={{ fontSize: 10, color: "var(--accent-bronze)" }}>3rd</div>
                   <div style={{ fontSize: 20 }}>🥉</div>
                   <div style={{ fontSize: 12 }}>{top3[2].nickname}</div>
-                  <div style={{ fontSize: 10, color: "var(--text-secondary)" }}>{top3[2].avgRank}위</div>
                 </div>
               )}
             </div>
@@ -138,9 +135,6 @@ export default function RankingScreen({ classroomId, user, onTabChange, onBack }
                 }}>
                   <span style={{ width: 28, color: "var(--text-secondary)" }}>{r.rank}</span>
                   <span style={{ fontWeight: isMe ? 600 : 400 }}>{isMe ? "나" : r.nickname}</span>
-                  <span style={{ marginLeft: "auto", color: isMe ? "var(--accent-blue)" : "var(--text-secondary)", fontSize: 12 }}>
-                    평균 {r.avgRank}위 · {r.totalPresent}/{r.totalDays}일
-                  </span>
                 </div>
               );
             })}
