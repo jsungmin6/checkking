@@ -200,7 +200,7 @@ export default function SettingsScreen({ classroomId, user, onTabChange, onBack,
   return (
     <div className="page" style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
       <BackHeader title="방 설정" onBack={onBack} />
-      <div style={{ flex: 1, overflow: "auto", padding: "0 16px" }}>
+      <div style={{ flex: 1, overflow: "auto", padding: "8px 16px 0" }}>
         <div style={rowStyle(true)}>
           <span>초대 코드</span>
           <span onClick={handleCopyCode} style={{ color: "var(--accent-blue)", fontWeight: 600, cursor: "pointer" }}>{classroom.inviteCode} 📋</span>
