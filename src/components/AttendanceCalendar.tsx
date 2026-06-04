@@ -185,7 +185,7 @@ export default function AttendanceCalendar({ classroomId }: AttendanceCalendarPr
             >
               {attended && record!.dailyRank === 1 && (
                 <div style={{
-                  position: "absolute", top: -2, left: "50%", transform: "translateX(-50%)",
+                  position: "absolute", top: -8, left: "50%", transform: "translateX(-50%)",
                   fontSize: 10, lineHeight: 1, color: "var(--accent-gold)",
                 }}>👑</div>
               )}
