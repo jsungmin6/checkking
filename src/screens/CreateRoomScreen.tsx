@@ -115,9 +115,10 @@ export default function CreateRoomScreen({ onBack, onCreated }: CreateRoomScreen
   const [wifiSsid, setWifiSsid] = useState("");
   const [wifiBssid, setWifiBssid] = useState("");
 
-  // 출석 시간
+  // 출석 시간 + 주말
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
+  const [includeWeekends, setIncludeWeekends] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -181,14 +182,14 @@ export default function CreateRoomScreen({ onBack, onCreated }: CreateRoomScreen
         ? { ssid: wifiSsid, bssid: wifiBssid }
         : null;
 
-      if (validationType !== "NONE" || startTime) {
+      if (validationType !== "NONE" || startTime || !includeWeekends) {
         const settings: ClassroomSettingsRequest = {
           validationType,
           gpsConfig: finalGpsConfig,
           wifiConfig: finalWifiConfig,
           checkInStartTime: startTime || null,
           checkInEndTime: endTime || null,
-          includeWeekends: true,
+          includeWeekends,
         };
         await api(`/classrooms/${classroom.classroomId}/settings`, {
           method: "PUT",
@@ -206,11 +207,6 @@ export default function CreateRoomScreen({ onBack, onCreated }: CreateRoomScreen
   return (
     <div className="page animate-fade-in">
       <BackHeader title="방 만들기" onBack={onBack} />
-      <div style={{ display: "flex", justifyContent: "center", gap: 8, padding: 16 }}>
-        {[1, 2, 3].map((s) => (
-          <div key={s} style={{ width: s === step ? 24 : 8, height: 8, borderRadius: 4, background: s === step ? "var(--accent-blue)" : "var(--border-light)", transition: "width 0.2s" }} />
-        ))}
-      </div>
       {error && <div style={{ padding: "0 16px", color: "var(--accent-red)", fontSize: 13 }}>{error}</div>}
 
       {step === 1 && (
@@ -346,6 +342,24 @@ export default function CreateRoomScreen({ onBack, onCreated }: CreateRoomScreen
                 종료 시간이 시작 시간보다 빠릅니다
               </div>
             )}
+
+            <div style={{ marginTop: 20, marginBottom: 20 }}>
+              <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 10, textAlign: "left" }}>주말 출석</div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button onClick={() => setIncludeWeekends(false)} style={{
+                  flex: 1, padding: 12, borderRadius: "var(--radius-button)", fontSize: 14, fontWeight: 600,
+                  background: !includeWeekends ? "var(--accent-blue)" : "var(--bg-card)",
+                  color: !includeWeekends ? "#fff" : "var(--text-secondary)",
+                  border: !includeWeekends ? "none" : "1px solid var(--border-color)",
+                }}>주말 제외</button>
+                <button onClick={() => setIncludeWeekends(true)} style={{
+                  flex: 1, padding: 12, borderRadius: "var(--radius-button)", fontSize: 14, fontWeight: 600,
+                  background: includeWeekends ? "var(--accent-blue)" : "var(--bg-card)",
+                  color: includeWeekends ? "#fff" : "var(--text-secondary)",
+                  border: includeWeekends ? "none" : "1px solid var(--border-color)",
+                }}>주말 포함</button>
+              </div>
+            </div>
             <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 10 }}>
               <button onClick={handleCreate} disabled={loading || !!timeInvalid} style={{ width: "100%", padding: 16, borderRadius: "var(--radius-button)", background: "var(--accent-green)", color: "#fff", fontSize: 16, fontWeight: 700, opacity: loading || timeInvalid ? 0.5 : 1 }}>
                 {loading ? "생성 중..." : "방 생성 완료!"}
