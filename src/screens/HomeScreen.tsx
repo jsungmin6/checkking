@@ -36,7 +36,7 @@ export default function HomeScreen({
 
   return (
     <div className="page" style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
-      <div style={{ padding: "20px 20px 12px", display: "flex", justifyContent: "space-between", alignItems: "center", background: "var(--bg-card)", borderBottom: "1px solid var(--border-color)" }}>
+      <div style={{ padding: "20px 20px 12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div style={{ fontSize: 22, fontWeight: 700 }}>내 방</div>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           <span onClick={onNavigateCreateRoom} style={{ padding: "8px 14px", background: "var(--accent-blue)", borderRadius: "var(--radius-button)", fontSize: 13, fontWeight: 600, color: "#fff", cursor: "pointer" }}>+ 만들기</span>
