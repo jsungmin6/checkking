@@ -67,6 +67,7 @@ export interface Classroom {
   wifiConfig: WifiConfig | null;
   checkInStartTime: string | null;
   checkInEndTime: string | null;
+  includeWeekends: boolean;
   memberCount: number;
   createdAt: string;
 }
@@ -199,4 +200,12 @@ export interface ClassroomSettingsRequest {
   wifiConfig: WifiConfig | null;
   checkInStartTime: string | null;
   checkInEndTime: string | null;
+  includeWeekends: boolean;
+}
+
+export interface ExcludedDate {
+  id: number;
+  classroomId: number;
+  excludedDate: string;
+  reason: string | null;
 }

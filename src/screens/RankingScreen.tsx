@@ -16,31 +16,81 @@ export default function RankingScreen({ classroomId, user, onTabChange, onBack }
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
+  const [period, setPeriod] = useState<"WEEKLY" | "MONTHLY">("MONTHLY");
+  const [week, setWeek] = useState(1);
   const [data, setData] = useState<MonthlyRanking | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setLoading(true);
-    api<MonthlyRanking>(`/classrooms/${classroomId}/statistics/ranking?period=MONTHLY&year=${year}&month=${month}&criteria=AVG_RANK`)
+    const params = new URLSearchParams({
+      period,
+      year: String(year),
+      month: String(month),
+      criteria: "AVG_RANK",
+    });
+    if (period === "WEEKLY") params.set("week", String(week));
+
+    api<MonthlyRanking>(`/classrooms/${classroomId}/statistics/ranking?${params}`)
       .then(setData)
       .catch(() => setData(null))
       .finally(() => setLoading(false));
-  }, [classroomId, year, month]);
+  }, [classroomId, year, month, period, week]);
 
-  const prevMonth = () => { if (month === 1) { setYear(year - 1); setMonth(12); } else setMonth(month - 1); };
-  const nextMonth = () => { if (month === 12) { setYear(year + 1); setMonth(1); } else setMonth(month + 1); };
+  const prevMonth = () => {
+    if (month === 1) { setYear(year - 1); setMonth(12); } else setMonth(month - 1);
+    setWeek(1);
+  };
+  const nextMonth = () => {
+    if (month === 12) { setYear(year + 1); setMonth(1); } else setMonth(month + 1);
+    setWeek(1);
+  };
+
+  const prevWeek = () => { if (week > 1) setWeek(week - 1); };
+  const nextWeek = () => setWeek(week + 1);
 
   const top3 = data?.rankings.slice(0, 3) ?? [];
   const rest = data?.rankings.slice(3) ?? [];
 
+  const toggleBtnStyle = (active: boolean): React.CSSProperties => ({
+    flex: 1,
+    padding: "8px 0",
+    borderRadius: 8,
+    fontSize: 13,
+    fontWeight: 600,
+    cursor: "pointer",
+    background: active ? "var(--accent-blue)" : "transparent",
+    color: active ? "#fff" : "var(--text-secondary)",
+    border: active ? "none" : "1px solid var(--border-light)",
+    transition: "all 0.15s",
+  });
+
   return (
     <div className="page" style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
       <BackHeader title="랭킹" onBack={onBack} />
-      <div style={{ padding: 16, display: "flex", alignItems: "center", justifyContent: "center", gap: 16 }}>
+
+      {/* Period toggle */}
+      <div style={{ display: "flex", gap: 6, padding: "8px 16px 0" }}>
+        <button onClick={() => setPeriod("WEEKLY")} style={toggleBtnStyle(period === "WEEKLY")}>주간</button>
+        <button onClick={() => setPeriod("MONTHLY")} style={toggleBtnStyle(period === "MONTHLY")}>월간</button>
+      </div>
+
+      {/* Month navigation */}
+      <div style={{ padding: "12px 16px 0", display: "flex", alignItems: "center", justifyContent: "center", gap: 16 }}>
         <span onClick={prevMonth} style={{ color: "var(--text-secondary)", cursor: "pointer" }}>◀</span>
         <span style={{ fontWeight: 600, fontSize: 16 }}>{year}년 {month}월</span>
         <span onClick={nextMonth} style={{ color: "var(--text-secondary)", cursor: "pointer" }}>▶</span>
       </div>
+
+      {/* Week navigation (only for WEEKLY) */}
+      {period === "WEEKLY" && (
+        <div style={{ padding: "8px 16px 0", display: "flex", alignItems: "center", justifyContent: "center", gap: 16 }}>
+          <span onClick={prevWeek} style={{ color: week > 1 ? "var(--text-secondary)" : "var(--border-light)", cursor: week > 1 ? "pointer" : "default" }}>◀</span>
+          <span style={{ fontWeight: 500, fontSize: 14 }}>{week}주차</span>
+          <span onClick={nextWeek} style={{ color: "var(--text-secondary)", cursor: "pointer" }}>▶</span>
+        </div>
+      )}
+
       {loading ? (
         <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
           <span style={{ color: "var(--text-secondary)" }}>불러오는 중...</span>
@@ -48,7 +98,7 @@ export default function RankingScreen({ classroomId, user, onTabChange, onBack }
       ) : (
         <>
           {top3.length > 0 && (
-            <div style={{ display: "flex", justifyContent: "center", alignItems: "flex-end", gap: 12, marginBottom: 16, padding: "0 16px" }}>
+            <div style={{ display: "flex", justifyContent: "center", alignItems: "flex-end", gap: 12, marginTop: 12, marginBottom: 16, padding: "0 16px" }}>
               {top3[1] && (
                 <div style={{ textAlign: "center", background: "var(--bg-card)", padding: "14px 18px", borderRadius: "var(--radius-card)", boxShadow: "var(--shadow-card)" }}>
                   <div style={{ fontSize: 10, color: "var(--accent-silver)" }}>2nd</div>

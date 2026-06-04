@@ -188,6 +188,7 @@ export default function CreateRoomScreen({ onBack, onCreated }: CreateRoomScreen
           wifiConfig: finalWifiConfig,
           checkInStartTime: startTime || null,
           checkInEndTime: endTime || null,
+          includeWeekends: true,
         };
         await api(`/classrooms/${classroom.classroomId}/settings`, {
           method: "PUT",
