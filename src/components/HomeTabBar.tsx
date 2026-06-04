@@ -12,7 +12,7 @@ const TABS: { key: HomeTab; label: string }[] = [
 
 export default function HomeTabBar({ active, onSelect }: HomeTabBarProps) {
   return (
-    <div style={{ display: "flex", borderTop: "1px solid var(--border-color)" }}>
+    <div style={{ display: "flex", borderTop: "1px solid var(--border-color)", paddingBottom: "env(safe-area-inset-bottom)" }}>
       {TABS.map((tab) => (
         <div
           key={tab.key}
