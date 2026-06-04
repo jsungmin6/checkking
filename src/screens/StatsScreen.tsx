@@ -52,7 +52,12 @@ export default function StatsScreen({ classroomId, onTabChange, onBack }: StatsS
     const avgM = String(avgMinutes % 60).padStart(2, "0");
     const avgCheckInTime = `${avgH}:${avgM}`;
 
-    return { totalPresent, firstPlaceCount, topThreeCount, avgRank, avgCheckInTime };
+    // 가장 빠른/늦은 출석 시간
+    const times = records.map((r) => r.checkInTime).sort();
+    const earliest = times[0] ?? "-";
+    const latest = times[times.length - 1] ?? "-";
+
+    return { totalPresent, firstPlaceCount, topThreeCount, avgRank, avgCheckInTime, earliest, latest };
   }, [records]);
 
   return (
@@ -76,6 +81,8 @@ export default function StatsScreen({ classroomId, onTabChange, onBack }: StatsS
             <StatCard value={monthStats.totalPresent} label="총 출석일" />
             <StatCard value={monthStats.firstPlaceCount} label="1등 횟수" color="var(--accent-gold)" />
             <StatCard value={monthStats.topThreeCount} label="TOP3 횟수" />
+            <StatCard value={monthStats.earliest} label="가장 빠른 출석" color="var(--accent-green)" />
+            <StatCard value={monthStats.latest} label="가장 늦은 출석" color="var(--accent-red)" />
           </div>
         )}
 
