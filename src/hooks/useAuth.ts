@@ -1,6 +1,7 @@
 import { useCallback, useState, useEffect } from "react";
 import { TOKEN_KEYS, KAKAO_REDIRECT_URI } from "../constants";
 import { api, clearTokens } from "../utils/api";
+import { isCapacitor } from "../utils/platform";
 import type { AuthResponse, User, Profile } from "../types";
 
 interface AuthState {
@@ -82,6 +83,61 @@ export function useAuth() {
         clearTokens();
         setState({ user: null, loading: false, error: null });
       });
+  }, []);
+
+  // iOS 딥링크 수신 (checkking://login?accessToken=...&refreshToken=...&userId=...&nickname=...&loginType=...)
+  useEffect(() => {
+    if (!isCapacitor()) return;
+
+    let cleanup: (() => void) | undefined;
+
+    (async () => {
+      const { App: CapApp } = await import("@capacitor/app");
+      const listener = await CapApp.addListener("appUrlOpen", async (event) => {
+        console.log("[등교왕] 딥링크 수신:", event.url);
+
+        try {
+          const url = new URL(event.url);
+          if (url.host === "login") {
+            const error = url.searchParams.get("error");
+            if (error) {
+              console.error("[등교왕] iOS 카카오 로그인 에러:", error);
+              setState({ user: null, loading: false, error: decodeURIComponent(error) });
+              return;
+            }
+
+            const accessToken = url.searchParams.get("accessToken");
+            const refreshToken = url.searchParams.get("refreshToken");
+            const userId = url.searchParams.get("userId");
+            const nickname = url.searchParams.get("nickname");
+            const loginType = url.searchParams.get("loginType");
+
+            if (accessToken && refreshToken && userId && nickname && loginType) {
+              console.log("[등교왕] iOS 로그인 성공:", nickname);
+              localStorage.setItem(TOKEN_KEYS.ACCESS, accessToken);
+              localStorage.setItem(TOKEN_KEYS.REFRESH, refreshToken);
+              setState({
+                user: { userId: Number(userId), nickname: decodeURIComponent(nickname), loginType: loginType as "KAKAO" | "TOSS" },
+                loading: false,
+                error: null,
+              });
+
+              // InAppBrowser 닫기
+              try {
+                const { Browser } = await import("@capacitor/browser");
+                await Browser.close();
+              } catch { /* 이미 닫혔을 수 있음 */ }
+            }
+          }
+        } catch (e) {
+          console.error("[등교왕] 딥링크 처리 에러:", e);
+        }
+      });
+
+      cleanup = () => listener.remove();
+    })();
+
+    return () => { cleanup?.(); };
   }, []);
 
   const loginWithKakao = useCallback(async (authorizationCode: string) => {

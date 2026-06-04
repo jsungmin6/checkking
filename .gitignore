@@ -3,3 +3,4 @@ dist
 *.ait
 .superpowers
 .env.local
+.vercel

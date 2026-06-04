@@ -54,5 +54,16 @@
 	</dict>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>출석 확인을 위해 위치 정보가 필요합니다</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.chescode.checkking</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>checkking</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>
