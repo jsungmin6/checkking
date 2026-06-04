@@ -21,16 +21,16 @@ export function launchConfetti(isFirstPlace = false) {
 
   const ctx = canvas.getContext("2d")!;
   const particles: Particle[] = [];
-  const count = isFirstPlace ? 120 : 60;
+  const count = isFirstPlace ? 120 : 20;
 
   for (let i = 0; i < count; i++) {
     particles.push({
-      x: canvas.width / 2 + (Math.random() - 0.5) * 200,
-      y: canvas.height * 0.4,
-      vx: (Math.random() - 0.5) * (isFirstPlace ? 16 : 10),
-      vy: -Math.random() * (isFirstPlace ? 18 : 12) - 4,
+      x: canvas.width / 2 + (Math.random() - 0.5) * (isFirstPlace ? 200 : 60),
+      y: isFirstPlace ? canvas.height * 0.4 : canvas.height * 0.25,
+      vx: (Math.random() - 0.5) * (isFirstPlace ? 16 : 5),
+      vy: -Math.random() * (isFirstPlace ? 18 : 6) - 2,
       color: COLORS[Math.floor(Math.random() * COLORS.length)] ?? "#3182F6",
-      size: Math.random() * (isFirstPlace ? 10 : 7) + 4,
+      size: Math.random() * (isFirstPlace ? 10 : 5) + 3,
       rotation: Math.random() * 360,
       rotationSpeed: (Math.random() - 0.5) * 10,
       life: 1,
@@ -38,7 +38,7 @@ export function launchConfetti(isFirstPlace = false) {
   }
 
   let frame = 0;
-  const maxFrames = isFirstPlace ? 120 : 80;
+  const maxFrames = isFirstPlace ? 120 : 50;
 
   function animate() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
