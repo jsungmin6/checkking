@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import BackHeader from "../components/BackHeader";
 import TabBar from "../components/TabBar";
 import { api, ApiError } from "../utils/api";
 import type { TabName } from "../components/TabBar";
@@ -8,6 +9,7 @@ interface SettingsScreenProps {
   classroomId: number;
   user: User;
   onTabChange: (tab: TabName) => void;
+  onBack: () => void;
   onLeave: () => void;
   onDelete: () => void;
 }
@@ -53,7 +55,7 @@ function TimeSelect({ value, onChange }: { value: string; onChange: (v: string) 
   );
 }
 
-export default function SettingsScreen({ classroomId, user, onTabChange, onLeave, onDelete }: SettingsScreenProps) {
+export default function SettingsScreen({ classroomId, user, onTabChange, onBack, onLeave, onDelete }: SettingsScreenProps) {
   const [classroom, setClassroom] = useState<Classroom | null>(null);
   const [members, setMembers] = useState<ClassroomMember[]>([]);
   const [loading, setLoading] = useState(true);
@@ -193,7 +195,7 @@ export default function SettingsScreen({ classroomId, user, onTabChange, onLeave
 
   return (
     <div className="page" style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
-      <div style={{ padding: 16, fontSize: 17, fontWeight: 600 }}>방 설정</div>
+      <BackHeader title="방 설정" onBack={onBack} />
       <div style={{ flex: 1, overflow: "auto", padding: "0 16px" }}>
         <div style={rowStyle(true)}>
           <span>초대 코드</span>

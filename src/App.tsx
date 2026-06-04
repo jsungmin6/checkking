@@ -84,6 +84,7 @@ export default function App() {
       if (!activeRoomId) { setScreen("home"); return null; }
       return (
         <RankingScreen classroomId={activeRoomId} user={user}
+          onBack={() => navigateTo("home")}
           onTabChange={(tab) => {
             if (tab === "today") navigateTo("room", activeRoomId);
             else if (tab === "stats") navigateTo("stats");
@@ -95,6 +96,7 @@ export default function App() {
       if (!activeRoomId) { setScreen("home"); return null; }
       return (
         <StatsScreen classroomId={activeRoomId}
+          onBack={() => navigateTo("home")}
           onTabChange={(tab) => {
             if (tab === "today") navigateTo("room", activeRoomId);
             else if (tab === "ranking") navigateTo("ranking");
@@ -106,6 +108,7 @@ export default function App() {
       if (!activeRoomId) { setScreen("home"); return null; }
       return (
         <SettingsScreen classroomId={activeRoomId} user={user}
+          onBack={() => navigateTo("home")}
           onTabChange={(tab) => {
             if (tab === "today") navigateTo("room", activeRoomId);
             else if (tab === "ranking") navigateTo("ranking");

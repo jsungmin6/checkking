@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import BackHeader from "../components/BackHeader";
 import TabBar from "../components/TabBar";
 import { api } from "../utils/api";
 import type { TabName } from "../components/TabBar";
@@ -8,9 +9,10 @@ interface RankingScreenProps {
   classroomId: number;
   user: User;
   onTabChange: (tab: TabName) => void;
+  onBack: () => void;
 }
 
-export default function RankingScreen({ classroomId, user, onTabChange }: RankingScreenProps) {
+export default function RankingScreen({ classroomId, user, onTabChange, onBack }: RankingScreenProps) {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
@@ -33,6 +35,7 @@ export default function RankingScreen({ classroomId, user, onTabChange }: Rankin
 
   return (
     <div className="page" style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
+      <BackHeader title="랭킹" onBack={onBack} />
       <div style={{ padding: 16, display: "flex", alignItems: "center", justifyContent: "center", gap: 16 }}>
         <span onClick={prevMonth} style={{ color: "var(--text-secondary)", cursor: "pointer" }}>◀</span>
         <span style={{ fontWeight: 600, fontSize: 16 }}>{year}년 {month}월</span>

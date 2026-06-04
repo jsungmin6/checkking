@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import BackHeader from "../components/BackHeader";
 import TabBar from "../components/TabBar";
 import StatCard from "../components/StatCard";
 import { api } from "../utils/api";
@@ -9,9 +10,10 @@ import type { PersonalStats } from "../types";
 interface StatsScreenProps {
   classroomId: number;
   onTabChange: (tab: TabName) => void;
+  onBack: () => void;
 }
 
-export default function StatsScreen({ classroomId, onTabChange }: StatsScreenProps) {
+export default function StatsScreen({ classroomId, onTabChange, onBack }: StatsScreenProps) {
   const [stats, setStats] = useState<PersonalStats | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -35,9 +37,7 @@ export default function StatsScreen({ classroomId, onTabChange }: StatsScreenPro
 
   return (
     <div className="page" style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
-      <div style={{ padding: "20px 16px 8px" }}>
-        <div style={{ fontSize: 17, fontWeight: 600 }}>내 통계</div>
-      </div>
+      <BackHeader title="내 통계" onBack={onBack} />
       <div className="stat-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, padding: "8px 16px" }}>
         <StatCard value={stats.avgRank} label="평균 순위" color="var(--accent-blue)" />
         <StatCard value={stats.avgCheckInTime} label="평균 등교 시간" color="var(--accent-green)" />
