@@ -18,7 +18,7 @@ const selectStyle: React.CSSProperties = {
   fontWeight: 600,
   borderRadius: 8,
   border: "1px solid var(--border-light)",
-  background: "var(--bg-primary)",
+  background: "var(--bg-secondary)",
   color: "var(--text-primary)",
   textAlign: "center",
   textAlignLast: "center",
@@ -187,7 +187,8 @@ export default function SettingsScreen({ classroomId, user, onTabChange, onLeave
     background: "var(--bg-card)", padding: "14px 16px",
     display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 14,
     borderRadius: first && last ? 8 : first ? "8px 8px 0 0" : last ? "0 0 8px 8px" : 0,
-    borderBottom: last ? "none" : "1px solid var(--bg-primary)",
+    borderBottom: last ? "none" : "1px solid var(--border-light)",
+    boxShadow: "var(--shadow-card)",
   });
 
   return (
@@ -206,7 +207,7 @@ export default function SettingsScreen({ classroomId, user, onTabChange, onLeave
         {showMembers && (
           <div style={{ marginTop: 2, marginBottom: 16 }}>
             {members.map((m) => (
-              <div key={m.userId} style={{ background: "var(--bg-card)", padding: "10px 16px", display: "flex", alignItems: "center", fontSize: 13, borderBottom: "1px solid var(--bg-primary)" }}>
+              <div key={m.userId} style={{ background: "var(--bg-card)", padding: "10px 16px", display: "flex", alignItems: "center", fontSize: 13, borderBottom: "1px solid var(--border-light)" }}>
                 <span>{m.nickname} {m.isOwner && "👑"}</span>
                 {isOwner && !m.isOwner && (
                   <span style={{ marginLeft: "auto", display: "flex", gap: 12 }}>
@@ -244,7 +245,7 @@ export default function SettingsScreen({ classroomId, user, onTabChange, onLeave
                 </div>
               </>
             ) : (
-              <div style={{ background: "var(--bg-card)", borderRadius: 8, padding: 16 }}>
+              <div style={{ background: "var(--bg-card)", borderRadius: 8, padding: 16, boxShadow: "var(--shadow-card)" }}>
                 <div style={{ fontSize: 13, marginBottom: 12 }}>출석 검증 방식</div>
                 <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
                   {(["NONE", "GPS"] as ValidationType[]).map((t) => (

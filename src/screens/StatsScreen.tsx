@@ -47,11 +47,11 @@ export default function StatsScreen({ classroomId, onTabChange }: StatsScreenPro
         <StatCard value={`${stats.currentStreak}일`} label="연속 출석" color="var(--accent-orange)" />
       </div>
       <div style={{ padding: "8px 16px" }}>
-        <div style={{ background: "var(--bg-card)", borderRadius: "8px 8px 0 0", padding: "12px 16px", display: "flex", justifyContent: "space-between", fontSize: 13, borderBottom: "1px solid var(--bg-primary)" }}>
+        <div style={{ background: "var(--bg-card)", borderRadius: "8px 8px 0 0", padding: "12px 16px", display: "flex", justifyContent: "space-between", fontSize: 13, borderBottom: "1px solid var(--border-light)", boxShadow: "var(--shadow-card)" }}>
           <span style={{ color: "var(--text-secondary)" }}>가장 빠른 등교</span>
           <span style={{ color: "var(--accent-green)" }}>{formatTime(stats.earliestCheckIn)}</span>
         </div>
-        <div style={{ background: "var(--bg-card)", borderRadius: "0 0 8px 8px", padding: "12px 16px", display: "flex", justifyContent: "space-between", fontSize: 13 }}>
+        <div style={{ background: "var(--bg-card)", borderRadius: "0 0 8px 8px", padding: "12px 16px", display: "flex", justifyContent: "space-between", fontSize: 13, boxShadow: "var(--shadow-card)" }}>
           <span style={{ color: "var(--text-secondary)" }}>가장 늦은 등교</span>
           <span style={{ color: "var(--accent-red)" }}>{formatTime(stats.latestCheckIn)}</span>
         </div>

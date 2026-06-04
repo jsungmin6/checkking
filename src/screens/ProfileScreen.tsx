@@ -53,18 +53,18 @@ export default function ProfileScreen({ user, onBack, onLogout, onNicknameUpdate
     <div className="page animate-fade-in">
       <BackHeader title="내 계정" onBack={onBack} />
       <div style={{ padding: 16, textAlign: "center" }}>
-        <div style={{ width: 64, height: 64, borderRadius: "50%", background: "var(--accent-blue)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, margin: "0 auto" }}>{user.nickname.charAt(0)}</div>
+        <div style={{ width: 64, height: 64, borderRadius: "50%", background: "var(--accent-blue)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, margin: "0 auto" }}>{user.nickname.charAt(0)}</div>
         <div style={{ fontSize: 17, fontWeight: 600, marginTop: 10 }}>{user.nickname}</div>
         <div style={{ color: "var(--text-secondary)", fontSize: 13 }}>{loginTypeLabel} 로그인</div>
       </div>
       <div style={{ padding: "0 16px" }}>
         <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 8 }}>프로필</div>
-        <div style={{ background: "var(--bg-card)", borderRadius: 8, overflow: "hidden" }}>
+        <div style={{ background: "var(--bg-card)", borderRadius: 8, overflow: "hidden", boxShadow: "var(--shadow-card)" }}>
           <div style={{ padding: "14px 16px", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 14 }}>
             <span>닉네임</span>
             {editing ? (
               <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                <input value={nickname} onChange={(e) => setNickname(e.target.value)} style={{ width: 120, padding: "6px 8px", borderRadius: 6, border: "1px solid var(--border-light)", background: "var(--bg-primary)", color: "var(--text-primary)", fontSize: 14 }} />
+                <input value={nickname} onChange={(e) => setNickname(e.target.value)} style={{ width: 120, padding: "6px 8px", borderRadius: 6, border: "1px solid var(--border-light)", background: "var(--bg-secondary)", color: "var(--text-primary)", fontSize: 14 }} />
                 <span onClick={handleSaveNickname} style={{ color: "var(--accent-blue)", cursor: "pointer", fontSize: 13, opacity: saving ? 0.5 : 1 }}>{saving ? "..." : "저장"}</span>
                 <span onClick={() => { setEditing(false); setNickname(user.nickname); setError(null); }} style={{ color: "var(--text-secondary)", cursor: "pointer", fontSize: 13 }}>취소</span>
               </div>
@@ -72,7 +72,7 @@ export default function ProfileScreen({ user, onBack, onLogout, onNicknameUpdate
               <span onClick={() => setEditing(true)} style={{ color: "var(--accent-blue)", cursor: "pointer" }}>{user.nickname} ✏️</span>
             )}
           </div>
-          <div style={{ padding: "14px 16px", display: "flex", justifyContent: "space-between", fontSize: 14, borderTop: "1px solid var(--bg-primary)" }}>
+          <div style={{ padding: "14px 16px", display: "flex", justifyContent: "space-between", fontSize: 14, borderTop: "1px solid var(--border-light)" }}>
             <span>로그인 방식</span>
             <span style={{ color: "var(--text-secondary)" }}>{loginTypeLabel}</span>
           </div>

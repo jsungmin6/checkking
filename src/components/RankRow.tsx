@@ -21,6 +21,7 @@ export default function RankRow({ rank, nickname, checkInTime, isMe }: RankRowPr
       background: isMe ? "var(--bg-card-highlight)" : "var(--bg-card)",
       borderRadius: 8, marginBottom: 4, fontSize: 14,
       border: isMe ? "1px solid var(--accent-blue)" : "none",
+      boxShadow: "var(--shadow-card)",
     }}>
       <span style={{ width: 28, fontWeight: 700, color: getRankColor(rank) }}>{rank}</span>
       <span style={{ fontWeight: isMe ? 600 : 400 }}>{isMe ? `나 (${nickname})` : nickname}</span>

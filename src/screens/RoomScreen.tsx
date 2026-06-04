@@ -106,12 +106,12 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
             <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 20 }}>
               <div onClick={handleCheckIn} style={{
                 width: 140, height: 140, borderRadius: "50%",
-                background: checkingIn ? "var(--border-light)" : "linear-gradient(135deg, var(--accent-blue), var(--accent-green))",
+                background: checkingIn ? "var(--border-light)" : "linear-gradient(135deg, var(--accent-blue), #5B9CF6)",
                 display: "flex", alignItems: "center", justifyContent: "center",
                 cursor: checkingIn ? "default" : "pointer",
-                boxShadow: "0 0 40px rgba(26,95,180,0.3)",
+                boxShadow: "0 4px 20px rgba(49, 130, 246, 0.3)",
               }}>
-                <div style={{ textAlign: "center" }}>
+                <div style={{ textAlign: "center", color: "#fff" }}>
                   <div style={{ fontSize: 28 }}>{checkingIn ? "⏳" : "👆"}</div>
                   <div style={{ fontSize: 15, fontWeight: 700, marginTop: 4 }}>{checkingIn ? "확인 중..." : "출석하기"}</div>
                 </div>
@@ -121,7 +121,7 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
               {checkInError && <div style={{ color: "var(--accent-red)", fontSize: 13, marginTop: 8 }}>{checkInError}</div>}
             </div>
             {today.rankings.length > 0 && (
-              <div style={{ padding: "12px 16px", background: "#111", borderTop: "1px solid var(--border-color)" }}>
+              <div style={{ padding: "12px 16px", background: "var(--bg-secondary)", borderTop: "1px solid var(--border-color)" }}>
                 <div style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 8 }}>오늘 TOP 3</div>
                 {today.rankings.slice(0, 3).map((r) => (
                   <div key={r.userId} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, marginBottom: 6 }}>

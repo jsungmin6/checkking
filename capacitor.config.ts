@@ -4,7 +4,7 @@ const isDev = process.env.CAPACITOR_DEV === 'true';
 const macIp = process.env.MAC_IP ?? '192.168.0.64';
 
 const config: CapacitorConfig = {
-  appId: 'com.chescode.checkking',
+  appId: 'com.chesscode.checkking',
   appName: '등교왕',
   webDir: 'dist',
   server: isDev

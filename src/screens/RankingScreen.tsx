@@ -47,7 +47,7 @@ export default function RankingScreen({ classroomId, user, onTabChange }: Rankin
           {top3.length > 0 && (
             <div style={{ display: "flex", justifyContent: "center", alignItems: "flex-end", gap: 12, marginBottom: 16, padding: "0 16px" }}>
               {top3[1] && (
-                <div style={{ textAlign: "center", background: "var(--bg-card)", padding: "12px 16px", borderRadius: 12 }}>
+                <div style={{ textAlign: "center", background: "var(--bg-card)", padding: "12px 16px", borderRadius: 12, boxShadow: "var(--shadow-card)" }}>
                   <div style={{ fontSize: 10, color: "var(--accent-silver)" }}>2nd</div>
                   <div style={{ fontSize: 20 }}>🥈</div>
                   <div style={{ fontSize: 12 }}>{top3[1].nickname}</div>
@@ -55,7 +55,7 @@ export default function RankingScreen({ classroomId, user, onTabChange }: Rankin
                 </div>
               )}
               {top3[0] && (
-                <div style={{ textAlign: "center", background: "var(--bg-card)", padding: "16px 20px", borderRadius: 12, border: "1px solid var(--accent-gold)" }}>
+                <div style={{ textAlign: "center", background: "var(--bg-card)", padding: "16px 20px", borderRadius: 12, border: "1px solid var(--accent-gold)", boxShadow: "var(--shadow-card)" }}>
                   <div style={{ fontSize: 10, color: "var(--accent-gold)" }}>1st</div>
                   <div style={{ fontSize: 24 }}>🏆</div>
                   <div style={{ fontSize: 13, fontWeight: 600 }}>{top3[0].nickname}</div>
@@ -63,7 +63,7 @@ export default function RankingScreen({ classroomId, user, onTabChange }: Rankin
                 </div>
               )}
               {top3[2] && (
-                <div style={{ textAlign: "center", background: "var(--bg-card)", padding: "12px 16px", borderRadius: 12 }}>
+                <div style={{ textAlign: "center", background: "var(--bg-card)", padding: "12px 16px", borderRadius: 12, boxShadow: "var(--shadow-card)" }}>
                   <div style={{ fontSize: 10, color: "var(--accent-bronze)" }}>3rd</div>
                   <div style={{ fontSize: 20 }}>🥉</div>
                   <div style={{ fontSize: 12 }}>{top3[2].nickname}</div>
@@ -81,6 +81,7 @@ export default function RankingScreen({ classroomId, user, onTabChange }: Rankin
                   background: isMe ? "var(--bg-card-highlight)" : "var(--bg-card)",
                   borderRadius: 8, marginBottom: 4, fontSize: 14,
                   border: isMe ? "1px solid var(--accent-blue)" : "none",
+                  boxShadow: "var(--shadow-card)",
                 }}>
                   <span style={{ width: 28, color: "var(--text-secondary)" }}>{r.rank}</span>
                   <span style={{ fontWeight: isMe ? 600 : 400 }}>{isMe ? "나" : r.nickname}</span>

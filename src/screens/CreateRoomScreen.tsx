@@ -16,7 +16,7 @@ const selectStyle: React.CSSProperties = {
   fontWeight: 600,
   borderRadius: 8,
   border: "1px solid var(--border-light)",
-  background: "var(--bg-card)",
+  background: "var(--bg-secondary)",
   color: "var(--text-primary)",
   textAlign: "center",
   textAlignLast: "center",
@@ -216,7 +216,7 @@ export default function CreateRoomScreen({ onBack, onCreated }: CreateRoomScreen
         <div style={{ padding: "24px 16px", textAlign: "center" }}>
           <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>Step 1. 기본 정보</div>
           <div style={{ color: "var(--text-secondary)", fontSize: 13, marginBottom: 24 }}>방 이름을 입력하세요</div>
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="예: 1학년 3반, 코딩 동아리" style={{ width: "100%", padding: 14, borderRadius: 10, border: "1px solid var(--border-light)", background: "var(--bg-card)", color: "var(--text-primary)", fontSize: 15, textAlign: "center" }} />
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="예: 1학년 3반, 코딩 동아리" style={{ width: "100%", padding: 14, borderRadius: 10, border: "1px solid var(--border-light)", background: "var(--bg-secondary)", color: "var(--text-primary)", fontSize: 15, textAlign: "center" }} />
           <button onClick={() => name.trim() && setStep(2)} disabled={!name.trim()} style={{ width: "100%", padding: 14, borderRadius: 10, background: name.trim() ? "var(--accent-blue)" : "var(--border-light)", color: "#fff", fontSize: 15, fontWeight: 600, marginTop: 24 }}>다음</button>
         </div>
       )}
@@ -233,6 +233,7 @@ export default function CreateRoomScreen({ onBack, onCreated }: CreateRoomScreen
                 cursor: opt.disabled ? "not-allowed" : "pointer",
                 opacity: opt.disabled ? 0.4 : 1,
                 border: validationType === opt.type ? "2px solid var(--accent-blue)" : "1px solid var(--border-light)",
+                boxShadow: "var(--shadow-card)",
               }}>
                 <div style={{ fontWeight: 600 }}>{opt.label}</div>
                 <div style={{ color: "var(--text-secondary)", fontSize: 12 }}>{opt.desc}</div>
@@ -241,7 +242,7 @@ export default function CreateRoomScreen({ onBack, onCreated }: CreateRoomScreen
           </div>
 
           {validationType === "GPS" && (
-            <div style={{ marginTop: 20, padding: 16, background: "var(--bg-card)", borderRadius: 12 }}>
+            <div style={{ marginTop: 20, padding: 16, background: "var(--bg-card)", borderRadius: 12, boxShadow: "var(--shadow-card)" }}>
               <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 12 }}>위치 설정</div>
 
               <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
@@ -280,7 +281,7 @@ export default function CreateRoomScreen({ onBack, onCreated }: CreateRoomScreen
                       onChange={(e) => setRadiusMeters(Number(e.target.value))}
                       min={10}
                       max={1000}
-                      style={{ width: 80, padding: 8, borderRadius: 6, border: "1px solid var(--border-light)", background: "var(--bg-primary)", color: "var(--text-primary)", fontSize: 14, textAlign: "center" }}
+                      style={{ width: 80, padding: 8, borderRadius: 6, border: "1px solid var(--border-light)", background: "var(--bg-secondary)", color: "var(--text-primary)", fontSize: 14, textAlign: "center" }}
                     />
                     <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>m</span>
                   </div>
@@ -290,19 +291,19 @@ export default function CreateRoomScreen({ onBack, onCreated }: CreateRoomScreen
           )}
 
           {validationType === "WIFI" && (
-            <div style={{ marginTop: 20, padding: 16, background: "var(--bg-card)", borderRadius: 12 }}>
+            <div style={{ marginTop: 20, padding: 16, background: "var(--bg-card)", borderRadius: 12, boxShadow: "var(--shadow-card)" }}>
               <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 12 }}>Wi-Fi 설정</div>
               <input
                 value={wifiSsid}
                 onChange={(e) => setWifiSsid(e.target.value)}
                 placeholder="Wi-Fi 이름 (SSID)"
-                style={{ width: "100%", padding: 12, borderRadius: 8, border: "1px solid var(--border-light)", background: "var(--bg-primary)", color: "var(--text-primary)", fontSize: 14, marginBottom: 8 }}
+                style={{ width: "100%", padding: 12, borderRadius: 8, border: "1px solid var(--border-light)", background: "var(--bg-secondary)", color: "var(--text-primary)", fontSize: 14, marginBottom: 8 }}
               />
               <input
                 value={wifiBssid}
                 onChange={(e) => setWifiBssid(e.target.value)}
                 placeholder="BSSID (예: AA:BB:CC:DD:EE:FF)"
-                style={{ width: "100%", padding: 12, borderRadius: 8, border: "1px solid var(--border-light)", background: "var(--bg-primary)", color: "var(--text-primary)", fontSize: 14 }}
+                style={{ width: "100%", padding: 12, borderRadius: 8, border: "1px solid var(--border-light)", background: "var(--bg-secondary)", color: "var(--text-primary)", fontSize: 14 }}
               />
               <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 8 }}>
                 BSSID는 공유기의 고유 주소입니다. 핸드폰 Wi-Fi 설정에서 확인할 수 있습니다.

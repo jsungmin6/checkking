@@ -7,11 +7,12 @@ interface RoomCardProps {
 
 export default function RoomCard({ room, onClick }: RoomCardProps) {
   return (
-    <div onClick={onClick} style={{ background: "var(--bg-card)", borderRadius: 12, padding: 16, marginBottom: 10, cursor: "pointer" }}>
+    <div onClick={onClick} style={{ background: "var(--bg-card)", borderRadius: 12, padding: 16, marginBottom: 10, cursor: "pointer", boxShadow: "var(--shadow-card)" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div style={{ fontWeight: 600 }}>{room.name}</div>
         <span style={{
           background: room.todayCheckedIn ? "var(--accent-green)" : "var(--accent-red)",
+          color: "#fff",
           padding: "3px 10px", borderRadius: 12, fontSize: 11,
         }}>
           {room.todayCheckedIn ? "출석완료" : "미출석"}

@@ -55,7 +55,7 @@ export default function JoinRoomScreen({ onBack, onJoined }: JoinRoomScreenProps
         {error && <div style={{ color: "var(--accent-red)", fontSize: 13, marginBottom: 16 }}>{error}</div>}
         <div style={{ display: "flex", justifyContent: "center", gap: 8, marginBottom: 24 }}>
           {code.map((c, i) => (
-            <input key={i} ref={(el) => { inputRefs.current[i] = el; }} value={c} onChange={(e) => handleInput(i, e.target.value)} onKeyDown={(e) => handleKeyDown(i, e)} maxLength={1} style={{ width: 40, height: 48, textAlign: "center", fontSize: 20, fontWeight: 700, borderRadius: 8, border: "1px solid var(--border-light)", background: "var(--bg-card)", color: "var(--text-primary)" }} />
+            <input key={i} ref={(el) => { inputRefs.current[i] = el; }} value={c} onChange={(e) => handleInput(i, e.target.value)} onKeyDown={(e) => handleKeyDown(i, e)} maxLength={1} style={{ width: 40, height: 48, textAlign: "center", fontSize: 20, fontWeight: 700, borderRadius: 8, border: "1px solid var(--border-light)", background: "var(--bg-secondary)", color: "var(--text-primary)" }} />
           ))}
         </div>
         <button onClick={handleJoin} disabled={!isComplete || loading} style={{ width: "80%", padding: 14, borderRadius: 10, background: isComplete ? "var(--accent-blue)" : "var(--border-light)", color: "#fff", fontSize: 15, fontWeight: 600, opacity: loading ? 0.6 : 1 }}>
