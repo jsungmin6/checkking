@@ -205,15 +205,15 @@ export default function SettingsScreen({ classroomId, user, onTabChange, onBack,
           <span>초대 코드</span>
           <span onClick={handleCopyCode} style={{ color: "var(--accent-blue)", fontWeight: 600, cursor: "pointer" }}>{classroom.inviteCode} 📋</span>
         </div>
-        <div onClick={() => setShowMembers(!showMembers)} style={{ ...rowStyle(false, true), cursor: "pointer" }}>
+        <div onClick={() => setShowMembers(!showMembers)} style={{ ...rowStyle(false, !showMembers), cursor: "pointer" }}>
           <span>멤버 관리</span>
           <span style={{ color: "var(--text-secondary)" }}>{members.length}명 {showMembers ? "▲" : "▼"}</span>
         </div>
 
         {showMembers && (
-          <div style={{ marginTop: 2, marginBottom: 16 }}>
-            {members.map((m) => (
-              <div key={m.userId} style={{ background: "var(--bg-card)", padding: "10px 16px", display: "flex", alignItems: "center", fontSize: 13, borderBottom: "1px solid var(--border-light)" }}>
+          <div style={{ background: "var(--bg-card)", borderRadius: "0 0 var(--radius-card) var(--radius-card)", overflow: "hidden", boxShadow: "var(--shadow-card)", marginBottom: 16 }}>
+            {members.map((m, i) => (
+              <div key={m.userId} style={{ padding: "12px 16px", display: "flex", alignItems: "center", fontSize: 14, borderBottom: i < members.length - 1 ? "1px solid var(--border-light)" : "none" }}>
                 <span>{m.nickname} {m.isOwner && "👑"}</span>
                 {isOwner && !m.isOwner && (
                   <span style={{ marginLeft: "auto", display: "flex", gap: 12 }}>
