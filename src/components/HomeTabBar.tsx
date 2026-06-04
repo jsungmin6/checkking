@@ -20,8 +20,8 @@ export default function HomeTabBar({ active, onSelect }: HomeTabBarProps) {
           style={{
             flex: 1,
             textAlign: "center",
-            padding: 12,
-            fontSize: 11,
+            padding: "14px 0",
+            fontSize: 13,
             color: active === tab.key ? "var(--accent-blue)" : "var(--text-muted)",
             fontWeight: active === tab.key ? 600 : 400,
             cursor: "pointer",
