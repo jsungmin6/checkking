@@ -119,6 +119,7 @@ export default function CreateRoomScreen({ onBack, onCreated }: CreateRoomScreen
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [includeWeekends, setIncludeWeekends] = useState(false);
+  const [showTimeSelect, setShowTimeSelect] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -319,32 +320,13 @@ export default function CreateRoomScreen({ onBack, onCreated }: CreateRoomScreen
       {step === 3 && (() => {
         const timeInvalid = startTime && endTime && startTime >= endTime;
         return (
-          <div style={{ padding: "24px 16px", textAlign: "center" }}>
-            <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>Step 3. 출석 시간 (선택)</div>
-            <div style={{ color: "var(--text-secondary)", fontSize: 13, marginBottom: 24 }}>비워두면 24시간 출석 가능</div>
-            <div style={{ display: "flex", alignItems: "center", gap: 12, justifyContent: "center", marginBottom: 12 }}>
-              <div>
-                <div style={{ color: "var(--text-secondary)", fontSize: 12, marginBottom: 4 }}>시작</div>
-                <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
-                  <TimeSelect value={startTime} onChange={setStartTime} />
-                </div>
-              </div>
-              <div style={{ fontSize: 20, color: "var(--text-secondary)", marginTop: 16 }}>~</div>
-              <div>
-                <div style={{ color: "var(--text-secondary)", fontSize: 12, marginBottom: 4 }}>종료</div>
-                <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
-                  <TimeSelect value={endTime} onChange={setEndTime} />
-                </div>
-              </div>
-            </div>
-            {timeInvalid && (
-              <div style={{ color: "var(--accent-red)", fontSize: 13, marginBottom: 16 }}>
-                종료 시간이 시작 시간보다 빠릅니다
-              </div>
-            )}
+          <div style={{ padding: "24px 16px" }}>
+            <div style={{ textAlign: "center", fontSize: 16, fontWeight: 600, marginBottom: 4 }}>상세 설정</div>
+            <div style={{ textAlign: "center", color: "var(--text-secondary)", fontSize: 13, marginBottom: 24 }}>설정하지 않으면 기본값으로 생성돼요</div>
 
-            <div style={{ marginTop: 20, marginBottom: 20 }}>
-              <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 10, textAlign: "left" }}>주말 출석</div>
+            {/* 주말 출석 */}
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 10 }}>주말 출석</div>
               <div style={{ display: "flex", gap: 8 }}>
                 <button onClick={() => setIncludeWeekends(false)} style={{
                   flex: 1, padding: 12, borderRadius: "var(--radius-button)", fontSize: 14, fontWeight: 600,
@@ -360,12 +342,43 @@ export default function CreateRoomScreen({ onBack, onCreated }: CreateRoomScreen
                 }}>주말 포함</button>
               </div>
             </div>
-            <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 10 }}>
-              <button onClick={handleCreate} disabled={loading || !!timeInvalid} style={{ width: "100%", padding: 16, borderRadius: "var(--radius-button)", background: "var(--accent-green)", color: "#fff", fontSize: 16, fontWeight: 700, opacity: loading || timeInvalid ? 0.5 : 1 }}>
-                {loading ? "생성 중..." : "방 생성 완료!"}
-              </button>
-              <button onClick={() => { setStartTime(""); setEndTime(""); handleCreate(); }} style={{ width: "100%", padding: 16, borderRadius: "var(--radius-button)", border: "1px solid var(--border-light)", background: "transparent", color: "var(--text-secondary)", fontSize: 16, fontWeight: 700, cursor: "pointer" }}>건너뛰기 (나중에 설정)</button>
+
+            {/* 출석 시간 */}
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 10 }}>출석 가능 시간</div>
+              {!showTimeSelect ? (
+                <button onClick={() => setShowTimeSelect(true)} style={{
+                  width: "100%", padding: 14, borderRadius: "var(--radius-button)", fontSize: 14,
+                  background: "var(--bg-card)", color: "var(--text-secondary)",
+                  border: "1px solid var(--border-color)",
+                }}>시간 설정하기</button>
+              ) : (
+                <div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, justifyContent: "center", marginBottom: 8 }}>
+                    <div>
+                      <div style={{ color: "var(--text-secondary)", fontSize: 12, marginBottom: 4, textAlign: "center" }}>시작</div>
+                      <TimeSelect value={startTime} onChange={setStartTime} />
+                    </div>
+                    <div style={{ fontSize: 20, color: "var(--text-secondary)", marginTop: 16 }}>~</div>
+                    <div>
+                      <div style={{ color: "var(--text-secondary)", fontSize: 12, marginBottom: 4, textAlign: "center" }}>종료</div>
+                      <TimeSelect value={endTime} onChange={setEndTime} />
+                    </div>
+                  </div>
+                  {timeInvalid && (
+                    <div style={{ color: "var(--accent-red)", fontSize: 13, textAlign: "center" }}>종료 시간이 시작 시간보다 빠릅니다</div>
+                  )}
+                  <div style={{ textAlign: "center", marginTop: 8 }}>
+                    <span onClick={() => { setShowTimeSelect(false); setStartTime(""); setEndTime(""); }} style={{ color: "var(--text-muted)", fontSize: 13, cursor: "pointer" }}>시간 설정 취소</span>
+                  </div>
+                </div>
+              )}
+              <div style={{ color: "var(--text-muted)", fontSize: 12, marginTop: 6 }}>설정하지 않으면 24시간 출석 가능</div>
             </div>
+
+            <button onClick={handleCreate} disabled={loading || !!timeInvalid} style={{ width: "100%", padding: 16, borderRadius: "var(--radius-button)", background: "var(--accent-blue)", color: "#fff", fontSize: 16, fontWeight: 700, opacity: loading || timeInvalid ? 0.5 : 1 }}>
+              {loading ? "생성 중..." : "방 생성 완료!"}
+            </button>
           </div>
         );
       })()}
