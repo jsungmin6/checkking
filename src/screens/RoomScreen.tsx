@@ -156,9 +156,7 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
                       boxShadow: "var(--shadow-card)",
                     }}>
                       <span>{m.nickname}</span>
-                      <span style={{ marginLeft: "auto", fontSize: 12, background: "var(--bg-secondary)", padding: "2px 8px", borderRadius: "var(--radius-badge)" }}>
-                        {m.status === "EXCUSED" ? "인정결석" : "미출석"}
-                      </span>
+                      <span style={{ marginLeft: "auto", fontSize: 12, color: "var(--text-muted)", background: "var(--bg-secondary)", padding: "2px 8px", borderRadius: "var(--radius-badge)" }}>미출석</span>
                     </div>
                   ))}
                 </>
