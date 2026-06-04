@@ -56,7 +56,7 @@ function TimeSelect({ value, onChange }: { value: string; onChange: (v: string) 
 const VALIDATION_OPTIONS: { type: ValidationType; label: string; desc: string; disabled?: boolean }[] = [
   { type: "NONE", label: "검증 없음", desc: "누구나 어디서든 출석" },
   { type: "GPS", label: "GPS 위치 확인", desc: "지정 위치 반경 내에서만" },
-  { type: "WIFI", label: "Wi-Fi 확인", desc: "지원 예정 (iOS 앱 전용)", disabled: true },
+  { type: "WIFI", label: "Wi-Fi 확인", desc: "지원 예정", disabled: true },
 ];
 
 declare global {
