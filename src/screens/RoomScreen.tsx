@@ -105,15 +105,18 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
         {/* 상단: 출석 버튼 or 출석 완료 */}
         {!isCheckedIn ? (
           <div style={{ padding: "20px 16px", textAlign: "center" }}>
-            <button onClick={handleCheckIn} disabled={checkingIn} style={{
-              width: "100%", padding: 16, borderRadius: "var(--radius-button)",
+            <div onClick={handleCheckIn} style={{
+              width: 100, height: 100, borderRadius: "50%", margin: "0 auto",
               background: checkingIn ? "var(--border-light)" : "linear-gradient(135deg, var(--accent-blue), #5B9CF6)",
-              color: "#fff", fontSize: 16, fontWeight: 700,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              cursor: checkingIn ? "default" : "pointer",
               boxShadow: "0 4px 16px rgba(49, 130, 246, 0.25)",
-              opacity: checkingIn ? 0.7 : 1,
             }}>
-              {checkingIn ? "확인 중..." : "출석하기"}
-            </button>
+              <div style={{ textAlign: "center", color: "#fff" }}>
+                <div style={{ fontSize: 22 }}>{checkingIn ? "⏳" : "👆"}</div>
+                <div style={{ fontSize: 12, fontWeight: 700, marginTop: 2 }}>{checkingIn ? "확인 중" : "출석"}</div>
+              </div>
+            </div>
             <div style={{ color: "var(--text-secondary)", fontSize: 13, marginTop: 10 }}>
               {today.totalCheckedIn}명 출석 · {timeRange}
             </div>
