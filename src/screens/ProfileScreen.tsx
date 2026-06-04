@@ -47,8 +47,6 @@ export default function ProfileScreen({ user, onNavigateHome, onLogout, onNickna
     }
   };
 
-  const loginTypeLabel = user.loginType === "KAKAO" ? "카카오" : "토스";
-
   return (
     <div className="page" style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
       <div style={{ padding: "20px 20px 12px", background: "var(--bg-card)", borderBottom: "1px solid var(--border-color)" }}>
@@ -56,13 +54,7 @@ export default function ProfileScreen({ user, onNavigateHome, onLogout, onNickna
       </div>
 
       <div style={{ flex: 1, overflow: "auto" }}>
-        <div style={{ padding: 24, textAlign: "center" }}>
-          <div style={{ width: 72, height: 72, borderRadius: "50%", background: "var(--accent-blue)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, margin: "0 auto" }}>{user.nickname.charAt(0)}</div>
-          <div style={{ fontSize: 18, fontWeight: 600, marginTop: 12 }}>{user.nickname}</div>
-          <div style={{ color: "var(--text-secondary)", fontSize: 14, marginTop: 4 }}>{loginTypeLabel} 로그인</div>
-        </div>
-
-        <div style={{ padding: "0 16px" }}>
+        <div style={{ padding: "24px 16px 0" }}>
           <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 8 }}>프로필</div>
           <div style={{ background: "var(--bg-card)", borderRadius: "var(--radius-card)", overflow: "hidden", boxShadow: "var(--shadow-card)" }}>
             <div style={{ padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 15 }}>
@@ -76,10 +68,6 @@ export default function ProfileScreen({ user, onNavigateHome, onLogout, onNickna
               ) : (
                 <span onClick={() => setEditing(true)} style={{ color: "var(--accent-blue)", cursor: "pointer", fontWeight: 500 }}>{user.nickname} ✏️</span>
               )}
-            </div>
-            <div style={{ padding: "16px 20px", display: "flex", justifyContent: "space-between", fontSize: 15, borderTop: "1px solid var(--border-light)" }}>
-              <span>로그인 방식</span>
-              <span style={{ color: "var(--text-secondary)" }}>{loginTypeLabel}</span>
             </div>
           </div>
           {error && <div style={{ color: "var(--accent-red)", fontSize: 13, marginTop: 8 }}>{error}</div>}
