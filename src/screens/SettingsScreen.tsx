@@ -328,7 +328,7 @@ export default function SettingsScreen({ classroomId, user, onTabChange, onBack,
             <button onClick={handleLeave} style={{ width: "100%", padding: 12, borderRadius: 8, border: "1px solid var(--border-light)", background: "transparent", color: "var(--text-secondary)", fontSize: 14 }}>방 나가기</button>
           )}
           {isOwner && (
-            <button onClick={handleDeleteRoom} style={{ width: "100%", padding: 12, borderRadius: 8, border: "1px solid var(--accent-danger)", background: "transparent", color: "var(--accent-danger)", fontSize: 14 }}>학급 삭제</button>
+            <button onClick={handleDeleteRoom} style={{ width: "100%", padding: 12, borderRadius: 8, border: "1px solid var(--accent-danger)", background: "transparent", color: "var(--accent-danger)", fontSize: 14 }}>방 삭제</button>
           )}
         </div>
       </div>
