@@ -113,8 +113,7 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
               boxShadow: "0 4px 16px rgba(49, 130, 246, 0.25)",
             }}>
               <div style={{ textAlign: "center", color: "#fff" }}>
-                <div style={{ fontSize: 22 }}>{checkingIn ? "⏳" : "✓"}</div>
-                <div style={{ fontSize: 12, fontWeight: 700, marginTop: 2 }}>{checkingIn ? "확인 중" : "출석"}</div>
+                <div style={{ fontSize: 14, fontWeight: 700 }}>{checkingIn ? "확인 중..." : "출석하기"}</div>
               </div>
             </div>
             <div style={{ color: "var(--text-secondary)", fontSize: 13, marginTop: 10 }}>
