@@ -29,9 +29,9 @@ export default function HomeScreen({
       <div style={{ padding: "20px 16px 12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div style={{ fontSize: 20, fontWeight: 700 }}>내 방</div>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-          <span onClick={onNavigateCreateRoom} style={{ padding: "6px 12px", background: "var(--accent-blue)", borderRadius: 8, fontSize: 12, color: "#fff", cursor: "pointer" }}>+ 만들기</span>
-          <span onClick={onNavigateJoinRoom} style={{ padding: "6px 12px", background: "var(--accent-orange)", borderRadius: 8, fontSize: 12, color: "#fff", cursor: "pointer" }}>참여</span>
-          <span onClick={onNavigateProfile} style={{ width: 32, height: 32, borderRadius: "50%", background: "var(--accent-blue)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, cursor: "pointer" }}>{user.nickname.charAt(0)}</span>
+          <span onClick={onNavigateCreateRoom} style={{ padding: "8px 14px", background: "var(--accent-blue)", borderRadius: "var(--radius-button)", fontSize: 12, color: "#fff", cursor: "pointer" }}>+ 만들기</span>
+          <span onClick={onNavigateJoinRoom} style={{ padding: "8px 14px", background: "var(--accent-orange)", borderRadius: "var(--radius-button)", fontSize: 12, color: "#fff", cursor: "pointer" }}>참여</span>
+          <span onClick={onNavigateProfile} style={{ width: 36, height: 36, borderRadius: "50%", background: "var(--accent-blue)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, cursor: "pointer" }}>{user.nickname.charAt(0)}</span>
         </div>
       </div>
       <div style={{ padding: "0 16px", flex: 1 }}>

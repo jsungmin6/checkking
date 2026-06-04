@@ -17,9 +17,9 @@ function getRankColor(rank: number): string {
 export default function RankRow({ rank, nickname, checkInTime, isMe }: RankRowProps) {
   return (
     <div style={{
-      display: "flex", alignItems: "center", padding: 10,
+      display: "flex", alignItems: "center", padding: 14,
       background: isMe ? "var(--bg-card-highlight)" : "var(--bg-card)",
-      borderRadius: 8, marginBottom: 4, fontSize: 14,
+      borderRadius: "var(--radius-card)", marginBottom: 8, fontSize: 14,
       border: isMe ? "1px solid var(--accent-blue)" : "none",
       boxShadow: "var(--shadow-card)",
     }}>

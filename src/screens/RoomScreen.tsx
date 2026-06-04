@@ -86,7 +86,7 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
     return (
       <div className="page" style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12 }}>
         <span style={{ color: "var(--text-secondary)" }}>정보를 불러올 수 없습니다</span>
-        <button onClick={() => { setLoading(true); fetchData(); }} style={{ padding: "8px 20px", borderRadius: 8, background: "var(--accent-blue)", color: "#fff", fontSize: 13 }}>다시 시도</button>
+        <button onClick={() => { setLoading(true); fetchData(); }} style={{ padding: "8px 20px", borderRadius: "var(--radius-card)", background: "var(--accent-blue)", color: "#fff", fontSize: 13 }}>다시 시도</button>
       </div>
     );
   }
@@ -105,7 +105,7 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
           <>
             <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 20 }}>
               <div onClick={handleCheckIn} style={{
-                width: 140, height: 140, borderRadius: "50%",
+                width: 150, height: 150, borderRadius: "50%",
                 background: checkingIn ? "var(--border-light)" : "linear-gradient(135deg, var(--accent-blue), #5B9CF6)",
                 display: "flex", alignItems: "center", justifyContent: "center",
                 cursor: checkingIn ? "default" : "pointer",
@@ -121,7 +121,7 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
               {checkInError && <div style={{ color: "var(--accent-red)", fontSize: 13, marginTop: 8 }}>{checkInError}</div>}
             </div>
             {today.rankings.length > 0 && (
-              <div style={{ padding: "12px 16px", background: "var(--bg-secondary)", borderTop: "1px solid var(--border-color)" }}>
+              <div style={{ padding: "12px 16px", background: "var(--bg-secondary)", borderRadius: "var(--radius-card)", margin: "0 16px" }}>
                 <div style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 8 }}>오늘 TOP 3</div>
                 {today.rankings.slice(0, 3).map((r) => (
                   <div key={r.userId} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, marginBottom: 6 }}>

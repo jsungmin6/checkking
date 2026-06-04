@@ -53,13 +53,13 @@ export default function ProfileScreen({ user, onBack, onLogout, onNicknameUpdate
     <div className="page animate-fade-in">
       <BackHeader title="내 계정" onBack={onBack} />
       <div style={{ padding: 16, textAlign: "center" }}>
-        <div style={{ width: 64, height: 64, borderRadius: "50%", background: "var(--accent-blue)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, margin: "0 auto" }}>{user.nickname.charAt(0)}</div>
+        <div style={{ width: 72, height: 72, borderRadius: "50%", background: "var(--accent-blue)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, margin: "0 auto" }}>{user.nickname.charAt(0)}</div>
         <div style={{ fontSize: 17, fontWeight: 600, marginTop: 10 }}>{user.nickname}</div>
         <div style={{ color: "var(--text-secondary)", fontSize: 13 }}>{loginTypeLabel} 로그인</div>
       </div>
       <div style={{ padding: "0 16px" }}>
         <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 8 }}>프로필</div>
-        <div style={{ background: "var(--bg-card)", borderRadius: 8, overflow: "hidden", boxShadow: "var(--shadow-card)" }}>
+        <div style={{ background: "var(--bg-card)", borderRadius: "var(--radius-card)", overflow: "hidden", boxShadow: "var(--shadow-card)" }}>
           <div style={{ padding: "14px 16px", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 14 }}>
             <span>닉네임</span>
             {editing ? (

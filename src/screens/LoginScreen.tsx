@@ -53,7 +53,7 @@ export default function LoginScreen({ onLogin, loginWithKakaoToken, loginWithTos
   const displayError = error || kakaoError;
 
   return (
-    <div className="page" style={{ alignItems: "center", justifyContent: "center", gap: 16, padding: 20 }}>
+    <div className="page" style={{ alignItems: "center", justifyContent: "center", gap: 16, padding: 20, background: "var(--bg-card)" }}>
       <div style={{ fontSize: 48 }}>🏫</div>
       <div style={{ fontSize: 24, fontWeight: 700 }}>등교왕</div>
       <div style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 24 }}>누가 제일 먼저 올까?</div>
@@ -63,15 +63,15 @@ export default function LoginScreen({ onLogin, loginWithKakaoToken, loginWithTos
       <div style={{ width: "80%", display: "flex", flexDirection: "column", gap: 10 }}>
         {isToss ? (
           <button onClick={handleTossLogin} disabled={isLoading} style={{
-            width: "100%", padding: 14, borderRadius: 10, background: "#0064FF",
-            color: "#fff", fontSize: 15, fontWeight: 600, opacity: isLoading ? 0.6 : 1,
+            width: "100%", padding: 16, borderRadius: "var(--radius-button)", background: "#0064FF",
+            color: "#fff", fontSize: 16, fontWeight: 700, opacity: isLoading ? 0.6 : 1,
           }}>
             {isLoading ? "로그인 중..." : "토스로 시작하기"}
           </button>
         ) : (
           <button onClick={handleKakaoLogin} disabled={isLoading} style={{
-            width: "100%", padding: 14, borderRadius: 10, background: "#FEE500",
-            color: "#000", fontSize: 15, fontWeight: 600, opacity: isLoading ? 0.6 : 1,
+            width: "100%", padding: 16, borderRadius: "var(--radius-button)", background: "#FEE500",
+            color: "#000", fontSize: 16, fontWeight: 700, opacity: isLoading ? 0.6 : 1,
           }}>
             {isLoading ? "로그인 중..." : "카카오로 시작하기"}
           </button>

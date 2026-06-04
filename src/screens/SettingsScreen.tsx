@@ -176,7 +176,7 @@ export default function SettingsScreen({ classroomId, user, onTabChange, onLeave
       <div className="page" style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
         <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12 }}>
           <span style={{ color: "var(--text-secondary)" }}>설정을 불러올 수 없습니다</span>
-          <button onClick={() => window.location.reload()} style={{ padding: "8px 20px", borderRadius: 8, background: "var(--accent-blue)", color: "#fff", fontSize: 13 }}>다시 시도</button>
+          <button onClick={() => window.location.reload()} style={{ padding: "8px 20px", borderRadius: "var(--radius-card)", background: "var(--accent-blue)", color: "#fff", fontSize: 13 }}>다시 시도</button>
         </div>
         <TabBar active="settings" onSelect={onTabChange} />
       </div>
@@ -186,7 +186,7 @@ export default function SettingsScreen({ classroomId, user, onTabChange, onLeave
   const rowStyle = (first?: boolean, last?: boolean): React.CSSProperties => ({
     background: "var(--bg-card)", padding: "14px 16px",
     display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 14,
-    borderRadius: first && last ? 8 : first ? "8px 8px 0 0" : last ? "0 0 8px 8px" : 0,
+    borderRadius: first && last ? "var(--radius-card)" : first ? "var(--radius-card) var(--radius-card) 0 0" : last ? "0 0 var(--radius-card) var(--radius-card)" : 0,
     borderBottom: last ? "none" : "1px solid var(--border-light)",
     boxShadow: "var(--shadow-card)",
   });
@@ -245,7 +245,7 @@ export default function SettingsScreen({ classroomId, user, onTabChange, onLeave
                 </div>
               </>
             ) : (
-              <div style={{ background: "var(--bg-card)", borderRadius: 8, padding: 16, boxShadow: "var(--shadow-card)" }}>
+              <div style={{ background: "var(--bg-card)", borderRadius: "var(--radius-card)", padding: 16, boxShadow: "var(--shadow-card)" }}>
                 <div style={{ fontSize: 13, marginBottom: 12 }}>출석 검증 방식</div>
                 <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
                   {(["NONE", "GPS"] as ValidationType[]).map((t) => (

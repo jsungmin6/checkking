@@ -216,8 +216,8 @@ export default function CreateRoomScreen({ onBack, onCreated }: CreateRoomScreen
         <div style={{ padding: "24px 16px", textAlign: "center" }}>
           <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>Step 1. 기본 정보</div>
           <div style={{ color: "var(--text-secondary)", fontSize: 13, marginBottom: 24 }}>방 이름을 입력하세요</div>
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="예: 1학년 3반, 코딩 동아리" style={{ width: "100%", padding: 14, borderRadius: 10, border: "1px solid var(--border-light)", background: "var(--bg-secondary)", color: "var(--text-primary)", fontSize: 15, textAlign: "center" }} />
-          <button onClick={() => name.trim() && setStep(2)} disabled={!name.trim()} style={{ width: "100%", padding: 14, borderRadius: 10, background: name.trim() ? "var(--accent-blue)" : "var(--border-light)", color: "#fff", fontSize: 15, fontWeight: 600, marginTop: 24 }}>다음</button>
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="예: 1학년 3반, 코딩 동아리" style={{ width: "100%", padding: 14, borderRadius: "var(--radius-input)", border: "1px solid var(--border-light)", background: "var(--bg-secondary)", color: "var(--text-primary)", fontSize: 15, textAlign: "center" }} />
+          <button onClick={() => name.trim() && setStep(2)} disabled={!name.trim()} style={{ width: "100%", padding: 16, borderRadius: "var(--radius-button)", background: name.trim() ? "var(--accent-blue)" : "var(--border-light)", color: "#fff", fontSize: 16, fontWeight: 700, marginTop: 24 }}>다음</button>
         </div>
       )}
 
@@ -229,7 +229,7 @@ export default function CreateRoomScreen({ onBack, onCreated }: CreateRoomScreen
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {VALIDATION_OPTIONS.map((opt) => (
               <div key={opt.type} onClick={() => { if (!opt.disabled) { setValidationType(opt.type); setGpsConfig(null); setGpsError(null); setAddressText(""); } }} style={{
-                background: "var(--bg-card)", borderRadius: 12, padding: 16, textAlign: "center",
+                background: "var(--bg-card)", borderRadius: "var(--radius-card)", padding: 16, textAlign: "center",
                 cursor: opt.disabled ? "not-allowed" : "pointer",
                 opacity: opt.disabled ? 0.4 : 1,
                 border: validationType === opt.type ? "2px solid var(--accent-blue)" : "1px solid var(--border-light)",
@@ -242,7 +242,7 @@ export default function CreateRoomScreen({ onBack, onCreated }: CreateRoomScreen
           </div>
 
           {validationType === "GPS" && (
-            <div style={{ marginTop: 20, padding: 16, background: "var(--bg-card)", borderRadius: 12, boxShadow: "var(--shadow-card)" }}>
+            <div style={{ marginTop: 20, padding: 16, background: "var(--bg-card)", borderRadius: "var(--radius-card)", boxShadow: "var(--shadow-card)" }}>
               <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 12 }}>위치 설정</div>
 
               <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
@@ -291,7 +291,7 @@ export default function CreateRoomScreen({ onBack, onCreated }: CreateRoomScreen
           )}
 
           {validationType === "WIFI" && (
-            <div style={{ marginTop: 20, padding: 16, background: "var(--bg-card)", borderRadius: 12, boxShadow: "var(--shadow-card)" }}>
+            <div style={{ marginTop: 20, padding: 16, background: "var(--bg-card)", borderRadius: "var(--radius-card)", boxShadow: "var(--shadow-card)" }}>
               <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 12 }}>Wi-Fi 설정</div>
               <input
                 value={wifiSsid}
@@ -312,9 +312,9 @@ export default function CreateRoomScreen({ onBack, onCreated }: CreateRoomScreen
           )}
 
           <button onClick={() => canProceedStep2() && setStep(3)} disabled={!canProceedStep2()} style={{
-            width: "100%", padding: 14, borderRadius: 10,
+            width: "100%", padding: 16, borderRadius: "var(--radius-button)",
             background: canProceedStep2() ? "var(--accent-blue)" : "var(--border-light)",
-            color: "#fff", fontSize: 15, fontWeight: 600, marginTop: 16,
+            color: "#fff", fontSize: 16, fontWeight: 700, marginTop: 16,
           }}>다음</button>
         </div>
       )}
@@ -346,10 +346,10 @@ export default function CreateRoomScreen({ onBack, onCreated }: CreateRoomScreen
               </div>
             )}
             <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 10 }}>
-              <button onClick={handleCreate} disabled={loading || !!timeInvalid} style={{ width: "100%", padding: 14, borderRadius: 10, background: "var(--accent-green)", color: "#fff", fontSize: 15, fontWeight: 600, opacity: loading || timeInvalid ? 0.5 : 1 }}>
+              <button onClick={handleCreate} disabled={loading || !!timeInvalid} style={{ width: "100%", padding: 16, borderRadius: "var(--radius-button)", background: "var(--accent-green)", color: "#fff", fontSize: 16, fontWeight: 700, opacity: loading || timeInvalid ? 0.5 : 1 }}>
                 {loading ? "생성 중..." : "방 생성 완료!"}
               </button>
-              <button onClick={() => { setStartTime(""); setEndTime(""); handleCreate(); }} style={{ width: "100%", padding: 12, borderRadius: 10, border: "1px solid var(--border-light)", background: "transparent", color: "var(--text-secondary)", fontSize: 14, cursor: "pointer" }}>건너뛰기 (나중에 설정)</button>
+              <button onClick={() => { setStartTime(""); setEndTime(""); handleCreate(); }} style={{ width: "100%", padding: 16, borderRadius: "var(--radius-button)", border: "1px solid var(--border-light)", background: "transparent", color: "var(--text-secondary)", fontSize: 16, fontWeight: 700, cursor: "pointer" }}>건너뛰기 (나중에 설정)</button>
             </div>
           </div>
         );

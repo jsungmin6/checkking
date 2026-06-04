@@ -14,7 +14,7 @@ const TABS: { key: TabName; label: string }[] = [
 
 export default function TabBar({ active, onSelect }: TabBarProps) {
   return (
-    <div style={{ display: "flex", borderTop: "1px solid var(--border-color)", background: "var(--bg-primary)" }}>
+    <div style={{ display: "flex", borderTop: "1px solid var(--border-color)", background: "var(--bg-card)", boxShadow: "0 -1px 8px rgba(0, 0, 0, 0.04)" }}>
       {TABS.map((tab) => (
         <div
           key={tab.key}
@@ -22,8 +22,8 @@ export default function TabBar({ active, onSelect }: TabBarProps) {
           style={{
             flex: 1,
             textAlign: "center",
-            padding: 10,
-            fontSize: 12,
+            padding: 12,
+            fontSize: 11,
             color: active === tab.key ? "var(--accent-blue)" : "var(--text-muted)",
             fontWeight: active === tab.key ? 600 : 400,
             cursor: "pointer",

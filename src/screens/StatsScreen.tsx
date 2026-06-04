@@ -38,7 +38,7 @@ export default function StatsScreen({ classroomId, onTabChange }: StatsScreenPro
       <div style={{ padding: "20px 16px 8px" }}>
         <div style={{ fontSize: 17, fontWeight: 600 }}>내 통계</div>
       </div>
-      <div className="stat-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, padding: "8px 16px" }}>
+      <div className="stat-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, padding: "8px 16px" }}>
         <StatCard value={stats.avgRank} label="평균 순위" color="var(--accent-blue)" />
         <StatCard value={stats.avgCheckInTime} label="평균 등교 시간" color="var(--accent-green)" />
         <StatCard value={stats.totalPresent} label="총 출석일" />
@@ -47,11 +47,11 @@ export default function StatsScreen({ classroomId, onTabChange }: StatsScreenPro
         <StatCard value={`${stats.currentStreak}일`} label="연속 출석" color="var(--accent-orange)" />
       </div>
       <div style={{ padding: "8px 16px" }}>
-        <div style={{ background: "var(--bg-card)", borderRadius: "8px 8px 0 0", padding: "12px 16px", display: "flex", justifyContent: "space-between", fontSize: 13, borderBottom: "1px solid var(--border-light)", boxShadow: "var(--shadow-card)" }}>
+        <div style={{ background: "var(--bg-card)", borderRadius: "var(--radius-card) var(--radius-card) 0 0", padding: "12px 16px", display: "flex", justifyContent: "space-between", fontSize: 13, borderBottom: "1px solid var(--border-light)", boxShadow: "var(--shadow-card)" }}>
           <span style={{ color: "var(--text-secondary)" }}>가장 빠른 등교</span>
           <span style={{ color: "var(--accent-green)" }}>{formatTime(stats.earliestCheckIn)}</span>
         </div>
-        <div style={{ background: "var(--bg-card)", borderRadius: "0 0 8px 8px", padding: "12px 16px", display: "flex", justifyContent: "space-between", fontSize: 13, boxShadow: "var(--shadow-card)" }}>
+        <div style={{ background: "var(--bg-card)", borderRadius: "0 0 var(--radius-card) var(--radius-card)", padding: "12px 16px", display: "flex", justifyContent: "space-between", fontSize: 13, boxShadow: "var(--shadow-card)" }}>
           <span style={{ color: "var(--text-secondary)" }}>가장 늦은 등교</span>
           <span style={{ color: "var(--accent-red)" }}>{formatTime(stats.latestCheckIn)}</span>
         </div>
