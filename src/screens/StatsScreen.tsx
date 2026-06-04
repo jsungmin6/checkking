@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import BackHeader from "../components/BackHeader";
 import TabBar from "../components/TabBar";
 import StatCard from "../components/StatCard";
+import AttendanceCalendar from "../components/AttendanceCalendar";
 import { api } from "../utils/api";
 import { formatTime } from "../utils/time";
 import type { TabName } from "../components/TabBar";
@@ -38,6 +39,7 @@ export default function StatsScreen({ classroomId, onTabChange, onBack }: StatsS
   return (
     <div className="page" style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
       <BackHeader title="내 통계" onBack={onBack} />
+      <AttendanceCalendar classroomId={classroomId} />
       <div className="stat-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, padding: "8px 16px" }}>
         <StatCard value={stats.avgRank} label="평균 순위" color="var(--accent-blue)" />
         <StatCard value={stats.avgCheckInTime} label="평균 등교 시간" color="var(--accent-green)" />

@@ -130,6 +130,15 @@ export interface TodayAttendance {
   absentMembers: AbsentMember[];
 }
 
+// === Monthly Attendance ===
+
+export interface MonthlyAttendanceRecord {
+  checkInDate: string;
+  checkInTime: string;
+  dailyRank: number;
+  status: string;
+}
+
 // === Statistics ===
 
 export interface MonthlyRankingEntry {
