@@ -5,6 +5,7 @@ import RankRow from "../components/RankRow";
 import { api, ApiError } from "../utils/api";
 import { collectCheckInData } from "../utils/location";
 import { formatTime } from "../utils/time";
+import { launchConfetti } from "../utils/confetti";
 import type { TabName } from "../components/TabBar";
 import type { Classroom, TodayAttendance, CheckInResponse, CheckInRequest, User } from "../types";
 
@@ -47,11 +48,13 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
     setCheckInError(null);
     try {
       const locationData: CheckInRequest = await collectCheckInData(classroom.validationType);
-      await api<CheckInResponse>(`/classrooms/${classroomId}/attendance/check-in`, {
+      const checkInResult = await api<CheckInResponse>(`/classrooms/${classroomId}/attendance/check-in`, {
         method: "POST",
         body: JSON.stringify(locationData),
       });
       await fetchData();
+      // 출석 성공 축하 애니메이션
+      setTimeout(() => launchConfetti(checkInResult.dailyRank === 1), 300);
     } catch (e) {
       if (e instanceof ApiError) {
         const messages: Record<string, string> = {
