@@ -58,7 +58,7 @@ export default function JoinRoomScreen({ onBack, onJoined }: JoinRoomScreenProps
             <input key={i} ref={(el) => { inputRefs.current[i] = el; }} value={c} onChange={(e) => handleInput(i, e.target.value)} onKeyDown={(e) => handleKeyDown(i, e)} maxLength={1} style={{ width: 40, height: 48, textAlign: "center", fontSize: 20, fontWeight: 700, borderRadius: "var(--radius-input)", border: "1px solid var(--border-light)", background: "var(--bg-secondary)", color: "var(--text-primary)" }} />
           ))}
         </div>
-        <button onClick={handleJoin} disabled={!isComplete || loading} style={{ width: "80%", padding: 16, borderRadius: "var(--radius-button)", background: isComplete ? "var(--accent-blue)" : "var(--border-light)", color: "#fff", fontSize: 16, fontWeight: 700, opacity: loading ? 0.6 : 1 }}>
+        <button onClick={handleJoin} disabled={!isComplete || loading} style={{ width: "80%", padding: 16, borderRadius: "var(--radius-button)", background: isComplete ? "var(--accent-blue)" : "var(--border-color)", color: isComplete ? "#fff" : "var(--text-muted)", fontSize: 16, fontWeight: 700, opacity: loading ? 0.6 : 1 }}>
           {loading ? "참여 중..." : "참여하기"}
         </button>
       </div>
