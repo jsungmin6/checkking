@@ -125,7 +125,7 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
             {checkInError && <div style={{ color: "var(--accent-red)", fontSize: 13, marginTop: 8 }}>{checkInError}</div>}
           </div>
         ) : (
-          <div style={{ padding: "16px 16px 8px", textAlign: "center" }}>
+          <div style={{ padding: "20px 16px 16px", textAlign: "center" }}>
             <div style={{ fontSize: 18, fontWeight: 700 }}>🎉 {today.myRank}등! <span style={{ color: "var(--text-secondary)", fontSize: 14, fontWeight: 400 }}>{today.myCheckInTime ? formatTime(today.myCheckInTime) : ""}에 출석</span></div>
           </div>
         )}
