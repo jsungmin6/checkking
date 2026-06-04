@@ -5,40 +5,29 @@ interface HomeTabBarProps {
   onSelect: (tab: HomeTab) => void;
 }
 
-export default function HomeTabBar({ active, onSelect }: HomeTabBarProps) {
-  const tabs: { key: HomeTab; label: string; icon: string }[] = [
-    { key: "home", label: "홈", icon: "🏠" },
-    { key: "profile", label: "내 정보", icon: "👤" },
-  ];
+const TABS: { key: HomeTab; label: string }[] = [
+  { key: "home", label: "홈" },
+  { key: "profile", label: "내 정보" },
+];
 
+export default function HomeTabBar({ active, onSelect }: HomeTabBarProps) {
   return (
-    <div
-      style={{
-        display: "flex",
-        borderTop: "1px solid var(--border-color)",
-      }}
-    >
-      {tabs.map((tab) => (
+    <div style={{ display: "flex", borderTop: "1px solid var(--border-color)" }}>
+      {TABS.map((tab) => (
         <div
           key={tab.key}
           onClick={() => onSelect(tab.key)}
           style={{
             flex: 1,
             textAlign: "center",
-            padding: "10px 0 8px",
+            padding: 12,
+            fontSize: 11,
+            color: active === tab.key ? "var(--accent-blue)" : "var(--text-muted)",
+            fontWeight: active === tab.key ? 600 : 400,
             cursor: "pointer",
           }}
         >
-          <div style={{ fontSize: 20, marginBottom: 2 }}>{tab.icon}</div>
-          <div
-            style={{
-              fontSize: 11,
-              color: active === tab.key ? "var(--accent-blue)" : "var(--text-muted)",
-              fontWeight: active === tab.key ? 600 : 400,
-            }}
-          >
-            {tab.label}
-          </div>
+          {tab.label}
         </div>
       ))}
     </div>
