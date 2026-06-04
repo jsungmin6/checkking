@@ -49,7 +49,7 @@ export default function ProfileScreen({ user, onNavigateHome, onLogout, onNickna
 
   return (
     <div className="page" style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
-      <div style={{ padding: "20px 20px 12px", background: "var(--bg-card)", borderBottom: "1px solid var(--border-color)" }}>
+      <div style={{ padding: "20px 20px 12px" }}>
         <div style={{ fontSize: 22, fontWeight: 700 }}>내 정보</div>
       </div>
 

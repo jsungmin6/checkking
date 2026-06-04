@@ -16,8 +16,6 @@ export default function HomeTabBar({ active, onSelect }: HomeTabBarProps) {
       style={{
         display: "flex",
         borderTop: "1px solid var(--border-color)",
-        background: "var(--bg-card)",
-        boxShadow: "0 -1px 8px rgba(0, 0, 0, 0.04)",
       }}
     >
       {tabs.map((tab) => (
