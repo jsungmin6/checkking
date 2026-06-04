@@ -146,7 +146,22 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
                 <RankRow key={r.userId} rank={r.rank} nickname={r.nickname} checkInTime={r.checkInTime} isMe={r.userId === user.userId} />
               ))}
               {today.absentMembers.length > 0 && (
-                <div style={{ textAlign: "center", padding: 8, color: "var(--text-muted)", fontSize: 12 }}>미출석 {today.absentMembers.length}명</div>
+                <>
+                  <div style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 16, marginBottom: 8 }}>미출석</div>
+                  {[...today.absentMembers].sort((a, b) => a.nickname.localeCompare(b.nickname, "ko")).map((m) => (
+                    <div key={m.userId} style={{
+                      display: "flex", alignItems: "center", padding: 14,
+                      background: "var(--bg-card)", borderRadius: "var(--radius-card)",
+                      marginBottom: 8, fontSize: 14, color: "var(--text-muted)",
+                      boxShadow: "var(--shadow-card)",
+                    }}>
+                      <span>{m.nickname}</span>
+                      <span style={{ marginLeft: "auto", fontSize: 12, background: "var(--bg-secondary)", padding: "2px 8px", borderRadius: "var(--radius-badge)" }}>
+                        {m.status === "EXCUSED" ? "인정결석" : "미출석"}
+                      </span>
+                    </div>
+                  ))}
+                </>
               )}
             </div>
           </>
