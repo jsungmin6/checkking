@@ -203,9 +203,3 @@ export interface ClassroomSettingsRequest {
   includeWeekends: boolean;
 }
 
-export interface ExcludedDate {
-  id: number;
-  classroomId: number;
-  excludedDate: string;
-  reason: string | null;
-}

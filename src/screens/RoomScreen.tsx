@@ -63,7 +63,6 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
           ALREADY_CHECKED_IN: "오늘 이미 출석했습니다",
           NOT_MEMBER: "이 방의 멤버가 아닙니다",
           WEEKEND_NOT_ALLOWED: "주말에는 출석할 수 없습니다",
-          EXCLUDED_DATE: "오늘은 출석이 제외된 날짜입니다",
         };
         setCheckInError(messages[e.code] ?? e.message);
       } else {

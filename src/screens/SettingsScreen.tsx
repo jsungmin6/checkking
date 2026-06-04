@@ -3,7 +3,7 @@ import BackHeader from "../components/BackHeader";
 import TabBar from "../components/TabBar";
 import { api, ApiError } from "../utils/api";
 import type { TabName } from "../components/TabBar";
-import type { Classroom, ClassroomMember, User, ValidationType, ClassroomSettingsRequest, ExcludedDate } from "../types";
+import type { Classroom, ClassroomMember, User, ValidationType, ClassroomSettingsRequest } from "../types";
 
 interface SettingsScreenProps {
   classroomId: number;
@@ -70,12 +70,6 @@ export default function SettingsScreen({ classroomId, user, onTabChange, onBack,
   const [editIncludeWeekends, setEditIncludeWeekends] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  // 제외 날짜
-  const [excludedDates, setExcludedDates] = useState<ExcludedDate[]>([]);
-  const [newExcludedDate, setNewExcludedDate] = useState("");
-  const [newExcludedReason, setNewExcludedReason] = useState("");
-  const [addingExcluded, setAddingExcluded] = useState(false);
-
   const isOwner = classroom?.ownerId === user.userId;
 
   useEffect(() => {
@@ -84,9 +78,8 @@ export default function SettingsScreen({ classroomId, user, onTabChange, onBack,
     Promise.all([
       api<Classroom>(`/classrooms/${classroomId}`),
       api<{ members: ClassroomMember[] }>(`/classrooms/${classroomId}/members`),
-      api<ExcludedDate[]>(`/classrooms/${classroomId}/excluded-dates`).catch(() => [] as ExcludedDate[]),
     ])
-      .then(([c, m, ed]) => { setClassroom(c); setMembers(m.members); setExcludedDates(ed); })
+      .then(([c, m]) => { setClassroom(c); setMembers(m.members); })
       .catch(() => setFetchError(true))
       .finally(() => setLoading(false));
   }, [classroomId]);
@@ -327,82 +320,6 @@ export default function SettingsScreen({ classroomId, user, onTabChange, onBack,
               </div>
             )}
 
-            {/* 제외 날짜 관리 */}
-            <div style={{ fontSize: 12, color: "var(--text-secondary)", margin: "16px 0 8px" }}>제외 날짜 관리</div>
-            {excludedDates.length > 0 ? (
-              <div>
-                {excludedDates.map((ed) => (
-                  <div key={ed.id} style={{
-                    display: "flex", alignItems: "center", justifyContent: "space-between",
-                    background: "var(--bg-card)", padding: "10px 16px", fontSize: 13,
-                    borderBottom: "1px solid var(--border-light)", borderRadius: 0,
-                  }}>
-                    <div>
-                      <span style={{ fontWeight: 500 }}>{ed.excludedDate}</span>
-                      {ed.reason && <span style={{ color: "var(--text-muted)", marginLeft: 8 }}>{ed.reason}</span>}
-                    </div>
-                    <span
-                      onClick={async () => {
-                        try {
-                          await api(`/classrooms/${classroomId}/excluded-dates/${ed.id}`, { method: "DELETE" });
-                          setExcludedDates((prev) => prev.filter((d) => d.id !== ed.id));
-                        } catch (err) { alert(err instanceof ApiError ? err.message : "삭제 실패"); }
-                      }}
-                      style={{ color: "var(--accent-danger)", cursor: "pointer", fontSize: 12, flexShrink: 0, marginLeft: 8 }}
-                    >
-                      삭제
-                    </span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div style={{ background: "var(--bg-card)", padding: "12px 16px", borderRadius: "var(--radius-card)", fontSize: 13, color: "var(--text-muted)", textAlign: "center", boxShadow: "var(--shadow-card)" }}>
-                제외된 날짜가 없습니다
-              </div>
-            )}
-            <div style={{ marginTop: 8, background: "var(--bg-card)", padding: 12, borderRadius: "var(--radius-card)", boxShadow: "var(--shadow-card)" }}>
-              <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
-                <input
-                  type="date"
-                  value={newExcludedDate}
-                  onChange={(e) => setNewExcludedDate(e.target.value)}
-                  style={{ flex: 1, padding: 8, borderRadius: 6, border: "1px solid var(--border-light)", background: "var(--bg-secondary)", color: "var(--text-primary)", fontSize: 13 }}
-                />
-              </div>
-              <div style={{ display: "flex", gap: 8 }}>
-                <input
-                  type="text"
-                  value={newExcludedReason}
-                  onChange={(e) => setNewExcludedReason(e.target.value)}
-                  placeholder="사유 (선택)"
-                  style={{ flex: 1, padding: 8, borderRadius: 6, border: "1px solid var(--border-light)", background: "var(--bg-secondary)", color: "var(--text-primary)", fontSize: 13 }}
-                />
-                <button
-                  disabled={!newExcludedDate || addingExcluded}
-                  onClick={async () => {
-                    if (!newExcludedDate) return;
-                    setAddingExcluded(true);
-                    try {
-                      const created = await api<ExcludedDate>(`/classrooms/${classroomId}/excluded-dates`, {
-                        method: "POST",
-                        body: JSON.stringify({ excludedDate: newExcludedDate, reason: newExcludedReason || null }),
-                      });
-                      setExcludedDates((prev) => [...prev, created]);
-                      setNewExcludedDate("");
-                      setNewExcludedReason("");
-                    } catch (err) { alert(err instanceof ApiError ? err.message : "추가 실패"); }
-                    finally { setAddingExcluded(false); }
-                  }}
-                  style={{
-                    padding: "8px 16px", borderRadius: 6, background: newExcludedDate ? "var(--accent-blue)" : "var(--border-light)",
-                    color: "#fff", fontSize: 13, fontWeight: 600, flexShrink: 0,
-                    opacity: addingExcluded ? 0.5 : 1,
-                  }}
-                >
-                  추가
-                </button>
-              </div>
-            </div>
           </>
         )}
 
