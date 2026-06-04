@@ -102,46 +102,33 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
       <BackHeader title={classroom.name} onBack={onBack} right={<span style={{ color: "var(--text-secondary)", fontSize: 12 }}>{classroom.memberCount}명</span>} />
 
       <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+        {/* 상단: 출석 버튼 or 출석 완료 */}
         {!isCheckedIn ? (
-          <>
-            <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 20 }}>
-              <div onClick={handleCheckIn} style={{
-                width: 150, height: 150, borderRadius: "50%",
-                background: checkingIn ? "var(--border-light)" : "linear-gradient(135deg, var(--accent-blue), #5B9CF6)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                cursor: checkingIn ? "default" : "pointer",
-                boxShadow: "0 4px 20px rgba(49, 130, 246, 0.3)",
-              }}>
-                <div style={{ textAlign: "center", color: "#fff" }}>
-                  <div style={{ fontSize: 28 }}>{checkingIn ? "⏳" : "👆"}</div>
-                  <div style={{ fontSize: 15, fontWeight: 700, marginTop: 4 }}>{checkingIn ? "확인 중..." : "출석하기"}</div>
-                </div>
-              </div>
-              <div style={{ color: "var(--text-secondary)", fontSize: 13, marginTop: 16 }}>현재 {today.totalCheckedIn}명 출석 완료</div>
-              <div style={{ color: "var(--text-muted)", fontSize: 12, marginTop: 4 }}>{timeRange}</div>
-              {checkInError && <div style={{ color: "var(--accent-red)", fontSize: 13, marginTop: 8 }}>{checkInError}</div>}
+          <div style={{ padding: "20px 16px", textAlign: "center" }}>
+            <button onClick={handleCheckIn} disabled={checkingIn} style={{
+              width: "100%", padding: 16, borderRadius: "var(--radius-button)",
+              background: checkingIn ? "var(--border-light)" : "linear-gradient(135deg, var(--accent-blue), #5B9CF6)",
+              color: "#fff", fontSize: 16, fontWeight: 700,
+              boxShadow: "0 4px 16px rgba(49, 130, 246, 0.25)",
+              opacity: checkingIn ? 0.7 : 1,
+            }}>
+              {checkingIn ? "확인 중..." : "출석하기"}
+            </button>
+            <div style={{ color: "var(--text-secondary)", fontSize: 13, marginTop: 10 }}>
+              {today.totalCheckedIn}명 출석 · {timeRange}
             </div>
-            {today.rankings.length > 0 && (
-              <div style={{ padding: "12px 16px", background: "var(--bg-secondary)", borderRadius: "var(--radius-card)", margin: "0 16px" }}>
-                <div style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 8 }}>오늘 TOP 3</div>
-                {today.rankings.slice(0, 3).map((r) => (
-                  <div key={r.userId} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, marginBottom: 6 }}>
-                    <span style={{ width: 20 }}>{r.rank === 1 ? "🥇" : r.rank === 2 ? "🥈" : "🥉"}</span>
-                    <span>{r.nickname}</span>
-                    <span style={{ marginLeft: "auto", color: "var(--text-secondary)" }}>{formatTime(r.checkInTime)}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </>
+            {checkInError && <div style={{ color: "var(--accent-red)", fontSize: 13, marginTop: 8 }}>{checkInError}</div>}
+          </div>
         ) : (
-          <>
-            <div style={{ padding: 16, textAlign: "center" }}>
-              <div style={{ fontSize: 40 }}>🎉</div>
-              <div style={{ fontSize: 22, fontWeight: 700, marginTop: 4 }}>{today.myRank}등!</div>
-              <div style={{ color: "var(--text-secondary)", fontSize: 14, marginTop: 4 }}>{today.myCheckInTime ? formatTime(today.myCheckInTime) : ""}에 출석했어요</div>
-            </div>
-            <div style={{ flex: 1, padding: "0 16px", overflow: "auto" }}>
+          <div style={{ padding: "16px 16px 8px", textAlign: "center" }}>
+            <div style={{ fontSize: 18, fontWeight: 700 }}>🎉 {today.myRank}등! <span style={{ color: "var(--text-secondary)", fontSize: 14, fontWeight: 400 }}>{today.myCheckInTime ? formatTime(today.myCheckInTime) : ""}에 출석</span></div>
+          </div>
+        )}
+
+        {/* 하단: 오늘의 순위 리스트 */}
+        <div style={{ flex: 1, padding: "0 16px", overflow: "auto" }}>
+          {today.rankings.length > 0 && (
+            <>
               <div style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 8 }}>오늘의 순위</div>
               {today.rankings.map((r) => (
                 <RankRow key={r.userId} rank={r.rank} nickname={r.nickname} checkInTime={r.checkInTime} isMe={r.userId === user.userId} />
@@ -162,9 +149,9 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
                   ))}
                 </>
               )}
-            </div>
-          </>
-        )}
+            </>
+          )}
+        </div>
       </div>
 
       <TabBar active="today" onSelect={onTabChange} />
