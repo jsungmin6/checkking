@@ -169,7 +169,7 @@ export default function AttendanceCalendar({ classroomId }: AttendanceCalendarPr
           // Circle background
           let circleBg = "transparent";
           if (attended) circleBg = "var(--accent-green)";
-          else if (pastFlag) circleBg = "#FFEEEE";
+          else if (pastFlag) circleBg = "#E5E8EB";
 
           return (
             <div
@@ -180,8 +180,15 @@ export default function AttendanceCalendar({ classroomId }: AttendanceCalendarPr
                 alignItems: "center",
                 padding: "4px 0",
                 minHeight: 52,
+                position: "relative",
               }}
             >
+              {attended && record!.dailyRank === 1 && (
+                <div style={{
+                  position: "absolute", top: -2, left: "50%", transform: "translateX(-50%)",
+                  fontSize: 10, lineHeight: 1, color: "var(--accent-gold)",
+                }}>👑</div>
+              )}
               <div
                 style={{
                   width: 32,
@@ -201,16 +208,11 @@ export default function AttendanceCalendar({ classroomId }: AttendanceCalendarPr
               >
                 {day}
               </div>
-              <span
-                style={{
-                  fontSize: 9,
-                  color: attended ? "var(--accent-green)" : pastFlag ? "var(--accent-red)" : "transparent",
-                  marginTop: 2,
-                  lineHeight: 1,
-                }}
-              >
-                {attended ? record!.checkInTime : pastFlag ? "미출석" : ""}
-              </span>
+              {attended && (
+                <span style={{ fontSize: 9, color: "var(--text-secondary)", marginTop: 2, lineHeight: 1 }}>
+                  {record!.checkInTime}
+                </span>
+              )}
             </div>
           );
         })}
