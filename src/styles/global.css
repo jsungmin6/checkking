@@ -83,6 +83,11 @@ button:active {
   transform: scale(0.98);
 }
 
+.checkin-btn:active:not(:disabled) {
+  transform: scale(0.92) !important;
+  box-shadow: 0 2px 8px rgba(49, 130, 246, 0.15) !important;
+}
+
 input {
   font-family: inherit;
   outline: none;
