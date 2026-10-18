@@ -1,24 +1,32 @@
 import { useState } from "react";
 import HomeTabBar from "../components/HomeTabBar";
+import TermsViewer from "../components/TermsViewer";
+import TossBannerAd from "../components/TossBannerAd";
+import AdMobBanner from "../components/AdMobBanner";
 import { api } from "../utils/api";
+import { validateNickname } from "../utils/profanity";
 import type { User } from "../types";
 
 interface ProfileScreenProps {
   user: User;
   onNavigateHome: () => void;
+  onNavigatePublicRooms: () => void;
   onLogout: () => void;
   onNicknameUpdate: (nickname: string) => void;
 }
 
-export default function ProfileScreen({ user, onNavigateHome, onLogout, onNicknameUpdate }: ProfileScreenProps) {
+export default function ProfileScreen({ user, onNavigateHome, onNavigatePublicRooms, onLogout, onNicknameUpdate }: ProfileScreenProps) {
   const [editing, setEditing] = useState(false);
+  const [viewingTerms, setViewingTerms] = useState<{ url: string; title: string } | null>(null);
+  const [accountOpen, setAccountOpen] = useState(false);
   const [nickname, setNickname] = useState(user.nickname);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleSaveNickname = async () => {
-    if (nickname.length < 2 || nickname.length > 20) {
-      setError("닉네임은 2~20자여야 합니다");
+    const validationError = validateNickname(nickname);
+    if (validationError) {
+      setError(validationError);
       return;
     }
     setSaving(true);
@@ -48,12 +56,13 @@ export default function ProfileScreen({ user, onNavigateHome, onLogout, onNickna
   };
 
   return (
-    <div className="page" style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
+    <div className="page" style={{ display: "flex", flexDirection: "column", height: "100dvh", minHeight: 0, overflow: "hidden" }}>
+      {viewingTerms && <TermsViewer url={viewingTerms.url} title={viewingTerms.title} onClose={() => setViewingTerms(null)} />}
       <div style={{ padding: "20px 20px 12px" }}>
         <div style={{ fontSize: 22, fontWeight: 700 }}>내 정보</div>
       </div>
 
-      <div style={{ flex: 1, overflow: "auto" }}>
+      <div style={{ flex: 1, minHeight: 0, overflowY: "auto", overscrollBehavior: "contain" }}>
         <div style={{ padding: "24px 16px 0" }}>
           <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 8 }}>프로필</div>
           <div style={{ background: "var(--bg-card)", borderRadius: "var(--radius-card)", overflow: "hidden", boxShadow: "var(--shadow-card)" }}>
@@ -72,22 +81,68 @@ export default function ProfileScreen({ user, onNavigateHome, onLogout, onNickna
           </div>
           {error && <div style={{ color: "var(--accent-red)", fontSize: 13, marginTop: 8 }}>{error}</div>}
 
-          <div style={{ marginTop: 16, fontSize: 12, color: "var(--text-secondary)", marginBottom: 8 }}>계정</div>
-          <div style={{ background: "var(--bg-card)", borderRadius: "var(--radius-card)", padding: "16px 20px", boxShadow: "var(--shadow-card)", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 15 }}>
-            <span>등급</span>
-            <span style={{ color: user.accountType === "PREMIUM" ? "var(--accent-blue)" : "var(--text-secondary)", fontWeight: 600 }}>
-              {user.accountType === "PREMIUM" ? "프리미엄" : "일반"}
-            </span>
+          <div style={{ marginTop: 16, fontSize: 12, color: "var(--text-secondary)", marginBottom: 8 }}>계정 관리</div>
+          <div style={{ background: "var(--bg-card)", borderRadius: "var(--radius-card)", overflow: "hidden", boxShadow: "var(--shadow-card)" }}>
+            <div onClick={() => setAccountOpen(!accountOpen)} style={{
+              padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 15, cursor: "pointer",
+            }}>
+              <span>계정 관리</span>
+              <span style={{ color: "var(--text-secondary)", fontSize: 13, transition: "transform 0.2s", transform: accountOpen ? "rotate(90deg)" : "none" }}>{">"}</span>
+            </div>
+            {accountOpen && (
+              <>
+                <div style={{ padding: "14px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 14, borderTop: "1px solid var(--border)" }}>
+                  <span style={{ color: "var(--text-secondary)" }}>등급</span>
+                  <span style={{ color: user.accountType === "PREMIUM" ? "var(--accent-blue)" : "var(--text-secondary)", fontWeight: 600 }}>
+                    {user.accountType === "PREMIUM" ? "프리미엄" : "일반"}
+                  </span>
+                </div>
+                <div onClick={onLogout} style={{
+                  padding: "14px 20px", fontSize: 14, color: "var(--text-secondary)", cursor: "pointer", borderTop: "1px solid var(--border)",
+                }}>
+                  로그아웃
+                </div>
+                <div onClick={handleDeleteAccount} style={{
+                  padding: "14px 20px", fontSize: 14, color: "var(--accent-red)", cursor: "pointer", borderTop: "1px solid var(--border)",
+                }}>
+                  회원 탈퇴
+                </div>
+              </>
+            )}
           </div>
         </div>
 
-        <div style={{ padding: "32px 16px", display: "flex", flexDirection: "column", gap: 10 }}>
-          <button onClick={onLogout} style={{ width: "100%", padding: 14, borderRadius: "var(--radius-button)", border: "1px solid var(--border-color)", background: "var(--bg-card)", color: "var(--text-secondary)", fontSize: 15 }}>로그아웃</button>
-          <button onClick={handleDeleteAccount} style={{ width: "100%", padding: 14, borderRadius: "var(--radius-button)", border: "1px solid var(--accent-danger)", background: "var(--bg-card)", color: "var(--accent-danger)", fontSize: 15 }}>회원 탈퇴</button>
+        <div style={{ padding: "24px 16px 0" }}>
+          <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 8 }}>약관 및 정책</div>
+          <div style={{ background: "var(--bg-card)", borderRadius: "var(--radius-card)", overflow: "hidden", boxShadow: "var(--shadow-card)" }}>
+            {[
+              { label: "서비스 이용약관", path: "/terms.html" },
+              { label: "개인정보 처리방침", path: "/privacy.html" },
+              { label: "위치정보 이용약관", path: "/location-terms.html" },
+            ].map((item, i, arr) => (
+              <div key={item.path} onClick={() => setViewingTerms({ url: item.path, title: item.label })} style={{
+                display: "flex", justifyContent: "space-between", alignItems: "center",
+                padding: "14px 20px", fontSize: 15, color: "var(--text-primary)", cursor: "pointer",
+                borderBottom: i < arr.length - 1 ? "1px solid var(--border)" : "none",
+              }}>
+                <span>{item.label}</span>
+                <span style={{ color: "var(--text-secondary)", fontSize: 13 }}>{">"}</span>
+              </div>
+            ))}
+          </div>
         </div>
+
+        <div style={{ height: 32 }} />
       </div>
 
-      <HomeTabBar active="profile" onSelect={(tab) => { if (tab === "home") onNavigateHome(); }} />
+      <div style={{ flexShrink: 0 }}>
+        <TossBannerAd />
+        <HomeTabBar active="profile" onSelect={(tab) => {
+          if (tab === "home") onNavigateHome();
+          else if (tab === "publicRooms") onNavigatePublicRooms();
+        }} />
+        <AdMobBanner />
+      </div>
     </div>
   );
 }

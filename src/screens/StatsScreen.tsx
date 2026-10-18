@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { hideAdBanner } from "../utils/admob";
 import BackHeader from "../components/BackHeader";
 import TabBar from "../components/TabBar";
 import StatCard from "../components/StatCard";
@@ -20,7 +21,7 @@ export default function StatsScreen({ classroomId, onTabChange, onBack }: StatsS
   const [records, setRecords] = useState<MonthlyAttendanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  useEffect(() => { hideAdBanner();
     setLoading(true);
     api<MonthlyAttendanceRecord[]>(
       `/classrooms/${classroomId}/attendance/monthly?year=${year}&month=${month}`

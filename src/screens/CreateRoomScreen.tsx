@@ -1,9 +1,15 @@
-import { useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import BackHeader from "../components/BackHeader";
-import { api } from "../utils/api";
-import type { Classroom, ValidationType, ClassroomSettingsRequest, GpsConfig, WifiConfig } from "../types";
+import Toast from "../components/Toast";
+import { useToast } from "../hooks/useToast";
+import { api, ApiError } from "../utils/api";
+import { validateRoomName } from "../utils/profanity";
+import { isTossApp } from "../utils/platform";
+import { showTossRewardedAd } from "../utils/tossRewardedAd";
+import type { AccountType, Classroom, ClassroomListItem, ValidationType, ClassroomSettingsRequest, GpsConfig, WifiConfig } from "../types";
 
 interface CreateRoomScreenProps {
+  accountType?: AccountType;
   onBack: () => void;
   onCreated: (classroomId: number) => void;
 }
@@ -24,6 +30,8 @@ const selectStyle: React.CSSProperties = {
   WebkitAppearance: "none",
   MozAppearance: "none",
 };
+
+const CREATE_ROOM_AD_GROUP_ID = "ait.v2.live.55ffe7a234434623";
 
 function TimeSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const [h, m] = value ? value.split(":") : ["", ""];
@@ -64,7 +72,9 @@ declare global {
     daum: {
       Postcode: new (config: {
         oncomplete: (data: { address: string; roadAddress: string; jibunAddress: string }) => void;
-      }) => { open: () => void };
+        width?: string;
+        height?: string;
+      }) => { open: () => void; embed: (element: HTMLElement) => void };
     };
   }
 }
@@ -85,29 +95,25 @@ async function geocodeAddress(address: string): Promise<{ lat: number; lng: numb
   }
 }
 
-function getCurrentPosition(): Promise<{ lat: number; lng: number }> {
-  return new Promise((resolve, reject) => {
-    if (!navigator.geolocation) {
-      reject(new Error("GPS를 사용할 수 없습니다"));
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(
-      (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-      (err) => reject(new Error(`위치를 가져올 수 없습니다: ${err.message}`)),
-      { enableHighAccuracy: true, timeout: 10000 }
-    );
+async function getCurrentPosition(): Promise<{ lat: number; lng: number }> {
+  const { Geolocation } = await import("@capacitor/geolocation");
+  const pos = await Geolocation.getCurrentPosition({
+    enableHighAccuracy: true,
+    timeout: 10000,
   });
+  return { lat: pos.coords.latitude, lng: pos.coords.longitude };
 }
 
-export default function CreateRoomScreen({ onBack, onCreated }: CreateRoomScreenProps) {
+export default function CreateRoomScreen({ accountType, onBack, onCreated }: CreateRoomScreenProps) {
   const [step, setStep] = useState<Step>(1);
   const [name, setName] = useState("");
+  const [isPublic, setIsPublic] = useState(true);
   const [validationType, setValidationType] = useState<ValidationType>("NONE");
 
   // GPS 설정
   const [addressText, setAddressText] = useState("");
   const [gpsConfig, setGpsConfig] = useState<GpsConfig | null>(null);
-  const [radiusMeters, setRadiusMeters] = useState(100);
+  const [radiusMeters, setRadiusMeters] = useState("100");
   const [gpsLoading, setGpsLoading] = useState(false);
   const [gpsError, setGpsError] = useState<string | null>(null);
 
@@ -118,32 +124,52 @@ export default function CreateRoomScreen({ onBack, onCreated }: CreateRoomScreen
   // 출석 시간 + 주말
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
-  const [includeWeekends, setIncludeWeekends] = useState(false);
+  const [includeWeekends, setIncludeWeekends] = useState(true);
   const [showTimeSelect, setShowTimeSelect] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { toastMessage, showToast } = useToast();
+  const [roomCount, setRoomCount] = useState<number | null>(null);
+  const roomLimit = accountType === "PREMIUM" ? 50 : 3;
+  const roomLimitReached = roomCount !== null && roomCount >= roomLimit;
+
+  useEffect(() => {
+    api<{ classrooms: ClassroomListItem[] }>("/classrooms/my")
+      .then((data) => setRoomCount(data.classrooms.length))
+      .catch(() => setRoomCount(null));
+  }, []);
+
+  const [showPostcode, setShowPostcode] = useState(false);
+  const postcodeRef = useRef<HTMLDivElement>(null);
 
   const handleAddressSearch = () => {
     if (!window.daum) {
       setGpsError("주소 검색을 로드할 수 없습니다");
       return;
     }
-    new window.daum.Postcode({
-      oncomplete: async (data) => {
-        const addr = data.roadAddress || data.jibunAddress || data.address;
-        setAddressText(addr);
-        setGpsLoading(true);
-        setGpsError(null);
-        const result = await geocodeAddress(addr);
-        if (result) {
-          setGpsConfig({ latitude: result.lat, longitude: result.lng, radiusMeters });
-        } else {
-          setGpsError("좌표를 찾을 수 없습니다");
-        }
-        setGpsLoading(false);
-      },
-    }).open();
+    setShowPostcode(true);
+    setTimeout(() => {
+      if (!postcodeRef.current) return;
+      new window.daum.Postcode({
+        oncomplete: async (data) => {
+          const addr = data.roadAddress || data.jibunAddress || data.address;
+          setShowPostcode(false);
+          setAddressText(addr);
+          setGpsLoading(true);
+          setGpsError(null);
+          const result = await geocodeAddress(addr);
+          if (result) {
+            setGpsConfig({ latitude: result.lat, longitude: result.lng, radiusMeters: Number.parseInt(radiusMeters, 10) || 100 });
+          } else {
+            setGpsError("좌표를 찾을 수 없습니다");
+          }
+          setGpsLoading(false);
+        },
+        width: "100%",
+        height: "100%",
+      }).embed(postcodeRef.current);
+    }, 100);
   };
 
   const handleCurrentLocation = async () => {
@@ -151,7 +177,7 @@ export default function CreateRoomScreen({ onBack, onCreated }: CreateRoomScreen
     setGpsError(null);
     try {
       const pos = await getCurrentPosition();
-      setGpsConfig({ latitude: pos.lat, longitude: pos.lng, radiusMeters });
+      setGpsConfig({ latitude: pos.lat, longitude: pos.lng, radiusMeters: Number.parseInt(radiusMeters, 10) || 100 });
       setAddressText(`현재 위치 (${pos.lat.toFixed(4)}, ${pos.lng.toFixed(4)})`);
     } catch (e) {
       setGpsError(e instanceof Error ? e.message : "위치를 가져올 수 없습니다");
@@ -168,22 +194,37 @@ export default function CreateRoomScreen({ onBack, onCreated }: CreateRoomScreen
   };
 
   const handleCreate = async () => {
+    const parsedRadiusMeters = Number.parseInt(radiusMeters, 10);
+    if (validationType === "GPS" && (!Number.isInteger(parsedRadiusMeters) || parsedRadiusMeters < 10 || parsedRadiusMeters > 1000)) {
+      setGpsError("허용 반경은 10~1000m로 입력해 주세요.");
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
+      if (isTossApp()) {
+        const rewarded = await showTossRewardedAd(CREATE_ROOM_AD_GROUP_ID);
+        if (!rewarded) {
+          setError("광고를 끝까지 시청하면 방을 만들 수 있어요.");
+          return;
+        }
+      }
+
       const classroom = await api<Classroom>("/classrooms", {
         method: "POST",
-        body: JSON.stringify({ name }),
+        body: JSON.stringify({ name, isPublic }),
       });
 
       const finalGpsConfig = validationType === "GPS" && gpsConfig
-        ? { ...gpsConfig, radiusMeters }
+        ? { ...gpsConfig, radiusMeters: parsedRadiusMeters }
         : null;
       const finalWifiConfig: WifiConfig | null = validationType === "WIFI" && wifiSsid
         ? { ssid: wifiSsid, bssid: wifiBssid }
         : null;
 
-      if (validationType !== "NONE" || startTime || !includeWeekends) {
+      // 기본값(NONE, 시간 제한 없음, 주말 포함)은 서버의 생성 기본값과 같아서
+      // 불필요한 설정 PUT을 보내지 않는다.
+      if (validationType !== "NONE" || startTime || endTime || !includeWeekends) {
         const settings: ClassroomSettingsRequest = {
           validationType,
           gpsConfig: finalGpsConfig,
@@ -199,6 +240,10 @@ export default function CreateRoomScreen({ onBack, onCreated }: CreateRoomScreen
       }
       onCreated(classroom.classroomId);
     } catch (e) {
+      if (e instanceof ApiError && e.code === "MAX_ROOMS_EXCEEDED") {
+        showToast(`방은 최대 ${roomLimit}개까지 관리할 수 있어요.`);
+        return;
+      }
       setError(e instanceof Error ? e.message : "생성 실패");
     } finally {
       setLoading(false);
@@ -215,7 +260,12 @@ export default function CreateRoomScreen({ onBack, onCreated }: CreateRoomScreen
           <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>Step 1. 기본 정보</div>
           <div style={{ color: "var(--text-secondary)", fontSize: 13, marginBottom: 24 }}>방 이름을 입력하세요</div>
           <input value={name} onChange={(e) => setName(e.target.value)} placeholder="예: 1학년 3반, 코딩 동아리" style={{ width: "100%", padding: 14, borderRadius: "var(--radius-input)", border: "1px solid var(--border-light)", background: "var(--bg-secondary)", color: "var(--text-primary)", fontSize: 15, textAlign: "center" }} />
-          <button onClick={() => name.trim() && setStep(2)} disabled={!name.trim()} style={{ width: "100%", padding: 16, borderRadius: "var(--radius-button)", background: name.trim() ? "var(--accent-blue)" : "var(--border-light)", color: "#fff", fontSize: 16, fontWeight: 700, marginTop: 24 }}>다음</button>
+          <button onClick={() => {
+            const err = validateRoomName(name);
+            if (err) { setError(err); return; }
+            setError(null);
+            setStep(2);
+          }} disabled={!name.trim()} style={{ width: "100%", padding: 16, borderRadius: "var(--radius-button)", background: name.trim() ? "var(--accent-blue)" : "#ccc", color: name.trim() ? "#fff" : "#888", fontSize: 16, fontWeight: 700, marginTop: 24 }}>다음</button>
         </div>
       )}
 
@@ -258,6 +308,17 @@ export default function CreateRoomScreen({ onBack, onCreated }: CreateRoomScreen
                 </button>
               </div>
 
+              {showPostcode && (
+                <div style={{ position: "relative", marginBottom: 8 }}>
+                  <div ref={postcodeRef} style={{ height: 400, border: "1px solid var(--border-light)", borderRadius: 8, overflow: "hidden" }} />
+                  <button onClick={() => setShowPostcode(false)} style={{
+                    position: "absolute", top: 8, right: 8, width: 28, height: 28, borderRadius: "50%",
+                    background: "rgba(0,0,0,0.5)", color: "#fff", fontSize: 16, border: "none", cursor: "pointer",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                  }}>X</button>
+                </div>
+              )}
+
               {gpsError && <div style={{ color: "var(--accent-red)", fontSize: 12, marginTop: 8 }}>{gpsError}</div>}
 
               {addressText && (
@@ -274,9 +335,20 @@ export default function CreateRoomScreen({ onBack, onCreated }: CreateRoomScreen
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>허용 반경</span>
                     <input
-                      type="number"
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
                       value={radiusMeters}
-                      onChange={(e) => setRadiusMeters(Number(e.target.value))}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/\D/g, "").slice(0, 4);
+                        setRadiusMeters(value);
+                        const parsed = Number.parseInt(value, 10);
+                        if (gpsConfig && Number.isInteger(parsed)) setGpsConfig({ ...gpsConfig, radiusMeters: parsed });
+                      }}
+                      onBlur={() => {
+                        const parsed = Number.parseInt(radiusMeters, 10);
+                        if (Number.isInteger(parsed)) setRadiusMeters(String(parsed));
+                      }}
                       min={10}
                       max={1000}
                       style={{ width: 80, padding: 8, borderRadius: 6, border: "1px solid var(--border-light)", background: "var(--bg-secondary)", color: "var(--text-primary)", fontSize: 14, textAlign: "center" }}
@@ -311,8 +383,8 @@ export default function CreateRoomScreen({ onBack, onCreated }: CreateRoomScreen
 
           <button onClick={() => canProceedStep2() && setStep(3)} disabled={!canProceedStep2()} style={{
             width: "100%", padding: 16, borderRadius: "var(--radius-button)",
-            background: canProceedStep2() ? "var(--accent-blue)" : "var(--border-light)",
-            color: "#fff", fontSize: 16, fontWeight: 700, marginTop: 16,
+            background: canProceedStep2() ? "var(--accent-blue)" : "#ccc",
+            color: canProceedStep2() ? "#fff" : "#888", fontSize: 16, fontWeight: 700, marginTop: 16,
           }}>다음</button>
         </div>
       )}
@@ -323,6 +395,14 @@ export default function CreateRoomScreen({ onBack, onCreated }: CreateRoomScreen
           <div style={{ padding: "24px 16px" }}>
             <div style={{ textAlign: "center", fontSize: 16, fontWeight: 600, marginBottom: 4 }}>상세 설정</div>
             <div style={{ textAlign: "center", color: "var(--text-secondary)", fontSize: 13, marginBottom: 24 }}>설정하지 않으면 기본값으로 생성돼요</div>
+
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 10 }}>방 공개 범위</div>
+              <div style={{ display: "flex", gap: 8 }}>
+                {([{ value: false, label: "비밀방" }, { value: true, label: "공개방" }] as const).map((option) => <button key={option.label} onClick={() => setIsPublic(option.value)} style={{ flex: 1, padding: 12, borderRadius: "var(--radius-button)", fontSize: 14, fontWeight: 600, background: isPublic === option.value ? "var(--accent-blue)" : "var(--bg-card)", color: isPublic === option.value ? "#fff" : "var(--text-secondary)", border: isPublic === option.value ? "none" : "1px solid var(--border-color)" }}>{option.label}</button>)}
+              </div>
+              <div style={{ color: "var(--text-muted)", fontSize: 12, marginTop: 6 }}>공개방은 공개방 목록에 표시됩니다.</div>
+            </div>
 
             {/* 주말 출석 */}
             <div style={{ marginBottom: 20 }}>
@@ -376,12 +456,13 @@ export default function CreateRoomScreen({ onBack, onCreated }: CreateRoomScreen
               <div style={{ color: "var(--text-muted)", fontSize: 12, marginTop: 6 }}>설정하지 않으면 24시간 출석 가능</div>
             </div>
 
-            <button onClick={handleCreate} disabled={loading || !!timeInvalid} style={{ width: "100%", padding: 16, borderRadius: "var(--radius-button)", background: "var(--accent-blue)", color: "#fff", fontSize: 16, fontWeight: 700, opacity: loading || timeInvalid ? 0.5 : 1 }}>
-              {loading ? "생성 중..." : "방 생성 완료!"}
+            <button onClick={handleCreate} disabled={loading || !!timeInvalid || roomLimitReached} style={{ width: "100%", padding: 16, borderRadius: "var(--radius-button)", background: "var(--accent-blue)", color: "#fff", fontSize: 16, fontWeight: 700, opacity: loading || timeInvalid || roomLimitReached ? 0.5 : 1 }}>
+              {loading ? (isTossApp() ? "광고 확인 중..." : "방 만드는 중...") : isTossApp() ? "광고 보고 방 만들기" : "방 만들기"}
             </button>
           </div>
         );
       })()}
+      <Toast message={toastMessage} />
     </div>
   );
 }

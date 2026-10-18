@@ -1,0 +1,45 @@
+diff --git a/node_modules/@capacitor-community/apple-sign-in/Package.resolved b/node_modules/@capacitor-community/apple-sign-in/Package.resolved
+new file mode 100644
+index 0000000..8dd87cc
+--- /dev/null
++++ b/node_modules/@capacitor-community/apple-sign-in/Package.resolved
+@@ -0,0 +1,14 @@
++{
++  "pins" : [
++    {
++      "identity" : "capacitor-swift-pm",
++      "kind" : "remoteSourceControl",
++      "location" : "https://github.com/ionic-team/capacitor-swift-pm.git",
++      "state" : {
++        "revision" : "40cf264baa3f4b308738bd31e3de94f607550adb",
++        "version" : "7.6.6"
++      }
++    }
++  ],
++  "version" : 2
++}
+diff --git a/node_modules/@capacitor-community/apple-sign-in/ios/Sources/SignInWithApple/Plugin.swift b/node_modules/@capacitor-community/apple-sign-in/ios/Sources/SignInWithApple/Plugin.swift
+index f53087c..6816e1f 100755
+--- a/node_modules/@capacitor-community/apple-sign-in/ios/Sources/SignInWithApple/Plugin.swift
++++ b/node_modules/@capacitor-community/apple-sign-in/ios/Sources/SignInWithApple/Plugin.swift
+@@ -24,6 +24,7 @@ public class SignInWithApple: CAPPlugin, CAPBridgedPlugin {
+ 
+         let authorizationController = ASAuthorizationController(authorizationRequests: [request])
+         authorizationController.delegate = self
++        authorizationController.presentationContextProvider = self
+         authorizationController.performRequests()
+     }
+ 
+@@ -48,6 +49,12 @@ public class SignInWithApple: CAPPlugin, CAPBridgedPlugin {
+     }
+ }
+ 
++extension SignInWithApple: ASAuthorizationControllerPresentationContextProviding {
++    public func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
++        return self.bridge?.webView?.window ?? ASPresentationAnchor()
++    }
++}
++
+ extension SignInWithApple: ASAuthorizationControllerDelegate {
+     public func authorizationController(controller: ASAuthorizationController, didCompleteWithAuthorization authorization: ASAuthorization) {
+         guard let appleIDCredential = authorization.credential as? ASAuthorizationAppleIDCredential else { return }

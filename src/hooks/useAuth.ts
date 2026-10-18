@@ -7,12 +7,13 @@ interface AuthState {
   user: User | null;
   loading: boolean;
   error: string | null;
+  needsTermsAgreement: boolean;
 }
 
 const KAKAO_CODE_KEY = "kakao_auth_code";
 
 export function useAuth() {
-  const [state, setState] = useState<AuthState>({ user: null, loading: true, error: null });
+  const [state, setState] = useState<AuthState>({ user: null, loading: true, error: null, needsTermsAgreement: false });
 
   useEffect(() => {
     console.log("[등교왕] useAuth 초기화 시작");
@@ -37,14 +38,14 @@ export function useAuth() {
         body: JSON.stringify({ authorizationCode: kakaoCode, redirectUri: KAKAO_REDIRECT_URI }),
       })
         .then((data) => {
-          console.log("[등교왕] 카카오 로그인 성공:", data.user.nickname);
+          console.log("[출석왕] 카카오 로그인 성공:", data.user.nickname);
           localStorage.setItem(TOKEN_KEYS.ACCESS, data.accessToken);
           localStorage.setItem(TOKEN_KEYS.REFRESH, data.refreshToken);
-          setState({ user: data.user, loading: false, error: null });
+          setState({ user: data.user, loading: false, error: null, needsTermsAgreement: data.isNewUser });
         })
         .catch((e) => {
           console.error("[등교왕] 카카오 로그인 실패:", e);
-          setState({ user: null, loading: false, error: e instanceof Error ? e.message : "카카오 로그인 실패" });
+          setState({ user: null, loading: false, error: e instanceof Error ? e.message : "카카오 로그인 실패", needsTermsAgreement: false });
         });
       return;
     }
@@ -57,30 +58,48 @@ export function useAuth() {
     const token = localStorage.getItem(TOKEN_KEYS.ACCESS);
     if (!token) {
       console.log("[등교왕] 저장된 토큰 없음 → 로그인 화면");
-      setState({ user: null, loading: false, error: null });
+      setState({ user: null, loading: false, error: null, needsTermsAgreement: false });
       return;
     }
 
-    console.log("[등교왕] 저장된 토큰으로 세션 복원 시도");
+    console.log("[출석왕] 저장된 토큰으로 세션 복원 시도");
     api<Profile>("/users/me")
       .then((profile) => {
-        console.log("[등교왕] 세션 복원 성공:", profile.nickname);
+        console.log("[출석왕] 세션 복원 성공:", profile.nickname);
         setState({
           user: {
             userId: profile.userId,
             nickname: profile.nickname,
             loginType: profile.loginType,
+            accountType: profile.accountType,
           },
           loading: false,
           error: null,
+          needsTermsAgreement: false,
         });
       })
       .catch((e) => {
-        console.error("[등교왕] 세션 복원 실패:", e);
+        console.error("[출석왕] 세션 복원 실패:", e);
         clearTokens();
-        setState({ user: null, loading: false, error: null });
+        setState({ user: null, loading: false, error: null, needsTermsAgreement: false });
       });
   }, []);
+
+  // Login responses omit accountType, so hydrate it from the authenticated profile endpoint.
+  useEffect(() => {
+    const currentUser = state.user;
+    if (!currentUser || currentUser.accountType) return;
+    let active = true;
+    api<Profile>("/users/me")
+      .then((profile) => {
+        if (!active) return;
+        setState((prev) => prev.user?.userId === profile.userId
+          ? { ...prev, user: { ...prev.user, accountType: profile.accountType } }
+          : prev);
+      })
+      .catch((e) => console.error("[출석왕] 계정 유형 조회 실패:", e));
+    return () => { active = false; };
+  }, [state.user?.userId, state.user?.accountType]);
 
   // 웹: 인가코드 기반 카카오 로그인
   const loginWithKakao = useCallback(async (authorizationCode: string) => {
@@ -91,38 +110,54 @@ export function useAuth() {
     });
     localStorage.setItem(TOKEN_KEYS.ACCESS, data.accessToken);
     localStorage.setItem(TOKEN_KEYS.REFRESH, data.refreshToken);
-    setState({ user: data.user, loading: false, error: null });
+    setState({ user: data.user, loading: false, error: null, needsTermsAgreement: data.isNewUser });
     return data;
   }, []);
 
   // iOS: 카카오 네이티브 SDK access_token 기반 로그인
   const loginWithKakaoToken = useCallback(async (kakaoAccessToken: string) => {
-    console.log("[등교왕] loginWithKakaoToken 호출 (iOS 네이티브)");
+    console.log("[출석왕] loginWithKakaoToken 호출 (iOS 네이티브)");
     const data = await api<AuthResponse>("/auth/login/kakao/token", {
       method: "POST",
       body: JSON.stringify({ accessToken: kakaoAccessToken }),
     });
     localStorage.setItem(TOKEN_KEYS.ACCESS, data.accessToken);
     localStorage.setItem(TOKEN_KEYS.REFRESH, data.refreshToken);
-    setState({ user: data.user, loading: false, error: null });
+    setState({ user: data.user, loading: false, error: null, needsTermsAgreement: data.isNewUser });
+  }, []);
+
+  // iOS: Apple 로그인 (identity token 기반)
+  const loginWithApple = useCallback(async (identityToken: string) => {
+    console.log("[출석왕] loginWithApple 호출 (iOS)");
+    const data = await api<AuthResponse>("/auth/login/apple", {
+      method: "POST",
+      body: JSON.stringify({ identityToken }),
+    });
+    localStorage.setItem(TOKEN_KEYS.ACCESS, data.accessToken);
+    localStorage.setItem(TOKEN_KEYS.REFRESH, data.refreshToken);
+    setState({ user: data.user, loading: false, error: null, needsTermsAgreement: data.isNewUser });
   }, []);
 
   const loginWithToss = useCallback(async (authorizationCode: string, referrer: string) => {
-    console.log("[등교왕] loginWithToss 호출");
+    console.log("[출석왕] loginWithToss 호출");
     const data = await api<AuthResponse>("/auth/login/toss", {
       method: "POST",
       body: JSON.stringify({ authorizationCode, referrer }),
     });
     localStorage.setItem(TOKEN_KEYS.ACCESS, data.accessToken);
     localStorage.setItem(TOKEN_KEYS.REFRESH, data.refreshToken);
-    setState({ user: data.user, loading: false, error: null });
+    setState({ user: data.user, loading: false, error: null, needsTermsAgreement: data.isNewUser });
     return data;
   }, []);
 
+  const acceptTerms = useCallback(() => {
+    setState((prev) => ({ ...prev, needsTermsAgreement: false }));
+  }, []);
+
   const logout = useCallback(() => {
-    console.log("[등교왕] 로그아웃");
+    console.log("[출석왕] 로그아웃");
     clearTokens();
-    setState({ user: null, loading: false, error: null });
+    setState({ user: null, loading: false, error: null, needsTermsAgreement: false });
   }, []);
 
   const updateNickname = useCallback((nickname: string) => {
@@ -136,9 +171,12 @@ export function useAuth() {
     user: state.user,
     loading: state.loading,
     authError: state.error,
+    needsTermsAgreement: state.needsTermsAgreement,
     loginWithKakao,
     loginWithKakaoToken,
+    loginWithApple,
     loginWithToss,
+    acceptTerms,
     logout,
     updateNickname,
   };

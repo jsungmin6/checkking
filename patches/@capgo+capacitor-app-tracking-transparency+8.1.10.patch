@@ -1,0 +1,40 @@
+diff --git a/node_modules/@capgo/capacitor-app-tracking-transparency/Package.resolved b/node_modules/@capgo/capacitor-app-tracking-transparency/Package.resolved
+new file mode 100644
+index 0000000..6634cee
+--- /dev/null
++++ b/node_modules/@capgo/capacitor-app-tracking-transparency/Package.resolved
+@@ -0,0 +1,14 @@
++{
++  "pins" : [
++    {
++      "identity" : "capacitor-swift-pm",
++      "kind" : "remoteSourceControl",
++      "location" : "https://github.com/ionic-team/capacitor-swift-pm.git",
++      "state" : {
++        "revision" : "44ae2505f54a80c5e559533950886d0644fc2fca",
++        "version" : "8.4.0"
++      }
++    }
++  ],
++  "version" : 2
++}
+diff --git a/node_modules/@capgo/capacitor-app-tracking-transparency/ios/Sources/AppTrackingTransparencyPlugin/AppTrackingTransparencyPlugin.swift b/node_modules/@capgo/capacitor-app-tracking-transparency/ios/Sources/AppTrackingTransparencyPlugin/AppTrackingTransparencyPlugin.swift
+index f100346..69a2359 100644
+--- a/node_modules/@capgo/capacitor-app-tracking-transparency/ios/Sources/AppTrackingTransparencyPlugin/AppTrackingTransparencyPlugin.swift
++++ b/node_modules/@capgo/capacitor-app-tracking-transparency/ios/Sources/AppTrackingTransparencyPlugin/AppTrackingTransparencyPlugin.swift
+@@ -25,13 +25,12 @@ public class AppTrackingTransparencyPlugin: CAPPlugin, CAPBridgedPlugin {
+ 
+     @objc func requestPermission(_ call: CAPPluginCall) {
+         if #available(iOS 14, *) {
+-            ATTrackingManager.requestTrackingAuthorization { status in
+-                DispatchQueue.main.async {
++            DispatchQueue.main.async {
++                ATTrackingManager.requestTrackingAuthorization { status in
+                     call.resolve(["status": self.statusToString(status)])
+                 }
+             }
+         } else {
+-            // iOS < 14 doesn't require tracking permission
+             call.resolve(["status": "authorized"])
+         }
+     }

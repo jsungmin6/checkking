@@ -1,5 +1,7 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
+import { closeView, graniteEvent } from "@apps-in-toss/web-framework";
 import { useAuth } from "./hooks/useAuth";
+import { isCapacitor, isIOS, isTossApp } from "./utils/platform";
 import LoginScreen from "./screens/LoginScreen";
 import HomeScreen from "./screens/HomeScreen";
 import ProfileScreen from "./screens/ProfileScreen";
@@ -9,12 +11,43 @@ import RoomScreen from "./screens/RoomScreen";
 import RankingScreen from "./screens/RankingScreen";
 import StatsScreen from "./screens/StatsScreen";
 import SettingsScreen from "./screens/SettingsScreen";
+import TermsAgreementScreen from "./screens/TermsAgreementScreen";
+import PublicRoomsScreen from "./screens/PublicRoomsScreen";
 import type { ScreenName, User } from "./types";
 
 export default function App() {
-  const { user, loading, authError, loginWithKakaoToken, loginWithToss, logout, updateNickname } = useAuth();
+  const { user, loading, authError, needsTermsAgreement, loginWithKakaoToken, loginWithApple, loginWithToss, acceptTerms, logout, updateNickname } = useAuth();
   const [screen, setScreen] = useState<ScreenName>("home");
   const [activeRoomId, setActiveRoomId] = useState<number | null>(null);
+  const attInitRef = useRef(false);
+
+  // 앱인토스 네이티브 뒤로가기를 SPA 화면 이동에 연결한다.
+  useEffect(() => {
+    if (!isTossApp()) return;
+    return graniteEvent.addEventListener("backEvent", {
+      onEvent: () => {
+        if (screen !== "home") setScreen("home");
+        else void closeView();
+      },
+    });
+  }, [screen]);
+
+  // ATT → AdMob 초기화 (loading 끝나고 앱이 active 상태일 때)
+  useEffect(() => {
+    if (loading || attInitRef.current || !isCapacitor() || isIOS()) return;
+    attInitRef.current = true;
+
+    (async () => {
+      try {
+        const { AppTrackingTransparency } = await import("@capgo/capacitor-app-tracking-transparency");
+        const { status } = await AppTrackingTransparency.getStatus();
+        if (status === "notDetermined") {
+          await new Promise((r) => setTimeout(r, 500));
+          await AppTrackingTransparency.requestPermission();
+        }
+      } catch {}
+    })();
+  }, [loading]);
 
   const navigateTo = useCallback((s: ScreenName, roomId?: number) => {
     setScreen(s);
@@ -39,17 +72,23 @@ export default function App() {
 
   if (!user) {
     return (
-      <LoginScreen onLogin={handleLogin} loginWithKakaoToken={loginWithKakaoToken} loginWithToss={loginWithToss} kakaoError={authError} />
+      <LoginScreen onLogin={handleLogin} loginWithKakaoToken={loginWithKakaoToken} loginWithApple={loginWithApple} loginWithToss={loginWithToss} kakaoError={authError} />
     );
+  }
+
+  if (needsTermsAgreement) {
+    return <TermsAgreementScreen onAgree={acceptTerms} onCancel={logout} />;
   }
 
   switch (screen) {
     case "home":
       return (
         <HomeScreen
+          accountType={user.accountType}
           onNavigateProfile={() => navigateTo("profile")}
           onNavigateCreateRoom={() => navigateTo("createRoom")}
           onNavigateJoinRoom={() => navigateTo("joinRoom")}
+          onNavigatePublicRooms={() => navigateTo("publicRooms")}
           onNavigateRoom={(id) => navigateTo("room", id)}
         />
       );
@@ -58,14 +97,17 @@ export default function App() {
         <ProfileScreen
           user={user}
           onNavigateHome={() => navigateTo("home")}
-          onLogout={() => { logout(); setScreen("login"); }}
+          onNavigatePublicRooms={() => navigateTo("publicRooms")}
+          onLogout={() => { logout(); setScreen("home"); }}
           onNicknameUpdate={updateNickname}
         />
       );
     case "createRoom":
-      return <CreateRoomScreen onBack={() => navigateTo("home")} onCreated={(id) => navigateTo("room", id)} />;
+      return <CreateRoomScreen accountType={user.accountType} onBack={() => navigateTo("home")} onCreated={(id) => navigateTo("room", id)} />;
     case "joinRoom":
       return <JoinRoomScreen onBack={() => navigateTo("home")} onJoined={(id) => navigateTo("room", id)} />;
+    case "publicRooms":
+      return <PublicRoomsScreen accountType={user.accountType} onNavigateHome={() => navigateTo("home")} onNavigateProfile={() => navigateTo("profile")} onJoined={(id) => navigateTo("room", id)} />;
     case "room":
       if (!activeRoomId) { setScreen("home"); return null; }
       return (

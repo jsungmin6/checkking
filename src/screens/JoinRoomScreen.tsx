@@ -1,6 +1,8 @@
 import { useState, useRef } from "react";
 import BackHeader from "../components/BackHeader";
-import { api } from "../utils/api";
+import Toast from "../components/Toast";
+import { useToast } from "../hooks/useToast";
+import { api, ApiError } from "../utils/api";
 
 interface JoinRoomScreenProps {
   onBack: () => void;
@@ -11,6 +13,7 @@ export default function JoinRoomScreen({ onBack, onJoined }: JoinRoomScreenProps
   const [code, setCode] = useState(["", "", "", "", "", ""]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { toastMessage, showToast } = useToast();
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   const handleInput = (index: number, value: string) => {
@@ -24,6 +27,19 @@ export default function JoinRoomScreen({ onBack, onJoined }: JoinRoomScreenProps
 
   const handleKeyDown = (index: number, e: React.KeyboardEvent) => {
     if (e.key === "Backspace" && !code[index] && index > 0) inputRefs.current[index - 1]?.focus();
+  };
+
+  const handlePaste = (e: React.ClipboardEvent) => {
+    e.preventDefault();
+    const pasted = e.clipboardData.getData("text").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
+    if (!pasted) return;
+    const next = [...code];
+    for (let i = 0; i < pasted.length && i < 6; i++) {
+      next[i] = pasted[i] ?? "";
+    }
+    setCode(next);
+    const focusIdx = Math.min(pasted.length, 5);
+    inputRefs.current[focusIdx]?.focus();
   };
 
   const inviteCode = code.join("");
@@ -40,6 +56,10 @@ export default function JoinRoomScreen({ onBack, onJoined }: JoinRoomScreenProps
       });
       onJoined(data.classroomId);
     } catch (e) {
+      if (e instanceof ApiError && e.code === "MAX_ROOMS_EXCEEDED") {
+        showToast("방은 최대 3개까지 관리할 수 있어요.");
+        return;
+      }
       setError(e instanceof Error ? e.message : "참여 실패");
     } finally {
       setLoading(false);
@@ -55,13 +75,14 @@ export default function JoinRoomScreen({ onBack, onJoined }: JoinRoomScreenProps
         {error && <div style={{ color: "var(--accent-red)", fontSize: 13, marginBottom: 16 }}>{error}</div>}
         <div style={{ display: "flex", justifyContent: "center", gap: 8, marginBottom: 24 }}>
           {code.map((c, i) => (
-            <input key={i} ref={(el) => { inputRefs.current[i] = el; }} value={c} onChange={(e) => handleInput(i, e.target.value)} onKeyDown={(e) => handleKeyDown(i, e)} maxLength={1} style={{ width: 40, height: 48, textAlign: "center", fontSize: 20, fontWeight: 700, borderRadius: "var(--radius-input)", border: "1px solid var(--border-light)", background: "var(--bg-secondary)", color: "var(--text-primary)" }} />
+            <input key={i} ref={(el) => { inputRefs.current[i] = el; }} value={c} onChange={(e) => handleInput(i, e.target.value)} onKeyDown={(e) => handleKeyDown(i, e)} onPaste={handlePaste} maxLength={1} style={{ width: 40, height: 48, textAlign: "center", fontSize: 20, fontWeight: 700, borderRadius: "var(--radius-input)", border: "1px solid var(--border-light)", background: "var(--bg-secondary)", color: "var(--text-primary)" }} />
           ))}
         </div>
-        <button onClick={handleJoin} disabled={!isComplete || loading} style={{ width: "80%", padding: 16, borderRadius: "var(--radius-button)", background: isComplete ? "var(--accent-blue)" : "var(--border-color)", color: isComplete ? "#fff" : "var(--text-muted)", fontSize: 16, fontWeight: 700, opacity: loading ? 0.6 : 1 }}>
+        <button onClick={handleJoin} disabled={!isComplete || loading} style={{ width: "80%", padding: 16, borderRadius: "var(--radius-button)", background: isComplete ? "var(--accent-blue)" : "#ccc", color: isComplete ? "#fff" : "#888", fontSize: 16, fontWeight: 700, opacity: loading ? 0.6 : 1 }}>
           {loading ? "참여 중..." : "참여하기"}
         </button>
       </div>
+      <Toast message={toastMessage} />
     </div>
   );
 }

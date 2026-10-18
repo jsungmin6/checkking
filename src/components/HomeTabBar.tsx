@@ -1,4 +1,4 @@
-type HomeTab = "home" | "profile";
+type HomeTab = "home" | "publicRooms" | "profile";
 
 interface HomeTabBarProps {
   active: HomeTab;
@@ -7,12 +7,13 @@ interface HomeTabBarProps {
 
 const TABS: { key: HomeTab; label: string }[] = [
   { key: "home", label: "홈" },
+  { key: "publicRooms", label: "오픈방" },
   { key: "profile", label: "내 정보" },
 ];
 
 export default function HomeTabBar({ active, onSelect }: HomeTabBarProps) {
   return (
-    <div style={{ display: "flex", borderTop: "1px solid var(--border-color)", paddingBottom: "env(safe-area-inset-bottom)" }}>
+    <div style={{ display: "flex", flexShrink: 0, borderTop: "1px solid var(--border-color)", paddingBottom: "env(safe-area-inset-bottom)" }}>
       {TABS.map((tab) => (
         <div
           key={tab.key}

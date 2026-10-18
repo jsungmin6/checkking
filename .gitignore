@@ -1,6 +1,23 @@
 node_modules
 dist
+.DS_Store
 *.ait
 .superpowers
 .env.local
 .vercel
+build
+
+# Android
+android/local.properties
+android/keystore.properties
+android/**/*.keystore
+android/**/*.jks
+android/.gradle
+android/**/build
+android/.idea
+android/*.iml
+android/app/release
+
+# iOS
+ios/App/Pods
+*.xcarchive

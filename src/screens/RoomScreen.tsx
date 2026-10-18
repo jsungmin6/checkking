@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from "react";
 import BackHeader from "../components/BackHeader";
 import TabBar from "../components/TabBar";
 import RankRow from "../components/RankRow";
+import UserActionSheet, { isBlocked } from "../components/UserActionSheet";
+import { hideAdBanner } from "../utils/admob";
 import { api, ApiError } from "../utils/api";
 import { collectCheckInData } from "../utils/location";
 import { formatTime } from "../utils/time";
@@ -23,6 +25,7 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
   const [fetchError, setFetchError] = useState(false);
   const [checkingIn, setCheckingIn] = useState(false);
   const [checkInError, setCheckInError] = useState<string | null>(null);
+  const [actionTarget, setActionTarget] = useState<{ userId: number; nickname: string } | null>(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -40,7 +43,7 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
     }
   }, [classroomId]);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => { hideAdBanner(); fetchData(); }, [fetchData]);
 
   const handleCheckIn = async () => {
     if (!classroom) return;
@@ -57,17 +60,7 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
       setTimeout(() => launchConfetti(checkInResult.dailyRank === 1), 300);
     } catch (e) {
       if (e instanceof ApiError) {
-        const messages: Record<string, string> = {
-          GPS_VERIFICATION_FAILED: "현재 위치가 출석 허용 범위 밖입니다",
-          WIFI_VERIFICATION_FAILED: "지정된 Wi-Fi에 연결되어 있지 않습니다",
-          MISSING_GPS_DATA: "GPS 위치 정보를 가져올 수 없습니다. 위치 권한을 확인해주세요",
-          MISSING_WIFI_DATA: "Wi-Fi 정보를 가져올 수 없습니다",
-          NOT_CHECK_IN_TIME: "출석 가능 시간이 아닙니다",
-          ALREADY_CHECKED_IN: "오늘 이미 출석했습니다",
-          NOT_MEMBER: "이 방의 멤버가 아닙니다",
-          WEEKEND_NOT_ALLOWED: "주말에는 출석할 수 없습니다",
-        };
-        setCheckInError(messages[e.code] ?? e.message);
+        setCheckInError(e.message);
       } else {
         const msg = e instanceof Error ? e.message : "출석에 실패했습니다";
         if (msg.includes("위치")) setCheckInError("GPS 위치를 가져올 수 없습니다. 위치 권한을 확인해주세요");
@@ -135,18 +128,20 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
           {today.rankings.length > 0 && (
             <>
               <div style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 8 }}>오늘의 순위</div>
-              {today.rankings.map((r) => (
-                <RankRow key={r.userId} rank={r.rank} nickname={r.nickname} checkInTime={r.checkInTime} isMe={r.userId === user.userId} />
+              {today.rankings.filter((r) => !isBlocked(r.userId)).map((r) => (
+                <div key={r.userId} onClick={() => r.userId !== user.userId && setActionTarget({ userId: r.userId, nickname: r.nickname })}>
+                  <RankRow rank={r.rank} nickname={r.nickname} checkInTime={r.checkInTime} isMe={r.userId === user.userId} />
+                </div>
               ))}
               {today.absentMembers.length > 0 && (
                 <>
                   <div style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 16, marginBottom: 8 }}>미출석</div>
-                  {[...today.absentMembers].sort((a, b) => a.nickname.localeCompare(b.nickname, "ko")).map((m) => (
-                    <div key={m.userId} style={{
+                  {[...today.absentMembers].filter((m) => !isBlocked(m.userId)).sort((a, b) => a.nickname.localeCompare(b.nickname, "ko")).map((m) => (
+                    <div key={m.userId} onClick={() => m.userId !== user.userId && setActionTarget({ userId: m.userId, nickname: m.nickname })} style={{
                       display: "flex", alignItems: "center", padding: 14,
                       background: "var(--bg-card)", borderRadius: "var(--radius-card)",
                       marginBottom: 8, fontSize: 14, color: "var(--text-muted)",
-                      boxShadow: "var(--shadow-card)",
+                      boxShadow: "var(--shadow-card)", cursor: "pointer",
                     }}>
                       <span>{m.nickname}</span>
                       <span style={{ marginLeft: "auto", fontSize: 12, color: "var(--text-muted)", background: "var(--bg-secondary)", padding: "2px 8px", borderRadius: "var(--radius-badge)" }}>미출석</span>
@@ -159,6 +154,13 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
         </div>
       </div>
 
+      {actionTarget && (
+        <UserActionSheet
+          userId={actionTarget.userId}
+          nickname={actionTarget.nickname}
+          onClose={() => setActionTarget(null)}
+        />
+      )}
       <TabBar active="today" onSelect={onTabChange} />
     </div>
   );

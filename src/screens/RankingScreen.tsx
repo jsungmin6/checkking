@@ -1,9 +1,14 @@
 import { useState, useEffect } from "react";
+import { hideAdBanner } from "../utils/admob";
 import BackHeader from "../components/BackHeader";
 import TabBar from "../components/TabBar";
 import { api } from "../utils/api";
+import { isTossApp } from "../utils/platform";
+import { showTossRewardedAd } from "../utils/tossRewardedAd";
 import type { TabName } from "../components/TabBar";
 import type { MonthlyRanking, User } from "../types";
+
+const RANKING_AD_GROUP_ID = "ait.v2.live.320548a2f8304a56";
 
 interface RankingScreenProps {
   classroomId: number;
@@ -20,8 +25,13 @@ export default function RankingScreen({ classroomId, user, onTabChange, onBack }
   const [week, setWeek] = useState(1);
   const [data, setData] = useState<MonthlyRanking | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showMore, setShowMore] = useState(false);
+  const [adLoading, setAdLoading] = useState(false);
+  const [adError, setAdError] = useState<string | null>(null);
 
-  useEffect(() => {
+  useEffect(() => { hideAdBanner();
+    setShowMore(false);
+    setAdError(null);
     setLoading(true);
     const params = new URLSearchParams({
       period,
@@ -51,6 +61,21 @@ export default function RankingScreen({ classroomId, user, onTabChange, onBack }
 
   const top3 = data?.rankings.slice(0, 3) ?? [];
   const rest = data?.rankings.slice(3) ?? [];
+
+  const handleShowMore = async () => {
+    if (adLoading) return;
+    setAdLoading(true);
+    setAdError(null);
+    try {
+      const rewarded = await showTossRewardedAd(RANKING_AD_GROUP_ID);
+      if (rewarded) setShowMore(true);
+      else setAdError("광고를 끝까지 시청하면 나머지 순위를 볼 수 있어요.");
+    } catch (e) {
+      setAdError(e instanceof Error ? e.message : "광고를 재생하지 못했습니다.");
+    } finally {
+      setAdLoading(false);
+    }
+  };
 
   const toggleBtnStyle = (active: boolean): React.CSSProperties => ({
     flex: 1,
@@ -122,8 +147,18 @@ export default function RankingScreen({ classroomId, user, onTabChange, onBack }
               )}
             </div>
           )}
+          {isTossApp() && rest.length > 0 && !showMore && (
+            <div style={{ padding: "0 16px 12px" }}>
+              <button onClick={() => void handleShowMore()} disabled={adLoading} style={{
+                width: "100%", padding: 13, borderRadius: "var(--radius-button)",
+                background: "var(--accent-blue)", color: "#fff", fontSize: 14, fontWeight: 600,
+                opacity: adLoading ? 0.6 : 1,
+              }}>{adLoading ? "광고 준비 중..." : "광고 보고 4위 이후 보기"}</button>
+              {adError && <div style={{ marginTop: 8, color: "var(--accent-red)", fontSize: 12, textAlign: "center" }}>{adError}</div>}
+            </div>
+          )}
           <div style={{ flex: 1, padding: "0 16px", overflow: "auto" }}>
-            {rest.map((r) => {
+            {(isTossApp() && !showMore ? [] : rest).map((r) => {
               const isMe = r.userId === user.userId;
               return (
                 <div key={r.userId} style={{

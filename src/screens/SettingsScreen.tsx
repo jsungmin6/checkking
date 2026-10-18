@@ -1,9 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import BackHeader from "../components/BackHeader";
 import TabBar from "../components/TabBar";
+import UserActionSheet from "../components/UserActionSheet";
+import { hideAdBanner } from "../utils/admob";
 import { api, ApiError } from "../utils/api";
 import type { TabName } from "../components/TabBar";
-import type { Classroom, ClassroomMember, User, ValidationType, ClassroomSettingsRequest } from "../types";
+import type { Classroom, ClassroomMember, User, ValidationType, ClassroomSettingsRequest, GpsConfig } from "../types";
 
 interface SettingsScreenProps {
   classroomId: number;
@@ -61,6 +63,7 @@ export default function SettingsScreen({ classroomId, user, onTabChange, onBack,
   const [loading, setLoading] = useState(true);
   const [showMembers, setShowMembers] = useState(false);
   const [fetchError, setFetchError] = useState(false);
+  const [actionTarget, setActionTarget] = useState<{ userId: number; nickname: string } | null>(null);
 
   // 편집 상태
   const [editingSettings, setEditingSettings] = useState(false);
@@ -68,11 +71,22 @@ export default function SettingsScreen({ classroomId, user, onTabChange, onBack,
   const [editStartTime, setEditStartTime] = useState("");
   const [editEndTime, setEditEndTime] = useState("");
   const [editIncludeWeekends, setEditIncludeWeekends] = useState(true);
+  const [editIsPublic, setEditIsPublic] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  // GPS 편집 상태
+  const [editGpsConfig, setEditGpsConfig] = useState<GpsConfig | null>(null);
+  const [editRadiusMeters, setEditRadiusMeters] = useState("100");
+  const [gpsLoading, setGpsLoading] = useState(false);
+  const [gpsError, setGpsError] = useState<string | null>(null);
+  const [addressText, setAddressText] = useState("");
+  const [showPostcode, setShowPostcode] = useState(false);
+  const postcodeRef = useRef<HTMLDivElement>(null);
 
   const isOwner = classroom?.ownerId === user.userId;
 
   useEffect(() => {
+    hideAdBanner();
     setLoading(true);
     setFetchError(false);
     Promise.all([
@@ -90,19 +104,79 @@ export default function SettingsScreen({ classroomId, user, onTabChange, onBack,
     setEditStartTime(classroom.checkInStartTime ?? "");
     setEditEndTime(classroom.checkInEndTime ?? "");
     setEditIncludeWeekends(classroom.includeWeekends);
+    setEditIsPublic(classroom.isPublic);
+    setEditGpsConfig(classroom.gpsConfig ?? null);
+    setEditRadiusMeters(String(classroom.gpsConfig?.radiusMeters ?? 100));
+    setAddressText(classroom.gpsConfig ? `위도 ${classroom.gpsConfig.latitude.toFixed(4)}, 경도 ${classroom.gpsConfig.longitude.toFixed(4)}` : "");
+    setGpsError(null);
     setEditingSettings(true);
+  };
+
+  const handleCurrentLocation = async () => {
+    setGpsLoading(true);
+    setGpsError(null);
+    try {
+      const { Geolocation } = await import("@capacitor/geolocation");
+      const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 10000 });
+      setEditGpsConfig({ latitude: pos.coords.latitude, longitude: pos.coords.longitude, radiusMeters: Number.parseInt(editRadiusMeters, 10) || 100 });
+      setAddressText(`현재 위치 (${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)})`);
+    } catch {
+      setGpsError("위치를 가져올 수 없습니다");
+    } finally {
+      setGpsLoading(false);
+    }
+  };
+
+  const handleAddressSearch = () => {
+    if (!(window as any).daum) { setGpsError("주소 검색을 로드할 수 없습니다"); return; }
+    setShowPostcode(true);
+    setTimeout(() => {
+      if (!postcodeRef.current) return;
+      new (window as any).daum.Postcode({
+        oncomplete: async (data: any) => {
+          const addr = data.roadAddress || data.jibunAddress || data.address;
+          setShowPostcode(false);
+          setAddressText(addr);
+          setGpsLoading(true);
+          // geocode는 CreateRoomScreen과 동일 로직
+          try {
+            const res = await fetch(`https://dapi.kakao.com/v2/local/search/address.json?query=${encodeURIComponent(addr)}`, {
+              headers: { Authorization: `KakaoAK 7149559f898939399037a8ffc2b64d17` },
+            });
+            const json = await res.json();
+            if (json.documents?.length > 0) {
+              const { y, x } = json.documents[0];
+              setEditGpsConfig({ latitude: parseFloat(y), longitude: parseFloat(x), radiusMeters: Number.parseInt(editRadiusMeters, 10) || 100 });
+            } else {
+              setGpsError("좌표를 찾을 수 없습니다");
+            }
+          } catch { setGpsError("주소 변환 실패"); }
+          setGpsLoading(false);
+        },
+        width: "100%", height: "100%",
+      }).embed(postcodeRef.current);
+    }, 100);
   };
 
   const handleSaveSettings = async () => {
     if (!classroom) return;
     const timeInvalid = editStartTime && editEndTime && editStartTime >= editEndTime;
     if (timeInvalid) { alert("종료 시간이 시작 시간보다 빠릅니다"); return; }
+    const parsedRadiusMeters = Number.parseInt(editRadiusMeters, 10);
+    if ((editValidationType === "GPS" || editValidationType === "GPS_AND_WIFI") &&
+      (!Number.isInteger(parsedRadiusMeters) || parsedRadiusMeters < 10 || parsedRadiusMeters > 1000)) {
+      alert("허용 반경은 10~1000m로 입력해 주세요.");
+      return;
+    }
+    const nextGpsConfig = editValidationType === "GPS" || editValidationType === "GPS_AND_WIFI"
+      ? editGpsConfig ? { ...editGpsConfig, radiusMeters: parsedRadiusMeters } : null
+      : null;
 
     setSaving(true);
     try {
       const settings: ClassroomSettingsRequest = {
         validationType: editValidationType,
-        gpsConfig: classroom.gpsConfig,
+        gpsConfig: nextGpsConfig,
         wifiConfig: classroom.wifiConfig,
         checkInStartTime: editStartTime || null,
         checkInEndTime: editEndTime || null,
@@ -112,12 +186,20 @@ export default function SettingsScreen({ classroomId, user, onTabChange, onBack,
         method: "PUT",
         body: JSON.stringify(settings),
       });
+      if (editIsPublic !== classroom.isPublic) {
+        await api(`/classrooms/${classroomId}/visibility`, {
+          method: "PUT",
+          body: JSON.stringify({ isPublic: editIsPublic }),
+        });
+      }
       setClassroom({
         ...classroom,
         validationType: editValidationType,
+        gpsConfig: nextGpsConfig,
         checkInStartTime: editStartTime || null,
         checkInEndTime: editEndTime || null,
         includeWeekends: editIncludeWeekends,
+        isPublic: editIsPublic,
       });
       setEditingSettings(false);
     } catch (e) {
@@ -214,7 +296,9 @@ export default function SettingsScreen({ classroomId, user, onTabChange, onBack,
           <div style={{ background: "var(--bg-card)", borderRadius: "0 0 var(--radius-card) var(--radius-card)", overflow: "hidden", boxShadow: "var(--shadow-card)", marginBottom: 16 }}>
             {members.map((m, i) => (
               <div key={m.userId} style={{ padding: "12px 16px", display: "flex", alignItems: "center", fontSize: 14, borderBottom: i < members.length - 1 ? "1px solid var(--border-light)" : "none" }}>
-                <span>{m.nickname} {m.isOwner && "👑"}</span>
+                <span onClick={() => m.userId !== user.userId && setActionTarget({ userId: m.userId, nickname: m.nickname })} style={{ cursor: m.userId !== user.userId ? "pointer" : "default" }}>
+                  {m.nickname}{m.isOwner && <span style={{ color: "var(--text-secondary)", fontSize: 12, marginLeft: 6 }}>(방장)</span>}
+                </span>
                 {isOwner && !m.isOwner && (
                   <span style={{ marginLeft: "auto", display: "flex", gap: 12 }}>
                     <span onClick={() => handleTransfer(m.userId, m.nickname)} style={{ color: "var(--accent-orange)", cursor: "pointer" }}>위임</span>
@@ -226,101 +310,170 @@ export default function SettingsScreen({ classroomId, user, onTabChange, onBack,
           </div>
         )}
 
-        {isOwner && (
+        <div style={{ fontSize: 12, color: "var(--text-secondary)", margin: "16px 0 8px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <span>방 설정</span>
+          {isOwner && !editingSettings && (
+            <span onClick={startEditing} style={{ color: "var(--accent-blue)", cursor: "pointer", fontSize: 12 }}>수정</span>
+          )}
+        </div>
+
+        {!editingSettings ? (
           <>
-            <div style={{ fontSize: 12, color: "var(--text-secondary)", margin: "16px 0 8px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span>방장 설정</span>
-              {!editingSettings && (
-                <span onClick={startEditing} style={{ color: "var(--accent-blue)", cursor: "pointer", fontSize: 12 }}>수정</span>
-              )}
+            <div style={rowStyle(true)}>
+              <span>방 공개 범위</span>
+              <span style={{ color: "var(--text-secondary)" }}>{classroom.isPublic ? "공개방" : "비밀방"}</span>
+            </div>
+            <div style={rowStyle()}>
+              <span>출석 검증 방식</span>
+              <span style={{ color: "var(--text-secondary)" }}>
+                {classroom.validationType === "NONE" ? "검증 없음" : classroom.validationType === "GPS" ? "GPS" : classroom.validationType}
+              </span>
+            </div>
+            {classroom.gpsConfig && (
+              <div style={rowStyle()}>
+                <span>GPS 반경</span>
+                <span style={{ color: "var(--text-secondary)" }}>{classroom.gpsConfig.radiusMeters}m</span>
+              </div>
+            )}
+            <div style={rowStyle()}>
+              <span>출석 가능 시간</span>
+              <span style={{ color: "var(--text-secondary)" }}>
+                {classroom.checkInStartTime && classroom.checkInEndTime ? `${classroom.checkInStartTime}~${classroom.checkInEndTime}` : "24시간"}
+              </span>
+            </div>
+            <div style={rowStyle(false, true)}>
+              <span>주말 출석 허용</span>
+              <span style={{ color: classroom.includeWeekends ? "var(--accent-blue)" : "var(--text-secondary)" }}>
+                {classroom.includeWeekends ? "허용" : "제외"}
+              </span>
+            </div>
+          </>
+        ) : (
+          <div style={{ background: "var(--bg-card)", borderRadius: "var(--radius-card)", padding: 16, boxShadow: "var(--shadow-card)" }}>
+            <div style={{ fontSize: 13, marginBottom: 8 }}>방 공개 범위</div>
+            <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+              {([{ value: false, label: "비밀방" }, { value: true, label: "공개방" }] as const).map((option) => (
+                <button key={option.label} onClick={() => setEditIsPublic(option.value)} style={{
+                  flex: 1, padding: 10, borderRadius: 8, fontSize: 13, fontWeight: 600,
+                  background: editIsPublic === option.value ? "var(--accent-blue)" : "transparent",
+                  color: editIsPublic === option.value ? "#fff" : "var(--text-secondary)",
+                  border: editIsPublic === option.value ? "none" : "1px solid var(--border-light)",
+                }}>{option.label}</button>
+              ))}
+            </div>
+            <div style={{ fontSize: 13, marginBottom: 12 }}>출석 검증 방식</div>
+            <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+              {(["NONE", "GPS"] as ValidationType[]).map((t) => (
+                <button key={t} onClick={() => setEditValidationType(t)} style={{
+                  flex: 1, padding: 10, borderRadius: 8, fontSize: 13, fontWeight: 600,
+                  background: editValidationType === t ? "var(--accent-blue)" : "transparent",
+                  color: editValidationType === t ? "#fff" : "var(--text-secondary)",
+                  border: editValidationType === t ? "none" : "1px solid var(--border-light)",
+                }}>
+                  {t === "NONE" ? "검증 없음" : "GPS"}
+                </button>
+              ))}
             </div>
 
-            {!editingSettings ? (
-              <>
-                <div style={rowStyle(true)}>
-                  <span>출석 검증 방식</span>
-                  <span style={{ color: "var(--text-secondary)" }}>
-                    {classroom.validationType === "NONE" ? "검증 없음" : classroom.validationType === "GPS" ? "GPS" : classroom.validationType}
-                  </span>
-                </div>
-                <div style={rowStyle()}>
-                  <span>출석 가능 시간</span>
-                  <span style={{ color: "var(--text-secondary)" }}>
-                    {classroom.checkInStartTime && classroom.checkInEndTime ? `${classroom.checkInStartTime}~${classroom.checkInEndTime}` : "24시간"}
-                  </span>
-                </div>
-                <div style={rowStyle(false, true)}>
-                  <span>주말 출석 허용</span>
-                  <span style={{ color: classroom.includeWeekends ? "var(--accent-blue)" : "var(--text-secondary)" }}>
-                    {classroom.includeWeekends ? "허용" : "제외"}
-                  </span>
-                </div>
-              </>
-            ) : (
-              <div style={{ background: "var(--bg-card)", borderRadius: "var(--radius-card)", padding: 16, boxShadow: "var(--shadow-card)" }}>
-                <div style={{ fontSize: 13, marginBottom: 12 }}>출석 검증 방식</div>
-                <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-                  {(["NONE", "GPS"] as ValidationType[]).map((t) => (
-                    <button key={t} onClick={() => setEditValidationType(t)} style={{
-                      flex: 1, padding: 10, borderRadius: 8, fontSize: 13, fontWeight: 600,
-                      background: editValidationType === t ? "var(--accent-blue)" : "transparent",
-                      color: editValidationType === t ? "#fff" : "var(--text-secondary)",
-                      border: editValidationType === t ? "none" : "1px solid var(--border-light)",
-                    }}>
-                      {t === "NONE" ? "검증 없음" : "GPS"}
-                    </button>
-                  ))}
+            {(editValidationType === "GPS" || editValidationType === "GPS_AND_WIFI") && (
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ fontSize: 13, marginBottom: 8 }}>GPS 위치 설정</div>
+                <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+                  <button onClick={handleAddressSearch} disabled={gpsLoading} style={{
+                    flex: 1, padding: 10, borderRadius: 8, background: "var(--accent-blue)", color: "#fff", fontSize: 13, fontWeight: 600,
+                    opacity: gpsLoading ? 0.5 : 1,
+                  }}>주소 검색</button>
+                  <button onClick={handleCurrentLocation} disabled={gpsLoading} style={{
+                    flex: 1, padding: 10, borderRadius: 8, background: "var(--accent-green)", color: "#fff", fontSize: 13, fontWeight: 600,
+                    opacity: gpsLoading ? 0.5 : 1,
+                  }}>{gpsLoading ? "확인 중..." : "현재 위치로 설정"}</button>
                 </div>
 
-                <div style={{ fontSize: 13, marginBottom: 8 }}>출석 가능 시간</div>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                  <TimeSelect value={editStartTime} onChange={setEditStartTime} />
-                  <span style={{ color: "var(--text-secondary)" }}>~</span>
-                  <TimeSelect value={editEndTime} onChange={setEditEndTime} />
-                </div>
-                <div style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 16 }}>비워두면 24시간 출석 가능</div>
-
-                <div style={{ fontSize: 13, marginBottom: 8 }}>주말 출석 허용</div>
-                <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-                  <button onClick={() => setEditIncludeWeekends(true)} style={{
-                    flex: 1, padding: 10, borderRadius: 8, fontSize: 13, fontWeight: 600,
-                    background: editIncludeWeekends ? "var(--accent-blue)" : "transparent",
-                    color: editIncludeWeekends ? "#fff" : "var(--text-secondary)",
-                    border: editIncludeWeekends ? "none" : "1px solid var(--border-light)",
-                  }}>
-                    허용
-                  </button>
-                  <button onClick={() => setEditIncludeWeekends(false)} style={{
-                    flex: 1, padding: 10, borderRadius: 8, fontSize: 13, fontWeight: 600,
-                    background: !editIncludeWeekends ? "var(--accent-blue)" : "transparent",
-                    color: !editIncludeWeekends ? "#fff" : "var(--text-secondary)",
-                    border: !editIncludeWeekends ? "none" : "1px solid var(--border-light)",
-                  }}>
-                    제외
-                  </button>
-                </div>
-
-                {editStartTime && editEndTime && editStartTime >= editEndTime && (
-                  <div style={{ color: "var(--accent-red)", fontSize: 12, marginBottom: 12 }}>종료 시간이 시작 시간보다 빠릅니다</div>
+                {showPostcode && (
+                  <div style={{ position: "relative", marginBottom: 8 }}>
+                    <div ref={postcodeRef} style={{ height: 400, border: "1px solid var(--border-light)", borderRadius: 8, overflow: "hidden" }} />
+                    <button onClick={() => setShowPostcode(false)} style={{
+                      position: "absolute", top: 8, right: 8, width: 28, height: 28, borderRadius: "50%",
+                      background: "rgba(0,0,0,0.5)", color: "#fff", fontSize: 16, border: "none", cursor: "pointer",
+                    }}>X</button>
+                  </div>
                 )}
 
-                <div style={{ display: "flex", gap: 8 }}>
-                  <button onClick={handleSaveSettings} disabled={saving} style={{
-                    flex: 1, padding: 10, borderRadius: 8, background: "var(--accent-blue)", color: "#fff", fontSize: 13, fontWeight: 600,
-                    opacity: saving ? 0.5 : 1,
-                  }}>
-                    {saving ? "저장 중..." : "저장"}
-                  </button>
-                  <button onClick={() => setEditingSettings(false)} style={{
-                    flex: 1, padding: 10, borderRadius: 8, border: "1px solid var(--border-light)", background: "transparent", color: "var(--text-secondary)", fontSize: 13,
-                  }}>
-                    취소
-                  </button>
+                {gpsError && <div style={{ color: "var(--accent-red)", fontSize: 12, marginBottom: 8 }}>{gpsError}</div>}
+                {addressText && <div style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 8 }}>{addressText}</div>}
+
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>허용 반경</span>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    value={editRadiusMeters}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, "").slice(0, 4);
+                      setEditRadiusMeters(value);
+                      const parsed = Number.parseInt(value, 10);
+                      if (editGpsConfig && Number.isInteger(parsed)) setEditGpsConfig({ ...editGpsConfig, radiusMeters: parsed });
+                    }}
+                    onBlur={() => {
+                      const parsed = Number.parseInt(editRadiusMeters, 10);
+                      if (Number.isInteger(parsed)) setEditRadiusMeters(String(parsed));
+                    }}
+                    min={10}
+                    max={1000}
+                    style={{ width: 70, padding: "6px 8px", borderRadius: 8, border: "1px solid var(--border-light)", background: "var(--bg-secondary)", color: "var(--text-primary)", fontSize: 14, textAlign: "center" }}
+                  />
+                  <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>m</span>
                 </div>
               </div>
             )}
 
-          </>
+            <div style={{ fontSize: 13, marginBottom: 8 }}>출석 가능 시간</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+              <TimeSelect value={editStartTime} onChange={setEditStartTime} />
+              <span style={{ color: "var(--text-secondary)" }}>~</span>
+              <TimeSelect value={editEndTime} onChange={setEditEndTime} />
+            </div>
+            <div style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 16 }}>비워두면 24시간 출석 가능</div>
+
+            <div style={{ fontSize: 13, marginBottom: 8 }}>주말 출석 허용</div>
+            <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+              <button onClick={() => setEditIncludeWeekends(true)} style={{
+                flex: 1, padding: 10, borderRadius: 8, fontSize: 13, fontWeight: 600,
+                background: editIncludeWeekends ? "var(--accent-blue)" : "transparent",
+                color: editIncludeWeekends ? "#fff" : "var(--text-secondary)",
+                border: editIncludeWeekends ? "none" : "1px solid var(--border-light)",
+              }}>
+                허용
+              </button>
+              <button onClick={() => setEditIncludeWeekends(false)} style={{
+                flex: 1, padding: 10, borderRadius: 8, fontSize: 13, fontWeight: 600,
+                background: !editIncludeWeekends ? "var(--accent-blue)" : "transparent",
+                color: !editIncludeWeekends ? "#fff" : "var(--text-secondary)",
+                border: !editIncludeWeekends ? "none" : "1px solid var(--border-light)",
+              }}>
+                제외
+              </button>
+            </div>
+
+            {editStartTime && editEndTime && editStartTime >= editEndTime && (
+              <div style={{ color: "var(--accent-red)", fontSize: 12, marginBottom: 12 }}>종료 시간이 시작 시간보다 빠릅니다</div>
+            )}
+
+            <div style={{ display: "flex", gap: 8 }}>
+              <button onClick={handleSaveSettings} disabled={saving} style={{
+                flex: 1, padding: 10, borderRadius: 8, background: "var(--accent-blue)", color: "#fff", fontSize: 13, fontWeight: 600,
+                opacity: saving ? 0.5 : 1,
+              }}>
+                {saving ? "저장 중..." : "저장"}
+              </button>
+              <button onClick={() => setEditingSettings(false)} style={{
+                flex: 1, padding: 10, borderRadius: 8, border: "1px solid var(--border-light)", background: "transparent", color: "var(--text-secondary)", fontSize: 13,
+              }}>
+                취소
+              </button>
+            </div>
+          </div>
         )}
 
         <div style={{ marginTop: 24, display: "flex", flexDirection: "column", gap: 8 }}>
@@ -332,6 +485,13 @@ export default function SettingsScreen({ classroomId, user, onTabChange, onBack,
           )}
         </div>
       </div>
+      {actionTarget && (
+        <UserActionSheet
+          userId={actionTarget.userId}
+          nickname={actionTarget.nickname}
+          onClose={() => setActionTarget(null)}
+        />
+      )}
       <TabBar active="settings" onSelect={onTabChange} />
     </div>
   );

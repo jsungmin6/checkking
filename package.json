@@ -4,8 +4,8 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "granite dev",
-    "build": "ait build",
+    "dev": "vite dev",
+    "build": "vite build && ait build",
     "deploy": "ait deploy",
     "lint": "eslint .",
     "format": "prettier --write .",
@@ -13,13 +13,17 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@apps-in-toss/web-framework": "^2.5.1",
+    "@apps-in-toss/web-framework": "^3.8.0",
+    "@capacitor-community/admob": "^8.0.0",
+    "@capacitor-community/apple-sign-in": "^7.1.0",
+    "@capacitor/android": "^8.4.0",
     "@capacitor/app": "^8.1.0",
     "@capacitor/browser": "^8.0.3",
     "@capacitor/cli": "^8.4.0",
     "@capacitor/core": "^8.4.0",
     "@capacitor/geolocation": "^8.2.0",
     "@capacitor/ios": "^8.4.0",
+    "@capgo/capacitor-app-tracking-transparency": "^8.1.10",
     "capacitor-kakao-login-plugin": "^3.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
@@ -30,6 +34,7 @@
     "@vitejs/plugin-react": "^4.3.4",
     "typescript": "~5.7.2",
     "vite": "^6.2.0",
-    "vitest": "^4.1.7"
+    "vitest": "^4.1.7",
+    "@apps-in-toss/devtools": "^3.8.0"
   }
 }

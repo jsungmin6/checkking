@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">출석왕</string>
+    <string name="title_activity_main">출석왕</string>
+    <string name="package_name">com.chesscode.checkking</string>
+    <string name="custom_url_scheme">com.chesscode.checkking</string>
+    <string name="kakao_app_key">41fdc046dde317da70906f460646c759</string>
+    <string name="kakao_scheme">kakao41fdc046dde317da70906f460646c759</string>
+</resources>

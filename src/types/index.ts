@@ -1,6 +1,6 @@
 // === Enums ===
 
-export type LoginType = "KAKAO" | "TOSS";
+export type LoginType = "KAKAO" | "TOSS" | "APPLE";
 export type ValidationType = "NONE" | "GPS" | "WIFI" | "GPS_AND_WIFI";
 export type AttendanceStatus = "PRESENT" | "ABSENT" | "EXCUSED";
 
@@ -71,6 +71,7 @@ export interface Classroom {
   checkInStartTime: string | null;
   checkInEndTime: string | null;
   includeWeekends: boolean;
+  isPublic: boolean;
   memberCount: number;
   createdAt: string;
 }
@@ -82,8 +83,13 @@ export interface ClassroomListItem {
   ownerNickname: string;
   isOwner: boolean;
   memberCount: number;
+  maxMembers: number;
   todayCheckedIn: boolean;
   todayRank: number | null;
+  isPublic: boolean;
+  inviteCode: string;
+  joined: boolean;
+  isDemo?: boolean;
 }
 
 export interface ClassroomMember {
@@ -178,6 +184,7 @@ export interface Profile {
   userId: number;
   nickname: string;
   loginType: LoginType;
+  accountType: AccountType;
   createdAt: string;
 }
 
@@ -189,6 +196,7 @@ export type ScreenName =
   | "profile"
   | "createRoom"
   | "joinRoom"
+  | "publicRooms"
   | "room"
   | "ranking"
   | "stats"

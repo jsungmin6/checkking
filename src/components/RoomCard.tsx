@@ -7,21 +7,23 @@ interface RoomCardProps {
 
 export default function RoomCard({ room, onClick }: RoomCardProps) {
   return (
-    <div onClick={onClick} style={{ background: "var(--bg-card)", borderRadius: "var(--radius-card)", padding: 20, marginBottom: 10, cursor: "pointer", boxShadow: "var(--shadow-card)" }}>
+    <div onClick={onClick} style={{ background: "var(--bg-card)", borderRadius: "var(--radius-card)", padding: 14, cursor: "pointer", boxShadow: "var(--shadow-card)" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <div style={{ fontWeight: 600 }}>{room.name}</div>
+        <div style={{ fontWeight: 600, fontSize: 15, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{room.name}</div>
         <span style={{
           background: room.todayCheckedIn ? "#E8F8EE" : "#FFEEEE",
           color: room.todayCheckedIn ? "#1B873F" : "#F04452",
-          padding: "3px 10px", borderRadius: 12, fontSize: 11,
+          padding: "3px 9px", borderRadius: 12, fontSize: 11, flexShrink: 0, marginLeft: 8,
         }}>
           {room.todayCheckedIn ? "출석완료" : "미출석"}
         </span>
       </div>
-      <div style={{ color: "var(--text-secondary)", fontSize: 13, marginTop: 6 }}>
-        {room.todayCheckedIn && room.todayRank ? `오늘 ${room.todayRank}등` : "아직 출석하지 않았어요"}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginTop: 7 }}>
+        <div style={{ color: "var(--text-secondary)", fontSize: 12, minWidth: 0 }}>
+          {room.todayCheckedIn && room.todayRank ? `오늘 ${room.todayRank}등` : "아직 출석하지 않았어요"}
+        </div>
+        <div style={{ color: "var(--text-muted)", fontSize: 11, flexShrink: 0, textAlign: "right" }}>{room.memberCount}명 참여중</div>
       </div>
-      <div style={{ color: "var(--text-muted)", fontSize: 12, marginTop: 2 }}>{room.memberCount}명 참여중</div>
     </div>
   );
 }

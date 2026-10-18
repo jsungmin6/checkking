@@ -1,23 +1,49 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { api } from "../utils/api";
 import RoomCard from "../components/RoomCard";
 import HomeTabBar from "../components/HomeTabBar";
+import TossBannerAd from "../components/TossBannerAd";
+import AdMobBanner from "../components/AdMobBanner";
+import Toast from "../components/Toast";
+import { useToast } from "../hooks/useToast";
 import type { HomeTab } from "../components/HomeTabBar";
-import type { ClassroomListItem } from "../types";
+import type { AccountType, ClassroomListItem } from "../types";
 
 interface HomeScreenProps {
+  accountType?: AccountType;
   onNavigateCreateRoom: () => void;
   onNavigateJoinRoom: () => void;
+  onNavigatePublicRooms: () => void;
   onNavigateRoom: (classroomId: number) => void;
   onNavigateProfile: () => void;
 }
 
 export default function HomeScreen({
-  onNavigateCreateRoom, onNavigateJoinRoom, onNavigateRoom, onNavigateProfile,
+  accountType, onNavigateCreateRoom, onNavigateJoinRoom, onNavigatePublicRooms, onNavigateRoom, onNavigateProfile,
 }: HomeScreenProps) {
   const [rooms, setRooms] = useState<ClassroomListItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<HomeTab>("home");
+  const { toastMessage, showToast } = useToast();
+  const roomLimit = accountType === "PREMIUM" ? 50 : 3;
+
+  const handleCreateRoom = async () => {
+    let currentRooms = rooms;
+    if (loading) {
+      try {
+        const data = await api<{ classrooms: ClassroomListItem[] }>("/classrooms/my");
+        currentRooms = data.classrooms;
+        setRooms(currentRooms);
+      } catch {
+        onNavigateCreateRoom();
+        return;
+      }
+    }
+    if (currentRooms.length >= roomLimit) {
+      showToast(`방은 ${roomLimit}개까지만 이용할 수 있어요.`);
+      return;
+    }
+    onNavigateCreateRoom();
+  };
 
   useEffect(() => {
     api<{ classrooms: ClassroomListItem[] }>("/classrooms/my")
@@ -29,36 +55,33 @@ export default function HomeScreen({
   const handleTabChange = (tab: HomeTab) => {
     if (tab === "profile") {
       onNavigateProfile();
-    } else {
-      setActiveTab(tab);
-    }
+    } else if (tab === "publicRooms") onNavigatePublicRooms();
   };
 
   return (
-    <div className="page" style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
-      <div style={{ padding: "20px 20px 12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+    <div className="page" style={{ display: "flex", flexDirection: "column", height: "100dvh", minHeight: 0, overflow: "hidden" }}>
+      <div style={{ padding: "20px 20px 12px", display: "flex", justifyContent: "space-between", alignItems: "center", flexShrink: 0 }}>
         <div style={{ fontSize: 22, fontWeight: 700 }}>내 방</div>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-          <span onClick={onNavigateCreateRoom} style={{ padding: "8px 14px", background: "var(--accent-blue)", borderRadius: "var(--radius-button)", fontSize: 13, fontWeight: 600, color: "#fff", cursor: "pointer" }}>+ 만들기</span>
+          <span onClick={handleCreateRoom} style={{ padding: "8px 14px", background: "var(--accent-blue)", borderRadius: "var(--radius-button)", fontSize: 13, fontWeight: 600, color: "#fff", cursor: "pointer" }}>+ 만들기</span>
           <span onClick={onNavigateJoinRoom} style={{ padding: "8px 14px", background: "var(--bg-card)", border: "1px solid var(--border-color)", borderRadius: "var(--radius-button)", fontSize: 13, fontWeight: 600, color: "var(--text-primary)", cursor: "pointer" }}>참여</span>
         </div>
       </div>
 
-      <div style={{ padding: "16px 16px", flex: 1, overflow: "auto" }}>
+      <div style={{ padding: "12px 16px", flex: 1, minHeight: 0, overflowY: "auto", overscrollBehavior: "contain" }}>
         {loading ? (
           <div style={{ textAlign: "center", padding: 40, color: "var(--text-secondary)" }}>불러오는 중...</div>
         ) : rooms.length === 0 ? (
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 60, textAlign: "center" }}>
-            <div style={{ fontSize: 48, marginBottom: 16 }}>📭</div>
             <div style={{ fontSize: 17, fontWeight: 600, marginBottom: 8 }}>아직 참여한 방이 없어요</div>
             <div style={{ color: "var(--text-secondary)", fontSize: 14, marginBottom: 32 }}>방을 만들거나 초대코드로 참여해보세요</div>
             <div style={{ display: "flex", gap: 12 }}>
-              <button onClick={onNavigateCreateRoom} style={{ padding: "12px 24px", borderRadius: "var(--radius-button)", background: "var(--accent-blue)", color: "#fff", fontSize: 15, fontWeight: 600 }}>방 만들기</button>
+              <button onClick={handleCreateRoom} style={{ padding: "12px 24px", borderRadius: "var(--radius-button)", background: "var(--accent-blue)", color: "#fff", fontSize: 15, fontWeight: 600 }}>방 만들기</button>
               <button onClick={onNavigateJoinRoom} style={{ padding: "12px 24px", borderRadius: "var(--radius-button)", background: "var(--bg-card)", border: "1px solid var(--border-color)", color: "var(--text-primary)", fontSize: 15, fontWeight: 600 }}>참여하기</button>
             </div>
           </div>
         ) : (
-          <div style={{ display: "grid", gap: 12 }} className="room-grid">
+          <div style={{ display: "grid", gap: 8 }} className="room-grid">
             {rooms.map((room) => (
               <RoomCard key={room.classroomId} room={room} onClick={() => onNavigateRoom(room.classroomId)} />
             ))}
@@ -66,7 +89,12 @@ export default function HomeScreen({
         )}
       </div>
 
-      <HomeTabBar active={activeTab} onSelect={handleTabChange} />
+      <div style={{ flexShrink: 0 }}>
+        <TossBannerAd />
+        <HomeTabBar active="home" onSelect={handleTabChange} />
+        <AdMobBanner />
+      </div>
+      <Toast message={toastMessage} />
     </div>
   );
 }

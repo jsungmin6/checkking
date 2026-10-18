@@ -1,3 +1,4 @@
+import { Geolocation } from "@capacitor/geolocation";
 import type { ValidationType, CheckInRequest } from "../types";
 
 interface GeoPosition {
@@ -6,23 +7,16 @@ interface GeoPosition {
   accuracy: number;
 }
 
-function getCurrentPosition(): Promise<GeoPosition> {
-  return new Promise((resolve, reject) => {
-    if (!navigator.geolocation) {
-      reject(new Error("GPS를 사용할 수 없습니다"));
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(
-      (pos) =>
-        resolve({
-          latitude: pos.coords.latitude,
-          longitude: pos.coords.longitude,
-          accuracy: pos.coords.accuracy,
-        }),
-      (err) => reject(new Error(`위치 정보를 가져올 수 없습니다: ${err.message}`)),
-      { enableHighAccuracy: true, timeout: 10000 }
-    );
+async function getCurrentPosition(): Promise<GeoPosition> {
+  const pos = await Geolocation.getCurrentPosition({
+    enableHighAccuracy: true,
+    timeout: 10000,
   });
+  return {
+    latitude: pos.coords.latitude,
+    longitude: pos.coords.longitude,
+    accuracy: pos.coords.accuracy,
+  };
 }
 
 async function getWifiInfo(): Promise<{ ssid: string; bssid: string } | null> {
