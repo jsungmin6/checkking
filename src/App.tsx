@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { closeView, graniteEvent } from "@apps-in-toss/web-framework";
 import { useAuth } from "./hooks/useAuth";
 import { isCapacitor, isIOS, isTossApp } from "./utils/platform";
+import { resetDevPreview } from "./utils/api";
 import LoginScreen from "./screens/LoginScreen";
 import HomeScreen from "./screens/HomeScreen";
 import ProfileScreen from "./screens/ProfileScreen";
@@ -16,7 +17,10 @@ import PublicRoomsScreen from "./screens/PublicRoomsScreen";
 import type { ScreenName, User } from "./types";
 
 export default function App() {
-  const { user, loading, authError, needsTermsAgreement, loginWithKakaoToken, loginWithApple, loginWithToss, acceptTerms, logout, updateNickname } = useAuth();
+  const { user: authUser, loading, authError, needsTermsAgreement, loginWithKakaoToken, loginWithApple, loginWithToss, acceptTerms, logout, updateNickname } = useAuth();
+  // TEMP dev-only local preview bypass (no real login). Remove before shipping.
+  const [devPreviewUser, setDevPreviewUser] = useState<User | null>(null);
+  const user = authUser ?? devPreviewUser;
   const [screen, setScreen] = useState<ScreenName>("home");
   const [activeRoomId, setActiveRoomId] = useState<number | null>(null);
   const attInitRef = useRef(false);
@@ -72,7 +76,18 @@ export default function App() {
 
   if (!user) {
     return (
-      <LoginScreen onLogin={handleLogin} loginWithKakaoToken={loginWithKakaoToken} loginWithApple={loginWithApple} loginWithToss={loginWithToss} kakaoError={authError} />
+      <LoginScreen
+        onLogin={handleLogin}
+        loginWithKakaoToken={loginWithKakaoToken}
+        loginWithApple={loginWithApple}
+        loginWithToss={loginWithToss}
+        kakaoError={authError}
+        onDevPreview={import.meta.env.DEV ? () => {
+          localStorage.setItem("att-points-total", "1500"); // TEMP: 로컬 확인용
+          resetDevPreview();
+          setDevPreviewUser({ userId: -1, nickname: "민준", loginType: "KAKAO", accountType: "FREE" });
+        } : undefined}
+      />
     );
   }
 

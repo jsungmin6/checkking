@@ -12,9 +12,10 @@ interface LoginScreenProps {
   loginWithToss: (code: string, referrer: string) => Promise<{ user: User }>;
   kakaoLoading?: boolean;
   kakaoError?: string | null;
+  onDevPreview?: () => void;
 }
 
-export default function LoginScreen({ onLogin, loginWithKakaoToken, loginWithApple, loginWithToss, kakaoLoading, kakaoError }: LoginScreenProps) {
+export default function LoginScreen({ onLogin, loginWithKakaoToken, loginWithApple, loginWithToss, kakaoLoading, kakaoError, onDevPreview }: LoginScreenProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [viewingTerms, setViewingTerms] = useState<{ url: string; title: string } | null>(null);
@@ -131,6 +132,15 @@ export default function LoginScreen({ onLogin, loginWithKakaoToken, loginWithApp
         <span onClick={() => setViewingTerms({ url: "/privacy.html", title: "개인정보 처리방침" })} style={{ color: "var(--text-secondary)", textDecoration: "underline", cursor: "pointer" }}>개인정보 처리방침</span>,{" "}
         <span onClick={() => setViewingTerms({ url: "/location-terms.html", title: "위치정보 이용약관" })} style={{ color: "var(--text-secondary)", textDecoration: "underline", cursor: "pointer" }}>위치정보 이용약관</span>에<br/>동의한 것으로 간주됩니다.
       </div>
+      {onDevPreview && (
+        <button onClick={onDevPreview} style={{
+          marginTop: 20, padding: "10px 18px", borderRadius: "var(--radius-button)",
+          background: "var(--bg-secondary)", color: "var(--text-secondary)", fontSize: 13, fontWeight: 600,
+          border: "1px dashed var(--border-color)",
+        }}>
+          🛠 로컬 미리보기 (DEV)
+        </button>
+      )}
       {viewingTerms && <TermsViewer url={viewingTerms.url} title={viewingTerms.title} onClose={() => setViewingTerms(null)} />}
     </div>
   );

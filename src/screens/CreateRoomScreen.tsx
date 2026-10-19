@@ -5,7 +5,7 @@ import { useToast } from "../hooks/useToast";
 import { api, ApiError } from "../utils/api";
 import { validateRoomName } from "../utils/profanity";
 import { isTossApp } from "../utils/platform";
-import { showTossRewardedAd } from "../utils/tossRewardedAd";
+import { showTossRewardedAd, reportAdLoadFailed } from "../utils/tossRewardedAd";
 import type { AccountType, Classroom, ClassroomListItem, ValidationType, ClassroomSettingsRequest, GpsConfig, WifiConfig } from "../types";
 
 interface CreateRoomScreenProps {
@@ -128,6 +128,7 @@ export default function CreateRoomScreen({ accountType, onBack, onCreated }: Cre
   const [showTimeSelect, setShowTimeSelect] = useState(false);
 
   const [loading, setLoading] = useState(false);
+  const [watchingAd, setWatchingAd] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toastMessage, showToast } = useToast();
   const [roomCount, setRoomCount] = useState<number | null>(null);
@@ -203,8 +204,24 @@ export default function CreateRoomScreen({ accountType, onBack, onCreated }: Cre
     setError(null);
     try {
       if (isTossApp()) {
-        const rewarded = await showTossRewardedAd(CREATE_ROOM_AD_GROUP_ID);
-        if (!rewarded) {
+        setWatchingAd(true);
+        let result: boolean | "timeout";
+        try {
+          const timeout = new Promise<"timeout">((resolve) => setTimeout(() => resolve("timeout"), 30000));
+          result = await Promise.race([showTossRewardedAd(CREATE_ROOM_AD_GROUP_ID), timeout]);
+        } catch (adError) {
+          setWatchingAd(false);
+          reportAdLoadFailed(CREATE_ROOM_AD_GROUP_ID, adError instanceof Error ? adError.message : "unknown_error");
+          showToast("광고 불러오기가 실패했어요. 다음에 시도해주세요");
+          return;
+        }
+        setWatchingAd(false);
+        if (result === "timeout") {
+          reportAdLoadFailed(CREATE_ROOM_AD_GROUP_ID, "timeout_30s");
+          showToast("광고 불러오기가 실패했어요. 다음에 시도해주세요");
+          return;
+        }
+        if (!result) {
           setError("광고를 끝까지 시청하면 방을 만들 수 있어요.");
           return;
         }
@@ -456,8 +473,15 @@ export default function CreateRoomScreen({ accountType, onBack, onCreated }: Cre
               <div style={{ color: "var(--text-muted)", fontSize: 12, marginTop: 6 }}>설정하지 않으면 24시간 출석 가능</div>
             </div>
 
-            <button onClick={handleCreate} disabled={loading || !!timeInvalid || roomLimitReached} style={{ width: "100%", padding: 16, borderRadius: "var(--radius-button)", background: "var(--accent-blue)", color: "#fff", fontSize: 16, fontWeight: 700, opacity: loading || timeInvalid || roomLimitReached ? 0.5 : 1 }}>
-              {loading ? (isTossApp() ? "광고 확인 중..." : "방 만드는 중...") : isTossApp() ? "광고 보고 방 만들기" : "방 만들기"}
+            <button onClick={handleCreate} disabled={loading || !!timeInvalid || roomLimitReached} style={{ width: "100%", padding: 16, borderRadius: "var(--radius-button)", background: "var(--accent-blue)", color: "#fff", fontSize: 16, fontWeight: 700, opacity: loading || timeInvalid || roomLimitReached ? 0.5 : 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+              {watchingAd && (
+                <span style={{
+                  display: "inline-block", width: 16, height: 16, borderRadius: "50%",
+                  border: "2px solid rgba(255,255,255,0.4)", borderTopColor: "#fff",
+                  animation: "spin 0.8s linear infinite",
+                }} />
+              )}
+              {watchingAd ? "광고 불러오는 중" : loading ? "방 만드는 중..." : isTossApp() ? "광고 보고 방 만들기" : "방 만들기"}
             </button>
           </div>
         );

@@ -21,3 +21,4 @@ android/app/release
 # iOS
 ios/App/Pods
 *.xcarchive
+.pq-review

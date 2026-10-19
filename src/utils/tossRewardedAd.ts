@@ -1,6 +1,14 @@
 import { isTossApp } from "./platform";
 import { api } from "./api";
 
+/** 광고 로딩/재생 실패를 서버에 보고한다(텔레그램 알림용). 실패해도 UI에 영향 없는 best-effort 호출. */
+export function reportAdLoadFailed(adGroupId: string, reason: string) {
+  void api("/notifications/ad-load-failed", {
+    method: "POST",
+    body: JSON.stringify({ adGroupId, reason }),
+  }).catch(() => {});
+}
+
 /** Returns true only after the SDK reports that the user earned the reward. */
 export async function showTossRewardedAd(adGroupId: string): Promise<boolean> {
   if (!isTossApp()) return true;

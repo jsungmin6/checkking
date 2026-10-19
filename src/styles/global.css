@@ -62,11 +62,6 @@ body {
   padding-top: env(safe-area-inset-top);
 }
 
-@media (min-width: 768px) {
-  .page {
-    max-width: 768px;
-  }
-}
 
 button {
   font-family: inherit;
@@ -102,16 +97,4 @@ select {
 
 .room-grid {
   grid-template-columns: 1fr;
-}
-
-@media (min-width: 768px) {
-  .room-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
-@media (min-width: 768px) {
-  .stat-grid {
-    grid-template-columns: 1fr 1fr 1fr !important;
-  }
 }

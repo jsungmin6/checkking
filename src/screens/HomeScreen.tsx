@@ -5,7 +5,9 @@ import HomeTabBar from "../components/HomeTabBar";
 import TossBannerAd from "../components/TossBannerAd";
 import AdMobBanner from "../components/AdMobBanner";
 import Toast from "../components/Toast";
+import ConvertPointsModal from "../components/ConvertPointsModal";
 import { useToast } from "../hooks/useToast";
+import { useAttendancePoints, POINTS_TO_WON_RATE } from "../hooks/useAttendancePoints";
 import type { HomeTab } from "../components/HomeTabBar";
 import type { AccountType, ClassroomListItem } from "../types";
 
@@ -25,6 +27,23 @@ export default function HomeScreen({
   const [loading, setLoading] = useState(true);
   const { toastMessage, showToast } = useToast();
   const roomLimit = accountType === "PREMIUM" ? 50 : 3;
+  const { totalPoints, requestConversion } = useAttendancePoints();
+  const [showConvertModal, setShowConvertModal] = useState(false);
+
+  const handleConvertPoints = () => {
+    if (totalPoints < POINTS_TO_WON_RATE) {
+      showToast(`${POINTS_TO_WON_RATE.toLocaleString()}P부터 전환할 수 있어요`);
+      return;
+    }
+    setShowConvertModal(true);
+  };
+
+  const handleConverted = (convertedCoins: number) => {
+    requestConversion(convertedCoins);
+    setShowConvertModal(false);
+    showToast(`토스 포인트 ${(convertedCoins / POINTS_TO_WON_RATE).toLocaleString()}P로 전환됐어요`);
+  };
+
 
   const handleCreateRoom = async () => {
     let currentRooms = rooms;
@@ -67,6 +86,24 @@ export default function HomeScreen({
           <span onClick={onNavigateJoinRoom} style={{ padding: "8px 14px", background: "var(--bg-card)", border: "1px solid var(--border-color)", borderRadius: "var(--radius-button)", fontSize: 13, fontWeight: 600, color: "var(--text-primary)", cursor: "pointer" }}>참여</span>
         </div>
       </div>
+      <div style={{
+        margin: "0 16px 12px", padding: "16px 18px", borderRadius: "var(--radius-card)",
+        background: "linear-gradient(135deg, var(--accent-blue), #5B9CF6)", color: "#fff",
+        display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 12,
+        flexShrink: 0, maxWidth: 420,
+      }}>
+        <div>
+          <div style={{ fontSize: 12, opacity: 0.85, marginBottom: 4 }}>출석 포인트</div>
+          <div style={{ fontSize: 24, fontWeight: 800 }}>{totalPoints.toLocaleString()}P</div>
+        </div>
+        <button onClick={handleConvertPoints} style={{
+          padding: "10px 14px", borderRadius: "var(--radius-button)", border: "none",
+          background: "rgba(255,255,255,0.2)", color: "#fff", fontSize: 13, fontWeight: 700,
+          whiteSpace: "nowrap", cursor: "pointer",
+        }}>
+          토스 포인트로 바꾸기
+        </button>
+      </div>
 
       <div style={{ padding: "12px 16px", flex: 1, minHeight: 0, overflowY: "auto", overscrollBehavior: "contain" }}>
         {loading ? (
@@ -95,6 +132,13 @@ export default function HomeScreen({
         <AdMobBanner />
       </div>
       <Toast message={toastMessage} />
+      {showConvertModal && (
+        <ConvertPointsModal
+          totalPoints={totalPoints}
+          onClose={() => setShowConvertModal(false)}
+          onConverted={handleConverted}
+        />
+      )}
     </div>
   );
 }
