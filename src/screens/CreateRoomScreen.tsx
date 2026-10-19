@@ -205,10 +205,9 @@ export default function CreateRoomScreen({ accountType, onBack, onCreated }: Cre
     try {
       if (isTossApp()) {
         setWatchingAd(true);
-        let result: boolean | "timeout";
+        let result: boolean;
         try {
-          const timeout = new Promise<"timeout">((resolve) => setTimeout(() => resolve("timeout"), 30000));
-          result = await Promise.race([showTossRewardedAd(CREATE_ROOM_AD_GROUP_ID), timeout]);
+          result = await showTossRewardedAd(CREATE_ROOM_AD_GROUP_ID);
         } catch (adError) {
           setWatchingAd(false);
           reportAdLoadFailed(CREATE_ROOM_AD_GROUP_ID, adError instanceof Error ? adError.message : "unknown_error");
@@ -216,11 +215,6 @@ export default function CreateRoomScreen({ accountType, onBack, onCreated }: Cre
           return;
         }
         setWatchingAd(false);
-        if (result === "timeout") {
-          reportAdLoadFailed(CREATE_ROOM_AD_GROUP_ID, "timeout_30s");
-          showToast("광고 불러오기가 실패했어요. 다음에 시도해주세요");
-          return;
-        }
         if (!result) {
           setError("광고를 끝까지 시청하면 방을 만들 수 있어요.");
           return;

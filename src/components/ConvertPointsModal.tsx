@@ -4,8 +4,8 @@ import { showTossRewardedAd, reportAdLoadFailed } from "../utils/tossRewardedAd"
 import { POINTS_TO_WON_RATE } from "../hooks/useAttendancePoints";
 
 // 기존 "출석왕_랭킹보기_리워드" 광고 그룹 재사용 — 이 광고를 끝까지 봐야 포인트교환 프로모션 지급을 요청한다.
+// 타임아웃은 showTossRewardedAd 내부에서 로딩/재생 단계별로 각각 처리한다(로딩 30초, 재생 180초).
 const CONVERT_POINTS_AD_GROUP_ID = "ait.v2.live.320548a2f8304a56";
-const AD_LOAD_TIMEOUT_MS = 30000;
 
 interface ConvertPointsModalProps {
   totalPoints: number;
@@ -32,21 +32,14 @@ export default function ConvertPointsModal({ totalPoints, onClose, onConverted }
   const handleConvert = async () => {
     setError(null);
 
-    // 1단계: 리워드 광고 시청
+    // 1단계: 리워드 광고 시청 (로딩 30초/재생 180초 타임아웃은 함수 내부에서 처리)
     setStep("watchingAd");
-    let watched: boolean | "timeout";
+    let watched: boolean;
     try {
-      const timeout = new Promise<"timeout">((resolve) => setTimeout(() => resolve("timeout"), AD_LOAD_TIMEOUT_MS));
-      watched = await Promise.race([showTossRewardedAd(CONVERT_POINTS_AD_GROUP_ID), timeout]);
+      watched = await showTossRewardedAd(CONVERT_POINTS_AD_GROUP_ID);
     } catch (adError) {
       setStep("idle");
       reportAdLoadFailed(CONVERT_POINTS_AD_GROUP_ID, adError instanceof Error ? adError.message : "unknown_error");
-      setError("광고 불러오기가 실패했어요. 다음에 시도해주세요");
-      return;
-    }
-    if (watched === "timeout") {
-      setStep("idle");
-      reportAdLoadFailed(CONVERT_POINTS_AD_GROUP_ID, "timeout_30s");
       setError("광고 불러오기가 실패했어요. 다음에 시도해주세요");
       return;
     }
