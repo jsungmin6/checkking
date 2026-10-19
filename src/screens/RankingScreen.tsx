@@ -2,9 +2,15 @@ import { useState, useEffect } from "react";
 import { hideAdBanner } from "../utils/admob";
 import BackHeader from "../components/BackHeader";
 import TabBar from "../components/TabBar";
+import Toast from "../components/Toast";
+import { useToast } from "../hooks/useToast";
 import { api } from "../utils/api";
+import { isTossApp } from "../utils/platform";
+import { showTossRewardedAd, reportAdLoadFailed } from "../utils/tossRewardedAd";
 import type { TabName } from "../components/TabBar";
 import type { MonthlyRanking, User } from "../types";
+
+const RANKING_AD_GROUP_ID = "ait.v2.live.320548a2f8304a56";
 
 interface RankingScreenProps {
   classroomId: number;
@@ -21,8 +27,12 @@ export default function RankingScreen({ classroomId, user, onTabChange, onBack }
   const [week, setWeek] = useState(1);
   const [data, setData] = useState<MonthlyRanking | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showMore, setShowMore] = useState(false);
+  const [watchingAd, setWatchingAd] = useState(false);
+  const { toastMessage, showToast } = useToast();
 
   useEffect(() => { hideAdBanner();
+    setShowMore(false);
     setLoading(true);
     const params = new URLSearchParams({
       period,
@@ -52,6 +62,31 @@ export default function RankingScreen({ classroomId, user, onTabChange, onBack }
 
   const top3 = data?.rankings.slice(0, 3) ?? [];
   const rest = data?.rankings.slice(3) ?? [];
+
+  const handleShowMore = async () => {
+    setWatchingAd(true);
+    let result: boolean | "timeout";
+    try {
+      const timeout = new Promise<"timeout">((resolve) => setTimeout(() => resolve("timeout"), 30000));
+      result = await Promise.race([showTossRewardedAd(RANKING_AD_GROUP_ID), timeout]);
+    } catch (adError) {
+      setWatchingAd(false);
+      reportAdLoadFailed(RANKING_AD_GROUP_ID, adError instanceof Error ? adError.message : "unknown_error");
+      showToast("광고 불러오기가 실패했어요. 다음에 시도해주세요");
+      return;
+    }
+    setWatchingAd(false);
+    if (result === "timeout") {
+      reportAdLoadFailed(RANKING_AD_GROUP_ID, "timeout_30s");
+      showToast("광고 불러오기가 실패했어요. 다음에 시도해주세요");
+      return;
+    }
+    if (result) {
+      setShowMore(true);
+    } else {
+      showToast("광고를 끝까지 시청하면 나머지 순위를 볼 수 있어요.");
+    }
+  };
 
   const toggleBtnStyle = (active: boolean): React.CSSProperties => ({
     flex: 1,
@@ -123,8 +158,26 @@ export default function RankingScreen({ classroomId, user, onTabChange, onBack }
               )}
             </div>
           )}
+          {isTossApp() && rest.length > 0 && !showMore && (
+            <div style={{ padding: "0 16px 12px" }}>
+              <button onClick={() => void handleShowMore()} disabled={watchingAd} style={{
+                width: "100%", padding: 13, borderRadius: "var(--radius-button)", border: "none",
+                background: "var(--accent-blue)", color: "#fff", fontSize: 14, fontWeight: 600,
+                opacity: watchingAd ? 0.6 : 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+              }}>
+                {watchingAd && (
+                  <span style={{
+                    display: "inline-block", width: 14, height: 14, borderRadius: "50%",
+                    border: "2px solid rgba(255,255,255,0.4)", borderTopColor: "#fff",
+                    animation: "spin 0.8s linear infinite",
+                  }} />
+                )}
+                {watchingAd ? "광고 불러오는 중" : "광고 보고 4위 이후 보기"}
+              </button>
+            </div>
+          )}
           <div style={{ flex: 1, padding: "0 16px", overflow: "auto" }}>
-            {rest.map((r) => {
+            {(isTossApp() && !showMore ? [] : rest).map((r) => {
               const isMe = r.userId === user.userId;
               return (
                 <div key={r.userId} style={{
@@ -143,6 +196,7 @@ export default function RankingScreen({ classroomId, user, onTabChange, onBack }
         </>
       )}
       <TabBar active="ranking" onSelect={onTabChange} />
+      <Toast message={toastMessage} />
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { grantTossPromotionReward, POINTS_PROMOTION_CODE_TEST, PROMOTION_DAILY_CAP_WON } from "../utils/tossPromotion";
+import { grantTossPromotionReward, POINTS_PROMOTION_CODE_REAL, PROMOTION_DAILY_CAP_WON } from "../utils/tossPromotion";
 import { POINTS_TO_WON_RATE } from "../hooks/useAttendancePoints";
 
 interface ConvertPointsModalProps {
@@ -25,7 +25,7 @@ export default function ConvertPointsModal({ totalPoints, onClose, onConverted }
   const handleGrant = async () => {
     setGranting(true);
     setError(null);
-    const result = await grantTossPromotionReward(POINTS_PROMOTION_CODE_TEST, convertibleWon);
+    const result = await grantTossPromotionReward(POINTS_PROMOTION_CODE_REAL, convertibleWon);
     setGranting(false);
     if (result.ok) {
       onConverted(convertibleCoins);
