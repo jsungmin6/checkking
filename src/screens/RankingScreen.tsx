@@ -13,6 +13,40 @@ interface RankingScreenProps {
   onBack: () => void;
 }
 
+function PodiumPillar({ place }: { place: number }) {
+  const palette = place === 1
+    ? { front: ["#FFF2C8", "#FFE6A6", "#FFDB82"], side: "#F2C66B", top: "#FFF6D9", shine: "#FFFFFF" }
+    : place === 2
+      ? { front: ["#EAF1FA", "#D8E3F1", "#C7D5E8"], side: "#B5C6DC", top: "#F4F8FD", shine: "#FFFFFF" }
+      : { front: ["#FFE7DB", "#F9D2C1", "#F2BEA5"], side: "#E6AA8E", top: "#FFF0E8", shine: "#FFFFFF" };
+  const gradientId = `podium-front-${place}`;
+  return (
+    <svg className="ranking-podium-art" viewBox="0 38 120 162" preserveAspectRatio="none" aria-hidden="true">
+      <defs>
+        <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stopColor={palette.front[0]} />
+          <stop offset=".55" stopColor={palette.front[1]} />
+          <stop offset="1" stopColor={palette.front[2]} />
+        </linearGradient>
+        <linearGradient id={`podium-shine-${place}`} x1="0" y1="0" x2="0" y2="1">
+          <stop stopColor={palette.shine} stopOpacity=".76" />
+          <stop offset="1" stopColor={palette.shine} stopOpacity="0" />
+        </linearGradient>
+        <filter id={`podium-shadow-${place}`} x="-30%" y="-30%" width="160%" height="180%">
+          <feGaussianBlur stdDeviation="5" />
+        </filter>
+      </defs>
+      <ellipse cx="60" cy="193" rx="48" ry="6" fill="#71839B" opacity=".15" filter={`url(#podium-shadow-${place})`} />
+      <path d="M91 45 Q105 47 105 62 V193 H91 Z" fill={palette.side} opacity=".82" />
+      <path d="M15 62 Q15 43 34 43 H87 Q101 43 101 61 V193 H15 Z" fill={`url(#${gradientId})`} />
+      <path d="M15 61 Q15 43 34 43 H87 Q101 43 101 61 Q99 75 59 75 Q18 75 15 61Z" fill={palette.top} />
+      <path d="M22 60 Q22 51 34 50 H82 Q91 50 94 58" stroke="#FFF" strokeOpacity=".78" strokeWidth="3" strokeLinecap="round" fill="none" />
+      <path d="M21 80 V178" stroke={`url(#podium-shine-${place})`} strokeWidth="7" strokeLinecap="round" opacity=".58" />
+      <path d="M28 188 H89" stroke="#FFF" strokeOpacity=".32" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 export default function RankingScreen({ classroomId, user, onTabChange, onBack }: RankingScreenProps) {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
@@ -50,8 +84,7 @@ export default function RankingScreen({ classroomId, user, onTabChange, onBack }
   const prevWeek = () => { if (week > 1) setWeek(week - 1); };
   const nextWeek = () => setWeek(week + 1);
 
-  const top3 = data?.rankings.slice(0, 3) ?? [];
-  const rest = data?.rankings.slice(3) ?? [];
+  const hasPodium = (data?.rankings.length ?? 0) > 0;
 
   const toggleBtnStyle = (active: boolean): React.CSSProperties => ({
     flex: 1,
@@ -98,33 +131,28 @@ export default function RankingScreen({ classroomId, user, onTabChange, onBack }
         </div>
       ) : (
         <>
-          {top3.length > 0 && (
-            <div style={{ display: "flex", justifyContent: "center", alignItems: "flex-end", gap: 12, marginTop: 12, marginBottom: 16, padding: "0 16px" }}>
-              {top3[1] && (
-                <div style={{ textAlign: "center", background: "var(--bg-card)", padding: "14px 18px", borderRadius: "var(--radius-card)", boxShadow: "var(--shadow-card)" }}>
-                  <div style={{ fontSize: 10, color: "var(--accent-silver)" }}>2nd</div>
-                  <div style={{ fontSize: 20 }}>🥈</div>
-                  <div style={{ fontSize: 12 }}>{top3[1].nickname}</div>
+          {hasPodium && (
+            <section className="ranking-podium" aria-label="시상대">
+              {[2, 1, 3].map((place) => (
+                <div className={`ranking-podium-slot place-${place}`} key={place}>
+                  <span className="ranking-podium-name">
+                    {(data?.rankings.find((entry) => Number(entry.rank) === place) ?? data?.rankings[place - 1])?.nickname ?? ""}
+                  </span>
+                  <div className="ranking-podium-block">
+                    <PodiumPillar place={place} />
+                    <span>{place}</span>
+                    {place === 1 && (
+                      <span className="ranking-podium-crown-wrap" aria-hidden="true">
+                        <img className="ranking-podium-crown" src="/ranking/crown.svg" alt="" />
+                      </span>
+                    )}
+                  </div>
                 </div>
-              )}
-              {top3[0] && (
-                <div style={{ textAlign: "center", background: "var(--bg-card)", padding: "18px 22px", borderRadius: "var(--radius-card)", border: "1px solid var(--accent-gold)", boxShadow: "var(--shadow-card)" }}>
-                  <div style={{ fontSize: 10, color: "var(--accent-gold)" }}>1st</div>
-                  <div style={{ fontSize: 24 }}>🏆</div>
-                  <div style={{ fontSize: 13, fontWeight: 600 }}>{top3[0].nickname}</div>
-                </div>
-              )}
-              {top3[2] && (
-                <div style={{ textAlign: "center", background: "var(--bg-card)", padding: "14px 18px", borderRadius: "var(--radius-card)", boxShadow: "var(--shadow-card)" }}>
-                  <div style={{ fontSize: 10, color: "var(--accent-bronze)" }}>3rd</div>
-                  <div style={{ fontSize: 20 }}>🥉</div>
-                  <div style={{ fontSize: 12 }}>{top3[2].nickname}</div>
-                </div>
-              )}
-            </div>
+              ))}
+            </section>
           )}
           <div style={{ flex: 1, padding: "0 16px", overflow: "auto" }}>
-            {rest.map((r) => {
+            {data?.rankings.filter((r) => Number(r.rank) > 3).map((r) => {
               const isMe = r.userId === user.userId;
               return (
                 <div key={r.userId} style={{
@@ -136,6 +164,7 @@ export default function RankingScreen({ classroomId, user, onTabChange, onBack }
                 }}>
                   <span style={{ width: 28, color: "var(--text-secondary)" }}>{r.rank}</span>
                   <span style={{ fontWeight: isMe ? 600 : 400 }}>{isMe ? "나" : r.nickname}</span>
+                  <span style={{ marginLeft: "auto", color: "var(--text-secondary)", fontSize: 13, fontWeight: 600 }}>평균 {Number(r.avgRank).toFixed(1)}위</span>
                 </div>
               );
             })}

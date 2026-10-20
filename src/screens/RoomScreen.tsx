@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import BackHeader from "../components/BackHeader";
 import TabBar from "../components/TabBar";
 import RankRow from "../components/RankRow";
@@ -31,9 +31,17 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
   const [actionTarget, setActionTarget] = useState<{ userId: number; nickname: string } | null>(null);
   const [rewardModal, setRewardModal] = useState<{ rank: number; rankBonus: number | null } | null>(null);
   const [rankOnlyModal, setRankOnlyModal] = useState<number | null>(null);
+  const [celebrating, setCelebrating] = useState(false);
+  const celebrationTimer = useRef<number | null>(null);
   const { addPoints } = useAttendancePoints();
   const { claim: claimGift } = useAttendanceGift(classroomId);
   const { remaining: rewardRemaining, increment: incrementReward } = useDailyRewardLimit();
+
+  const playCheckInCelebration = () => {
+    if (celebrationTimer.current !== null) window.clearTimeout(celebrationTimer.current);
+    setCelebrating(true);
+    celebrationTimer.current = window.setTimeout(() => setCelebrating(false), 1500);
+  };
 
   const fetchData = useCallback(async () => {
     try {
@@ -52,6 +60,9 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
   }, [classroomId]);
 
   useEffect(() => { hideAdBanner(); fetchData(); }, [fetchData]);
+  useEffect(() => () => {
+    if (celebrationTimer.current !== null) window.clearTimeout(celebrationTimer.current);
+  }, []);
 
   const handleCheckIn = async () => {
     if (!classroom) return;
@@ -111,36 +122,31 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
     : "24시간";
 
   return (
-    <div className="page" style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
+    <div className="page" style={{ display: "flex", flexDirection: "column", height: "100dvh", minHeight: 0, overflow: "hidden" }}>
       <BackHeader title={classroom.name} onBack={onBack} right={<span style={{ color: "var(--text-secondary)", fontSize: 12 }}>{classroom.memberCount}명</span>} />
 
       <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-        {/* 상단: 출석 버튼 or 출석 완료 */}
-        {!isCheckedIn ? (
-          <div style={{ padding: "20px 16px", textAlign: "center" }}>
-            <button onClick={handleCheckIn} disabled={checkingIn} className="checkin-btn" style={{
-              width: 100, height: 100, borderRadius: "50%", margin: "0 auto",
-              background: checkingIn ? "var(--border-light)" : "linear-gradient(135deg, var(--accent-blue), #5B9CF6)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              cursor: checkingIn ? "default" : "pointer",
-              boxShadow: "0 4px 16px rgba(49, 130, 246, 0.25)",
-              color: "#fff", fontSize: 14, fontWeight: 700,
-              transition: "transform 0.15s ease, box-shadow 0.15s ease",
-            }}>
-              {checkingIn ? "확인 중..." : "출석하기"}
+        <section className="attendance-hero" aria-label="오늘 출석">
+          <div className={`attendance-jelly-stage${celebrating ? " is-celebrating" : ""}${isCheckedIn ? " is-done" : ""}`}>
+            <div className="attendance-jelly-particles" aria-hidden="true"><i /><i />{celebrating && <><i /><i /><i /><i /></>}</div>
+            <button
+              onClick={handleCheckIn}
+              disabled={isCheckedIn || checkingIn}
+              className={`attendance-jelly-button${checkingIn ? " is-loading" : ""}`}
+              aria-label={isCheckedIn ? "출석 완료" : "출석하기"}
+            >
+              {checkingIn ? <span className="attendance-spinner" /> : (
+                <svg viewBox="0 0 32 32" aria-hidden="true"><path d="m6.5 16.5 6.2 6.2L25.5 9.8" /></svg>
+              )}
             </button>
-            <div style={{ color: "var(--text-secondary)", fontSize: 13, marginTop: 10 }}>
-              {today.totalCheckedIn}명 출석 · {timeRange}
-            </div>
-            {checkInError && <div style={{ color: "var(--accent-red)", fontSize: 13, marginTop: 8 }}>{checkInError}</div>}
           </div>
-        ) : (
-          <div style={{ padding: "20px 16px 16px", textAlign: "center" }}>
-            <div style={{ fontSize: 15, color: "var(--text-secondary)" }}>
-              {today.myRank}등으로 출석 완료 · {today.myCheckInTime ? formatTime(today.myCheckInTime) : ""}
-            </div>
+          <div className="attendance-hero-summary">
+            {isCheckedIn
+              ? `${today.myRank}등으로 출석 완료 · ${today.myCheckInTime ? formatTime(today.myCheckInTime) : ""}`
+              : `${today.totalCheckedIn}명 출석 · ${timeRange}`}
           </div>
-        )}
+          {checkInError && <div className="attendance-error" role="alert">{checkInError}</div>}
+        </section>
 
         {/* 하단: 오늘의 순위 리스트 */}
         <div style={{ flex: 1, padding: "0 16px", overflow: "auto" }}>
@@ -188,11 +194,12 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
           onClose={(total) => {
             addPoints(total);
             setRewardModal(null);
+            playCheckInCelebration();
           }}
         />
       )}
       {rankOnlyModal !== null && (
-        <RankOnlyModal rank={rankOnlyModal} onClose={() => setRankOnlyModal(null)} />
+        <RankOnlyModal rank={rankOnlyModal} onClose={() => { setRankOnlyModal(null); playCheckInCelebration(); }} />
       )}
       <TabBar active="today" onSelect={onTabChange} />
     </div>

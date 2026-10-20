@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { formatTime } from "../utils/time";
 import type { MonthlyAttendanceRecord } from "../types";
 
 interface AttendanceCalendarProps {
@@ -112,7 +113,7 @@ export default function AttendanceCalendar({ year, month, records, loading, onCh
               </div>
               {attended && (
                 <span style={{ fontSize: 9, color: "var(--text-secondary)", marginTop: 2, lineHeight: 1 }}>
-                  {record!.checkInTime}
+                  {formatTime(record!.checkInTime)}
                 </span>
               )}
             </div>

@@ -76,7 +76,7 @@ export default function StatsScreen({ classroomId, onTabChange, onBack }: StatsS
         />
 
         {monthStats && (
-          <div className="stat-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, padding: "12px 16px" }}>
+          <div className="stat-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 10, padding: "12px 16px" }}>
             <StatCard value={monthStats.avgRank} label="평균 순위" color="var(--accent-blue)" />
             <StatCard value={monthStats.avgCheckInTime} label="평균 출석 시간" color="var(--accent-green)" />
             <StatCard value={monthStats.totalPresent} label="총 출석일" />
