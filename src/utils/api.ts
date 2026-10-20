@@ -85,16 +85,23 @@ function fetchWithTimeout(url: string, options: RequestInit, timeoutMs = 15000):
   return fetch(url, { ...options, signal: controller.signal }).finally(() => clearTimeout(timer));
 }
 
-// TEMP dev-only mock data for the "로컬 미리보기" bypass (classroomId -1). Remove before shipping.
-let devCheckInCount = 0;
-let devDailyRank: number | null = null;
+// TEMP dev-only mock data for the "로컬 미리보기" bypass. Remove before shipping.
+// 방 4개(-1~-4)를 두어 "하루 3회 상한" 같은 여러 방 넘나드는 동작을 로컬에서 테스트할 수 있게 한다.
+const DEV_ROOM_IDS = [-1, -2, -3, -4];
+const DEV_ROOM_NAMES = new Map<number, string>([
+  [-1, "로컬 미리보기 방 1"], [-2, "로컬 미리보기 방 2"], [-3, "로컬 미리보기 방 3"], [-4, "로컬 미리보기 방 4"],
+]);
+const devCheckInCount = new Map<number, number>(DEV_ROOM_IDS.map((id) => [id, 0]));
+const devDailyRank = new Map<number, number | null>(DEV_ROOM_IDS.map((id) => [id, null]));
 
 /** "로컬 미리보기" 버튼을 누를 때마다 호출 — 다시 출석할 수 있도록 상태를 초기화한다 */
 export function resetDevPreview() {
-  devCheckInCount = 0;
-  devDailyRank = null;
-  localStorage.removeItem("att-points-claimed-date--1");
-  localStorage.removeItem("att-points-streak--1");
+  for (const id of DEV_ROOM_IDS) {
+    devCheckInCount.set(id, 0);
+    devDailyRank.set(id, null);
+    localStorage.removeItem(`att-points-claimed-date-${id}`);
+    localStorage.removeItem(`att-points-streak-${id}`);
+  }
 }
 
 const DEV_MEMBERS = [
@@ -105,40 +112,50 @@ const DEV_MEMBERS = [
 
 function devMock(path: string, method: string): unknown | undefined {
   if (!import.meta.env.DEV) return undefined;
-  const checkedIn = devCheckInCount > 0;
+
   if (path === "/classrooms/my") {
-    return { classrooms: [{
-      classroomId: -1, name: "로컬 미리보기 방", ownerId: -1, ownerNickname: "민준",
-      isOwner: true, memberCount: 3, maxMembers: 50, todayCheckedIn: checkedIn,
-      todayRank: devDailyRank, isPublic: false, inviteCode: "PREVIEW",
+    return { classrooms: DEV_ROOM_IDS.map((id) => ({
+      classroomId: id, name: DEV_ROOM_NAMES.get(id), ownerId: -1, ownerNickname: "민준",
+      isOwner: true, memberCount: 3, maxMembers: 50, todayCheckedIn: (devCheckInCount.get(id) ?? 0) > 0,
+      todayRank: devDailyRank.get(id) ?? null, isPublic: false, inviteCode: `PREVIEW${-id}`,
       joined: true, isDemo: true,
-    }] };
+    })) };
   }
-  if (path === "/classrooms/-1") {
+
+  const roomMatch = path.match(/^\/classrooms\/(-[1-4])(\/.*)?$/);
+  if (!roomMatch) return undefined;
+  const id = Number(roomMatch[1]);
+  const sub = roomMatch[2] ?? "";
+  const checkedIn = (devCheckInCount.get(id) ?? 0) > 0;
+
+  if (sub === "") {
     return {
-      classroomId: -1, name: "로컬 미리보기 방", inviteCode: "PREVIEW", ownerId: -1, ownerNickname: "민준",
+      classroomId: id, name: DEV_ROOM_NAMES.get(id), inviteCode: `PREVIEW${-id}`, ownerId: -1, ownerNickname: "민준",
       validationType: "NONE", gpsConfig: null, wifiConfig: null,
       checkInStartTime: null, checkInEndTime: null, includeWeekends: true, isPublic: false,
       memberCount: 3, createdAt: "2026-10-01T00:00:00",
     };
   }
-  if (path === "/classrooms/-1/attendance/today") {
+  if (sub === "/attendance/today") {
+    const rank = devDailyRank.get(id) ?? null;
     return {
-      date: "2026-10-19",
-      myRank: devDailyRank,
+      date: "2026-10-20",
+      myRank: rank,
       myCheckInTime: checkedIn ? "09:00:00" : null,
       totalCheckedIn: checkedIn ? 1 : 0,
       totalMembers: 3,
-      rankings: checkedIn ? [{ rank: devDailyRank, userId: -1, nickname: "민준", checkInTime: "09:00:00", status: "PRESENT" }] : [],
+      rankings: checkedIn ? [{ rank, userId: -1, nickname: "민준", checkInTime: "09:00:00", status: "PRESENT" }] : [],
       absentMembers: DEV_MEMBERS.filter((m) => !checkedIn || m.userId !== -1).map((m) => ({ ...m, status: "ABSENT" })),
     };
   }
-  if (path === "/classrooms/-1/attendance/check-in" && method === "POST") {
-    devCheckInCount += 1;
-    devDailyRank = Math.floor(Math.random() * 3) + 1; // 로컬 테스트용: 1~3등을 랜덤으로 순환 확인
+  if (sub === "/attendance/check-in" && method === "POST") {
+    const nextCount = (devCheckInCount.get(id) ?? 0) + 1;
+    const rank = Math.floor(Math.random() * 3) + 1; // 로컬 테스트용: 1~3등을 랜덤으로 순환 확인
+    devCheckInCount.set(id, nextCount);
+    devDailyRank.set(id, rank);
     return {
-      attendanceId: devCheckInCount, classroomId: -1, checkInDate: "2026-10-19",
-      checkInTime: "09:00:00", dailyRank: devDailyRank, totalCheckedIn: 1, totalMembers: 3, status: "PRESENT",
+      attendanceId: nextCount, classroomId: id, checkInDate: "2026-10-20",
+      checkInTime: "09:00:00", dailyRank: rank, totalCheckedIn: 1, totalMembers: 3, status: "PRESENT",
     };
   }
   return undefined;

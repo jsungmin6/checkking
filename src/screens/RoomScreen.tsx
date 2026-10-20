@@ -3,14 +3,14 @@ import BackHeader from "../components/BackHeader";
 import TabBar from "../components/TabBar";
 import RankRow from "../components/RankRow";
 import UserActionSheet, { isBlocked } from "../components/UserActionSheet";
-import PointsCelebrationModal from "../components/PointsCelebrationModal";
-import GiftBox from "../components/GiftBox";
+import AttendanceGiftModal from "../components/AttendanceGiftModal";
+import RankOnlyModal from "../components/RankOnlyModal";
 import { hideAdBanner } from "../utils/admob";
 import { api, ApiError } from "../utils/api";
 import { collectCheckInData } from "../utils/location";
 import { formatTime } from "../utils/time";
 import { launchConfetti } from "../utils/confetti";
-import { useAttendancePoints, useAttendanceGift, rollDailyRankBonus } from "../hooks/useAttendancePoints";
+import { useAttendancePoints, useAttendanceGift, useDailyRewardLimit, rollDailyRankBonus } from "../hooks/useAttendancePoints";
 import type { TabName } from "../components/TabBar";
 import type { Classroom, TodayAttendance, CheckInResponse, CheckInRequest, User } from "../types";
 
@@ -29,10 +29,11 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
   const [checkingIn, setCheckingIn] = useState(false);
   const [checkInError, setCheckInError] = useState<string | null>(null);
   const [actionTarget, setActionTarget] = useState<{ userId: number; nickname: string } | null>(null);
-  const [rankBonus, setRankBonus] = useState<{ rank: number; amount: number } | null>(null);
-  const [giftBonus, setGiftBonus] = useState<number | null>(null);
+  const [rewardModal, setRewardModal] = useState<{ rank: number; rankBonus: number | null } | null>(null);
+  const [rankOnlyModal, setRankOnlyModal] = useState<number | null>(null);
   const { addPoints } = useAttendancePoints();
-  const { claim: claimGift, alreadyClaimedToday } = useAttendanceGift(classroomId);
+  const { claim: claimGift } = useAttendanceGift(classroomId);
+  const { remaining: rewardRemaining, increment: incrementReward } = useDailyRewardLimit();
 
   const fetchData = useCallback(async () => {
     try {
@@ -63,12 +64,15 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
         body: JSON.stringify(locationData),
       });
       await fetchData();
-      // 출석 성공 축하 애니메이션 — 1~3등은 빵빠레 + 즉시 포인트
-      const rankBonus = rollDailyRankBonus(checkInResult.dailyRank);
-      setTimeout(() => launchConfetti(rankBonus !== null), 300);
-      if (rankBonus !== null) {
-        addPoints(rankBonus);
-        setRankBonus({ rank: checkInResult.dailyRank, amount: rankBonus });
+      // 출석 성공 — 방을 넘나들어도 "보상을 받는 체크인"은 하루 최대 3번까지만.
+      // 그 안에 들면 선물상자(+1~3등이면 보너스도 같이)를 보여주고, 넘으면 등수만 보여준다.
+      if (rewardRemaining > 0) {
+        incrementReward();
+        const rankBonus = rollDailyRankBonus(checkInResult.dailyRank);
+        setTimeout(() => launchConfetti(rankBonus !== null), 300);
+        setRewardModal({ rank: checkInResult.dailyRank, rankBonus });
+      } else {
+        setRankOnlyModal(checkInResult.dailyRank);
       }
     } catch (e) {
       if (e instanceof ApiError) {
@@ -83,11 +87,6 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
     }
   };
 
-  const handleOpenGiftBox = () => {
-    const amount = claimGift();
-    addPoints(amount);
-    setGiftBonus(amount);
-  };
 
   if (loading) {
     return (
@@ -137,13 +136,9 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
           </div>
         ) : (
           <div style={{ padding: "20px 16px 16px", textAlign: "center" }}>
-            {!alreadyClaimedToday ? (
-              <GiftBox onOpened={handleOpenGiftBox} />
-            ) : (
-              <div style={{ fontSize: 15, color: "var(--text-secondary)" }}>
-                {today.myRank}등으로 출석 완료 · {today.myCheckInTime ? formatTime(today.myCheckInTime) : ""}
-              </div>
-            )}
+            <div style={{ fontSize: 15, color: "var(--text-secondary)" }}>
+              {today.myRank}등으로 출석 완료 · {today.myCheckInTime ? formatTime(today.myCheckInTime) : ""}
+            </div>
           </div>
         )}
 
@@ -185,21 +180,19 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
           onClose={() => setActionTarget(null)}
         />
       )}
-      {rankBonus !== null && (
-        <PointsCelebrationModal
-          title={`${rankBonus.rank}등이에요!`}
-          subtitle={rankBonus.rank === 1 ? "오늘 가장 먼저 출석했어요" : `오늘 ${rankBonus.rank}번째로 출석했어요`}
-          amount={rankBonus.amount}
-          onClose={() => setRankBonus(null)}
+      {rewardModal !== null && (
+        <AttendanceGiftModal
+          rank={rewardModal.rank}
+          rankBonus={rewardModal.rankBonus}
+          onClaimGift={claimGift}
+          onClose={(total) => {
+            addPoints(total);
+            setRewardModal(null);
+          }}
         />
       )}
-      {giftBonus !== null && (
-        <PointsCelebrationModal
-          title="출석 선물 도착!"
-          subtitle="오늘의 선물을 열었어요"
-          amount={giftBonus}
-          onClose={() => setGiftBonus(null)}
-        />
+      {rankOnlyModal !== null && (
+        <RankOnlyModal rank={rankOnlyModal} onClose={() => setRankOnlyModal(null)} />
       )}
       <TabBar active="today" onSelect={onTabChange} />
     </div>
