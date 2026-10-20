@@ -2,6 +2,27 @@ import { useLocalStorage } from "./useLocalStorage";
 
 export const POINTS_TO_WON_RATE = 1000; // 1000P = 1원
 
+// 클라이언트에만 저장되는 값이라, 조작되더라도 손해가 토스 하루 전환 한도(100P≈100원) 수준을
+// 넘지 않도록 누적 상한을 둔다.
+const MAX_LOCAL_POINTS = 100_000;
+
+const TOTAL_POINTS_KEY = "att-points-total";
+const WELCOME_BONUS_GRANTED_KEY = "att-points-welcome-granted";
+const WELCOME_BONUS_AMOUNT = 1000;
+
+/**
+ * 완전 신규 가입 시 1회만 1000P를 지급한다. 로컬스토리지 플래그로만 중복 방지하므로
+ * 앱 재설치/기기 변경 시 다시 받을 수 있지만, 서버 포인트가 아니라 영향이 작아 허용한다.
+ */
+export function grantWelcomeBonusIfNew(isNewUser: boolean) {
+  if (!isNewUser) return;
+  if (localStorage.getItem(WELCOME_BONUS_GRANTED_KEY) === "1") return;
+  const current = Number(localStorage.getItem(TOTAL_POINTS_KEY) ?? "0");
+  const next = Math.min(MAX_LOCAL_POINTS, current + WELCOME_BONUS_AMOUNT);
+  localStorage.setItem(TOTAL_POINTS_KEY, String(next));
+  localStorage.setItem(WELCOME_BONUS_GRANTED_KEY, "1");
+}
+
 // 방 구분 없이, 보상(선물상자/등수보너스 타입 무관)을 받는 체크인은 하루 최대 N번까지만.
 const DAILY_REWARD_CHECKIN_LIMIT = 3;
 
@@ -30,10 +51,10 @@ export function useDailyRewardLimit() {
 
 /** 방 전체 누적 출석 포인트 — 토스 포인트 전환의 기준이 되는 총량 */
 export function useAttendancePoints() {
-  const [totalPoints, setTotalPoints] = useLocalStorage<number>("att-points-total", 0);
+  const [totalPoints, setTotalPoints] = useLocalStorage<number>(TOTAL_POINTS_KEY, 0);
   const [pendingConversion, setPendingConversion] = useLocalStorage<number | null>("att-points-conversion-pending", null);
 
-  const addPoints = (amount: number) => setTotalPoints((prev) => prev + amount);
+  const addPoints = (amount: number) => setTotalPoints((prev) => Math.min(MAX_LOCAL_POINTS, prev + amount));
 
   /** amount는 POINTS_TO_WON_RATE의 배수만 전환하고, 나머지는 출석 포인트로 남겨둔다 */
   const requestConversion = (amount: number) => {

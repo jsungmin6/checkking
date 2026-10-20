@@ -1,6 +1,7 @@
 import { useCallback, useState, useEffect } from "react";
 import { TOKEN_KEYS, KAKAO_REDIRECT_URI } from "../constants";
 import { api, clearTokens } from "../utils/api";
+import { grantWelcomeBonusIfNew } from "./useAttendancePoints";
 import type { AuthResponse, User, Profile } from "../types";
 
 interface AuthState {
@@ -41,6 +42,7 @@ export function useAuth() {
           console.log("[출석왕] 카카오 로그인 성공:", data.user.nickname);
           localStorage.setItem(TOKEN_KEYS.ACCESS, data.accessToken);
           localStorage.setItem(TOKEN_KEYS.REFRESH, data.refreshToken);
+          grantWelcomeBonusIfNew(data.isNewUser);
           setState({ user: data.user, loading: false, error: null, needsTermsAgreement: data.isNewUser });
         })
         .catch((e) => {
@@ -110,6 +112,7 @@ export function useAuth() {
     });
     localStorage.setItem(TOKEN_KEYS.ACCESS, data.accessToken);
     localStorage.setItem(TOKEN_KEYS.REFRESH, data.refreshToken);
+    grantWelcomeBonusIfNew(data.isNewUser);
     setState({ user: data.user, loading: false, error: null, needsTermsAgreement: data.isNewUser });
     return data;
   }, []);
@@ -123,6 +126,7 @@ export function useAuth() {
     });
     localStorage.setItem(TOKEN_KEYS.ACCESS, data.accessToken);
     localStorage.setItem(TOKEN_KEYS.REFRESH, data.refreshToken);
+    grantWelcomeBonusIfNew(data.isNewUser);
     setState({ user: data.user, loading: false, error: null, needsTermsAgreement: data.isNewUser });
   }, []);
 
@@ -135,6 +139,7 @@ export function useAuth() {
     });
     localStorage.setItem(TOKEN_KEYS.ACCESS, data.accessToken);
     localStorage.setItem(TOKEN_KEYS.REFRESH, data.refreshToken);
+    grantWelcomeBonusIfNew(data.isNewUser);
     setState({ user: data.user, loading: false, error: null, needsTermsAgreement: data.isNewUser });
   }, []);
 
@@ -146,6 +151,7 @@ export function useAuth() {
     });
     localStorage.setItem(TOKEN_KEYS.ACCESS, data.accessToken);
     localStorage.setItem(TOKEN_KEYS.REFRESH, data.refreshToken);
+    grantWelcomeBonusIfNew(data.isNewUser);
     setState({ user: data.user, loading: false, error: null, needsTermsAgreement: data.isNewUser });
     return data;
   }, []);
