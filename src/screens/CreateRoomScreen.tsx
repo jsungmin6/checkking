@@ -221,11 +221,6 @@ export default function CreateRoomScreen({ accountType, onBack, onCreated }: Cre
         }
       }
 
-      const classroom = await api<Classroom>("/classrooms", {
-        method: "POST",
-        body: JSON.stringify({ name, isPublic }),
-      });
-
       const finalGpsConfig = validationType === "GPS" && gpsConfig
         ? { ...gpsConfig, radiusMeters: parsedRadiusMeters }
         : null;
@@ -233,22 +228,26 @@ export default function CreateRoomScreen({ accountType, onBack, onCreated }: Cre
         ? { ssid: wifiSsid, bssid: wifiBssid }
         : null;
 
-      // 기본값(NONE, 시간 제한 없음, 주말 포함)은 서버의 생성 기본값과 같아서
-      // 불필요한 설정 PUT을 보내지 않는다.
-      if (validationType !== "NONE" || startTime || endTime || !includeWeekends) {
-        const settings: ClassroomSettingsRequest = {
-          validationType,
-          gpsConfig: finalGpsConfig,
-          wifiConfig: finalWifiConfig,
-          checkInStartTime: startTime || null,
-          checkInEndTime: endTime || null,
-          includeWeekends,
-        };
-        await api(`/classrooms/${classroom.classroomId}/settings`, {
-          method: "PUT",
-          body: JSON.stringify(settings),
-        });
-      }
+      // 방 생성 + 옵션 저장을 한 요청으로 합쳐서, 옵션 저장 단계에서만 실패해
+      // "옵션 없는 방이 혼자 만들어지는" 상황이 생기지 않게 한다.
+      // 기본값(NONE, 시간 제한 없음, 주말 포함)은 서버의 생성 기본값과 같아서 생략 가능.
+      const settings: ClassroomSettingsRequest | null =
+        validationType !== "NONE" || startTime || endTime || !includeWeekends
+          ? {
+              validationType,
+              gpsConfig: finalGpsConfig,
+              wifiConfig: finalWifiConfig,
+              checkInStartTime: startTime || null,
+              checkInEndTime: endTime || null,
+              includeWeekends,
+            }
+          : null;
+
+      const classroom = await api<Classroom>("/classrooms", {
+        method: "POST",
+        body: JSON.stringify({ name, isPublic, settings }),
+      });
+
       onCreated(classroom.classroomId);
     } catch (e) {
       if (e instanceof ApiError && e.code === "MAX_ROOMS_EXCEEDED") {

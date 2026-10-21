@@ -3,26 +3,21 @@ interface RankOnlyModalProps {
   onClose: () => void;
 }
 
-/** 선물/보너스를 하루 상한까지 다 받아서 더 줄 게 없을 때 보여주는 담백한 축하 모달 */
+/** 선물 상자 보상 한도를 채운 뒤 출석 완료를 확인하는 모달 */
 export default function RankOnlyModal({ rank, onClose }: RankOnlyModalProps) {
   return (
-    <div style={{
-      position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999,
-      background: "rgba(0,0,0,0.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24,
-    }}>
-      <div style={{
-        width: "100%", maxWidth: 340, background: "var(--bg-card)", borderRadius: 20,
-        padding: "28px 22px 22px", textAlign: "center",
-      }}>
-        <div style={{ fontSize: 40, marginBottom: 8 }}>🎉</div>
-        <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 20 }}>{rank}등이에요!</div>
-        <button onClick={onClose} style={{
-          width: "100%", padding: 14, borderRadius: "var(--radius-button)", border: "none",
-          background: "var(--accent-blue)", color: "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer",
-        }}>
-          확인
-        </button>
-      </div>
+    <div className="rank-only-overlay">
+      <section className="rank-only-dialog" role="dialog" aria-modal="true" aria-label="출석 완료">
+        <button className="rank-only-close" onClick={onClose} aria-label="닫기">×</button>
+        <h2>출석 체크 완료!</h2>
+        <div className="rank-only-seal" aria-hidden="true">
+          <svg viewBox="0 0 48 48">
+            <path d="m11 24 8.5 8.5L37 15" />
+          </svg>
+        </div>
+        <p>오늘은 {rank}번째로 도착했어요</p>
+        <button className="rank-only-confirm" onClick={onClose}>확인</button>
+      </section>
     </div>
   );
 }

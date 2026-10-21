@@ -18,57 +18,37 @@ export default function AttendanceGiftModal({ rank, rankBonus, onClaimGift, onCl
   };
 
   return (
-    <div style={{
-      position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999,
-      background: "rgba(0,0,0,0.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24,
-    }}>
-      <div style={{
-        width: "100%", maxWidth: 340, background: "var(--bg-card)", borderRadius: 20,
-        padding: "24px 22px 22px", textAlign: "center",
-      }}>
+    <div className="attendance-gift-overlay">
+      <section className={`attendance-gift-dialog${result ? " is-opened" : ""}`} role="dialog" aria-modal="true" aria-label="출석 선물">
+        <button className="attendance-gift-close" onClick={() => onClose(result?.total ?? 0)} aria-label="닫기">×</button>
         {result === null ? (
           <>
-            <div style={{ fontSize: 17, fontWeight: 700, marginBottom: 16 }}>
-              {rank <= 3 ? `오늘 ${rank}등이에요!` : "출석 완료!"}
-            </div>
+            <h2 className="attendance-gift-title">출석 완료!</h2>
+            {rank <= 3 && <div className="attendance-gift-rank">오늘 {rank}등으로 출석했어요</div>}
             <GiftBox onOpened={handleOpened} />
           </>
         ) : (
           <>
-            <div style={{ fontSize: 40, marginBottom: 8 }}>🎉</div>
-            <div style={{ fontSize: 17, fontWeight: 700, marginBottom: 16 }}>출석 선물이 도착했어요!</div>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", padding: "10px 14px", borderRadius: 12, background: "var(--bg-secondary)" }}>
-                <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>출석 선물</span>
-                {result.gift !== null ? (
-                  <span style={{ fontSize: 14, fontWeight: 700 }}>+{result.gift.toLocaleString()}P</span>
-                ) : (
-                  <span style={{ fontSize: 12, color: "var(--text-muted)" }}>오늘 받을 수 있는 선물을 모두 받았어요</span>
-                )}
+            <img className="attendance-gift-open-image" src="/rewards/gift-box-open.png" alt="포인트 동전이 나온 열린 선물 상자" />
+            <h2 className="attendance-gift-title attendance-gift-result-title">와! 선물이 열렸어요!</h2>
+            <div className="attendance-gift-points-list">
+              <div className="attendance-gift-point-row">
+                <span>출석 선물</span>
+                {result.gift !== null ? <strong>+{result.gift.toLocaleString()}P</strong> : <small>오늘 받을 수 있는 선물을 모두 받았어요</small>}
               </div>
               {rankBonus !== null && (
-                <div style={{ display: "flex", justifyContent: "space-between", padding: "10px 14px", borderRadius: 12, background: "var(--bg-secondary)" }}>
-                  <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>{rank}등 보너스</span>
-                  <span style={{ fontSize: 14, fontWeight: 700 }}>+{rankBonus.toLocaleString()}P</span>
+                <div className="attendance-gift-point-row">
+                  <span>{rank}등 보너스</span>
+                  <strong>+{rankBonus.toLocaleString()}P</strong>
                 </div>
               )}
             </div>
-
-            <div style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 4 }}>총 지급 포인트</div>
-            <div style={{ fontSize: 28, fontWeight: 800, color: "var(--accent-blue)", marginBottom: 20 }}>
-              +{result.total.toLocaleString()}P
-            </div>
-
-            <button onClick={() => onClose(result.total)} style={{
-              width: "100%", padding: 14, borderRadius: "var(--radius-button)", border: "none",
-              background: "var(--accent-blue)", color: "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer",
-            }}>
-              확인
-            </button>
+            <div className="attendance-gift-total-label">총 지급 포인트</div>
+            <div className="attendance-gift-total">+{result.total.toLocaleString()}P</div>
+            <button className="attendance-gift-confirm" onClick={() => onClose(result.total)}>확인</button>
           </>
         )}
-      </div>
+      </section>
     </div>
   );
 }

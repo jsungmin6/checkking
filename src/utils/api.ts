@@ -102,8 +102,10 @@ export function resetDevPreview() {
     devCheckInCount.set(id, 0);
     devDailyRank.set(id, null);
     localStorage.removeItem(`att-points-claimed-date-${id}`);
-    localStorage.removeItem(`att-points-streak-${id}`);
   }
+  // 방 구분 없이 하루 전체 상한(최대 3번)을 추적하는 키 — 이것도 같이 안 지우면
+  // 한 번 다 써버린 뒤로는 새로고침해도 계속 선물상자가 안 뜬다.
+  localStorage.removeItem("att-points-reward-daily");
 }
 
 const DEV_MEMBERS = [
