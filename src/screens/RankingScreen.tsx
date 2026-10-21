@@ -3,6 +3,7 @@ import { hideAdBanner } from "../utils/admob";
 import BackHeader from "../components/BackHeader";
 import TabBar from "../components/TabBar";
 import { api } from "../utils/api";
+import { getWeekOfMonth } from "../utils/time";
 import type { TabName } from "../components/TabBar";
 import type { MonthlyRanking, User } from "../types";
 
@@ -52,7 +53,7 @@ export default function RankingScreen({ classroomId, user, onTabChange, onBack }
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [period, setPeriod] = useState<"WEEKLY" | "MONTHLY">("MONTHLY");
-  const [week, setWeek] = useState(1);
+  const [week, setWeek] = useState(() => getWeekOfMonth(now.getFullYear(), now.getMonth() + 1, now.getDate()));
   const [data, setData] = useState<MonthlyRanking | null>(null);
   const [loading, setLoading] = useState(true);
 
