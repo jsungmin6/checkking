@@ -460,15 +460,15 @@ export default function SettingsScreen({ classroomId, user, onTabChange, onBack,
               <div style={{ color: "var(--accent-red)", fontSize: 12, marginBottom: 12 }}>종료 시간이 시작 시간보다 빠릅니다</div>
             )}
 
-            <div style={{ display: "flex", gap: 8 }}>
+            <div style={{ display: "flex", gap: 8, marginTop: 20, paddingTop: 16, borderTop: "1px solid var(--border-light)" }}>
               <button onClick={handleSaveSettings} disabled={saving} style={{
-                flex: 1, padding: 10, borderRadius: 8, background: "var(--accent-blue)", color: "#fff", fontSize: 13, fontWeight: 600,
+                flex: 1, padding: 13, borderRadius: "var(--radius-button)", background: "var(--accent-blue)", color: "#fff", fontSize: 14, fontWeight: 700,
                 opacity: saving ? 0.5 : 1,
               }}>
                 {saving ? "저장 중..." : "저장"}
               </button>
               <button onClick={() => setEditingSettings(false)} style={{
-                flex: 1, padding: 10, borderRadius: 8, border: "1px solid var(--border-light)", background: "transparent", color: "var(--text-secondary)", fontSize: 13,
+                flex: 1, padding: 13, borderRadius: "var(--radius-button)", border: "1px solid var(--border-light)", background: "transparent", color: "var(--text-secondary)", fontSize: 14, fontWeight: 600,
               }}>
                 취소
               </button>

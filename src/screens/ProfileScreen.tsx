@@ -5,6 +5,7 @@ import TossBannerAd from "../components/TossBannerAd";
 import AdMobBanner from "../components/AdMobBanner";
 import { api } from "../utils/api";
 import { validateNickname } from "../utils/profanity";
+import { hasAgreedToPushConsent, requestPushConsent } from "../utils/pushConsent";
 import type { User } from "../types";
 
 interface ProfileScreenProps {
@@ -22,6 +23,22 @@ export default function ProfileScreen({ user, onNavigateHome, onNavigatePublicRo
   const [nickname, setNickname] = useState(user.nickname);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pushAgreed, setPushAgreed] = useState(hasAgreedToPushConsent());
+  const [pushRequesting, setPushRequesting] = useState(false);
+
+  const handleTogglePushConsent = async () => {
+    setPushRequesting(true);
+    try {
+      const result = await requestPushConsent("SETTINGS");
+      if (result === "newAgreement" || result === "alreadyAgreed") {
+        setPushAgreed(true);
+      } else if (result === "unsupported") {
+        alert("토스 앱에서만 설정할 수 있어요. 앱을 최신 버전으로 업데이트해주세요.");
+      }
+    } finally {
+      setPushRequesting(false);
+    }
+  };
 
   const handleSaveNickname = async () => {
     const validationError = validateNickname(nickname);
@@ -80,6 +97,21 @@ export default function ProfileScreen({ user, onNavigateHome, onNavigatePublicRo
             </div>
           </div>
           {error && <div style={{ color: "var(--accent-red)", fontSize: 13, marginTop: 8 }}>{error}</div>}
+
+          {!pushAgreed && (
+            <>
+              <div style={{ marginTop: 16, fontSize: 12, color: "var(--text-secondary)", marginBottom: 8 }}>알림</div>
+              <div style={{ background: "var(--bg-card)", borderRadius: "var(--radius-card)", overflow: "hidden", boxShadow: "var(--shadow-card)" }}>
+                <div onClick={pushRequesting ? undefined : handleTogglePushConsent} style={{
+                  padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 15,
+                  cursor: pushRequesting ? "default" : "pointer",
+                }}>
+                  <span>출석 알림 받기</span>
+                  <span style={{ color: "var(--text-secondary)", fontSize: 13 }}>{pushRequesting ? "..." : "설정하기 >"}</span>
+                </div>
+              </div>
+            </>
+          )}
 
           <div style={{ marginTop: 16, fontSize: 12, color: "var(--text-secondary)", marginBottom: 8 }}>계정 관리</div>
           <div style={{ background: "var(--bg-card)", borderRadius: "var(--radius-card)", overflow: "hidden", boxShadow: "var(--shadow-card)" }}>

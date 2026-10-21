@@ -202,6 +202,9 @@ function devMock(path: string, method: string): unknown | undefined {
       absentMembers: DEV_MEMBERS.filter((m) => !checkedIn || m.userId !== -1).map((m) => ({ ...m, status: "ABSENT" })),
     };
   }
+  if (sub === "/members") {
+    return { members: DEV_MEMBERS.slice(0, 3).map((m) => ({ ...m, isOwner: m.userId === -1, joinedAt: "2026-10-01T00:00:00" })) };
+  }
   if (id === -1 && sub.startsWith("/statistics/ranking")) {
     return { period: "MONTHLY", year: 2026, month: 10, criteria: "AVG_RANK", rankings: ROOM1_MONTHLY_RANKING };
   }
