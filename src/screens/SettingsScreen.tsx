@@ -310,46 +310,46 @@ export default function SettingsScreen({ classroomId, user, onTabChange, onBack,
           </div>
         )}
 
-        <div style={{ fontSize: 12, color: "var(--text-secondary)", margin: "16px 0 8px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ fontSize: 12, color: "var(--text-secondary)", margin: "16px 0 8px" }}>
           <span>방 설정</span>
-          {isOwner && !editingSettings && (
-            <span onClick={startEditing} style={{ color: "var(--accent-blue)", cursor: "pointer", fontSize: 12 }}>수정</span>
-          )}
         </div>
 
-        {!editingSettings ? (
-          <>
-            <div style={rowStyle(true)}>
-              <span>방 공개 범위</span>
-              <span style={{ color: "var(--text-secondary)" }}>{classroom.isPublic ? "공개방" : "비밀방"}</span>
-            </div>
-            <div style={rowStyle()}>
-              <span>출석 검증 방식</span>
-              <span style={{ color: "var(--text-secondary)" }}>
-                {classroom.validationType === "NONE" ? "검증 없음" : classroom.validationType === "GPS" ? "GPS" : classroom.validationType}
-              </span>
-            </div>
-            {classroom.gpsConfig && (
-              <div style={rowStyle()}>
-                <span>GPS 반경</span>
-                <span style={{ color: "var(--text-secondary)" }}>{classroom.gpsConfig.radiusMeters}m</span>
-              </div>
-            )}
-            <div style={rowStyle()}>
-              <span>출석 가능 시간</span>
-              <span style={{ color: "var(--text-secondary)" }}>
-                {classroom.checkInStartTime && classroom.checkInEndTime ? `${classroom.checkInStartTime}~${classroom.checkInEndTime}` : "24시간"}
-              </span>
-            </div>
-            <div style={rowStyle(false, true)}>
-              <span>주말 출석 허용</span>
-              <span style={{ color: classroom.includeWeekends ? "var(--accent-blue)" : "var(--text-secondary)" }}>
-                {classroom.includeWeekends ? "허용" : "제외"}
-              </span>
-            </div>
-          </>
-        ) : (
-          <div style={{ background: "var(--bg-card)", borderRadius: "var(--radius-card)", padding: 16, boxShadow: "var(--shadow-card)" }}>
+        <div style={rowStyle(true)}>
+          <span>방 공개 범위</span>
+          <span style={{ color: "var(--text-secondary)" }}>{classroom.isPublic ? "공개방" : "비밀방"}</span>
+        </div>
+        <div style={rowStyle()}>
+          <span>출석 검증 방식</span>
+          <span style={{ color: "var(--text-secondary)" }}>
+            {classroom.validationType === "NONE" ? "검증 없음" : classroom.validationType === "GPS" ? "GPS" : classroom.validationType}
+          </span>
+        </div>
+        {classroom.gpsConfig && (
+          <div style={rowStyle()}>
+            <span>GPS 반경</span>
+            <span style={{ color: "var(--text-secondary)" }}>{classroom.gpsConfig.radiusMeters}m</span>
+          </div>
+        )}
+        <div style={rowStyle()}>
+          <span>출석 가능 시간</span>
+          <span style={{ color: "var(--text-secondary)" }}>
+            {classroom.checkInStartTime && classroom.checkInEndTime ? `${classroom.checkInStartTime}~${classroom.checkInEndTime}` : "24시간"}
+          </span>
+        </div>
+        <div style={rowStyle(false, true)}>
+          <span>주말 출석 허용</span>
+          <span style={{ color: classroom.includeWeekends ? "var(--accent-blue)" : "var(--text-secondary)" }}>
+            {classroom.includeWeekends ? "허용" : "제외"}
+          </span>
+        </div>
+
+        {editingSettings && (
+          <div style={{
+            position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.45)",
+            display: "flex", alignItems: "center", justifyContent: "center", padding: 20,
+          }}>
+          <div style={{ width: "100%", maxWidth: 360, maxHeight: "85vh", overflowY: "auto", background: "var(--bg-card)", borderRadius: 20, padding: "22px 20px" }}>
+            <div style={{ fontSize: 17, fontWeight: 700, marginBottom: 18 }}>방 설정 수정</div>
             <div style={{ fontSize: 13, marginBottom: 8 }}>방 공개 범위</div>
             <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
               {([{ value: false, label: "비밀방" }, { value: true, label: "공개방" }] as const).map((option) => (
@@ -460,19 +460,20 @@ export default function SettingsScreen({ classroomId, user, onTabChange, onBack,
               <div style={{ color: "var(--accent-red)", fontSize: 12, marginBottom: 12 }}>종료 시간이 시작 시간보다 빠릅니다</div>
             )}
 
-            <div style={{ display: "flex", gap: 8, marginTop: 20, paddingTop: 16, borderTop: "1px solid var(--border-light)" }}>
-              <button onClick={handleSaveSettings} disabled={saving} style={{
-                flex: 1, padding: 13, borderRadius: "var(--radius-button)", background: "var(--accent-blue)", color: "#fff", fontSize: 14, fontWeight: 700,
-                opacity: saving ? 0.5 : 1,
-              }}>
-                {saving ? "저장 중..." : "저장"}
-              </button>
-              <button onClick={() => setEditingSettings(false)} style={{
-                flex: 1, padding: 13, borderRadius: "var(--radius-button)", border: "1px solid var(--border-light)", background: "transparent", color: "var(--text-secondary)", fontSize: 14, fontWeight: 600,
-              }}>
-                취소
-              </button>
-            </div>
+            <button onClick={handleSaveSettings} disabled={saving} style={{
+              width: "100%", padding: 15, marginTop: 24, borderRadius: "var(--radius-button)", border: "none",
+              background: "var(--accent-blue)", color: "#fff", fontSize: 15, fontWeight: 700,
+              boxShadow: "0 4px 12px rgba(49, 130, 246, 0.25)", opacity: saving ? 0.5 : 1,
+            }}>
+              {saving ? "저장 중..." : "저장"}
+            </button>
+            <button onClick={() => setEditingSettings(false)} style={{
+              width: "100%", padding: 12, marginTop: 6, borderRadius: "var(--radius-button)", border: "none",
+              background: "transparent", color: "var(--text-secondary)", fontSize: 14,
+            }}>
+              취소
+            </button>
+          </div>
           </div>
         )}
 
@@ -481,7 +482,16 @@ export default function SettingsScreen({ classroomId, user, onTabChange, onBack,
             <button onClick={handleLeave} style={{ width: "100%", padding: 12, borderRadius: 8, border: "1px solid var(--border-light)", background: "transparent", color: "var(--text-secondary)", fontSize: 14 }}>방 나가기</button>
           )}
           {isOwner && (
-            <button onClick={handleDeleteRoom} style={{ width: "100%", padding: 12, borderRadius: 8, border: "1px solid var(--accent-danger)", background: "transparent", color: "var(--accent-danger)", fontSize: 14 }}>방 삭제</button>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button onClick={startEditing} style={{
+                flex: 1, padding: 12, borderRadius: 8, border: "none",
+                background: "var(--accent-blue)", color: "#fff", fontSize: 14, fontWeight: 600,
+              }}>수정</button>
+              <button onClick={handleDeleteRoom} style={{
+                flex: 1, padding: 12, borderRadius: 8, border: "1px solid var(--accent-danger)",
+                background: "transparent", color: "var(--accent-danger)", fontSize: 14,
+              }}>방 삭제</button>
+            </div>
           )}
         </div>
       </div>
