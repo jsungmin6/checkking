@@ -7,7 +7,8 @@ const TEMPLATE_CODE = "checkking-attendance-reminder";
 const STATUS_KEY = "att-push-consent-status"; // "agreed"면 다시 안 물어봄
 const LAST_ASKED_KEY = "att-push-consent-last-asked"; // 홈 화면 자동 질문용, 날짜 문자열
 
-const todayKey = () => new Date().toISOString().slice(0, 10);
+// toISOString()은 UTC 기준이라 자정~오전 9시(KST) 사이엔 아직 "어제"로 취급된다. 한국 시간 기준으로 계산한다.
+const todayKey = () => new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Seoul" });
 
 export function hasAgreedToPushConsent(): boolean {
   return localStorage.getItem(STATUS_KEY) === "agreed";

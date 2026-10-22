@@ -27,7 +27,9 @@ export function grantWelcomeBonusIfNew(isNewUser: boolean) {
 const DAILY_REWARD_CHECKIN_LIMIT = 3;
 
 const randomInt = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
-const dateKey = (d: Date) => d.toISOString().slice(0, 10);
+// toISOString()은 UTC 기준이라 자정~오전 9시(KST) 사이에는 아직 "어제"로 취급돼 하루 리셋이 안 된다.
+// 반드시 한국 시간 기준 날짜로 계산해야 한다.
+const dateKey = (d: Date) => d.toLocaleDateString("sv-SE", { timeZone: "Asia/Seoul" });
 
 /** 당일 출석 순위별 즉시 보너스 금액 — 1~3등만 해당, 4등부터는 null(하루 상한과는 별개) */
 export function rollDailyRankBonus(dailyRank: number): number | null {
