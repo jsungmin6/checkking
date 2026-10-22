@@ -7,10 +7,12 @@ import { api, ApiError } from "../utils/api";
 interface JoinRoomScreenProps {
   onBack: () => void;
   onJoined: (classroomId: number) => void;
+  initialCode?: string;
 }
 
-export default function JoinRoomScreen({ onBack, onJoined }: JoinRoomScreenProps) {
-  const [code, setCode] = useState(["", "", "", "", "", ""]);
+export default function JoinRoomScreen({ onBack, onJoined, initialCode }: JoinRoomScreenProps) {
+  const prefilled = (initialCode ?? "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6).split("");
+  const [code, setCode] = useState(Array.from({ length: 6 }, (_, i) => prefilled[i] ?? ""));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toastMessage, showToast } = useToast();

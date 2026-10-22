@@ -10,6 +10,7 @@ import { api, ApiError } from "../utils/api";
 import { collectCheckInData } from "../utils/location";
 import { formatTime } from "../utils/time";
 import { launchConfetti } from "../utils/confetti";
+import { shareRoomInvite } from "../utils/invite";
 import { useAttendancePoints, useAttendanceGift, useDailyRewardLimit, rollDailyRankBonus } from "../hooks/useAttendancePoints";
 import type { TabName } from "../components/TabBar";
 import type { Classroom, TodayAttendance, CheckInResponse, CheckInRequest, User } from "../types";
@@ -123,7 +124,17 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
 
   return (
     <div className="page" style={{ display: "flex", flexDirection: "column", height: "100dvh", minHeight: 0, overflow: "hidden" }}>
-      <BackHeader title={classroom.name} onBack={onBack} right={<span style={{ color: "var(--text-secondary)", fontSize: 12 }}>{classroom.memberCount}명</span>} />
+      <BackHeader title={classroom.name} onBack={onBack} right={
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <span
+            onClick={() => void shareRoomInvite(classroom.name, classroom.inviteCode)}
+            style={{ color: "var(--accent-blue)", fontSize: 13, fontWeight: 600, cursor: "pointer" }}
+          >
+            초대하기
+          </span>
+          <span style={{ color: "var(--text-secondary)", fontSize: 12 }}>{classroom.memberCount}명</span>
+        </div>
+      } />
 
       <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
         <section className="attendance-hero" aria-label="오늘 출석">

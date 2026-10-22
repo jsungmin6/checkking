@@ -4,6 +4,7 @@ import TabBar from "../components/TabBar";
 import UserActionSheet from "../components/UserActionSheet";
 import { hideAdBanner } from "../utils/admob";
 import { api, ApiError } from "../utils/api";
+import { shareRoomInvite } from "../utils/invite";
 import type { TabName } from "../components/TabBar";
 import type { Classroom, ClassroomMember, User, ValidationType, ClassroomSettingsRequest, GpsConfig } from "../types";
 
@@ -216,6 +217,12 @@ export default function SettingsScreen({ classroomId, user, onTabChange, onBack,
     }
   };
 
+  const handleInvite = async () => {
+    if (!classroom) return;
+    const result = await shareRoomInvite(classroom.name, classroom.inviteCode);
+    if (result === "copied") alert("초대 메시지가 클립보드에 복사되었습니다!");
+  };
+
   const handleKick = async (userId: number, nickname: string) => {
     if (!confirm(`${nickname}님을 강퇴하시겠습니까?`)) return;
     try {
@@ -286,6 +293,10 @@ export default function SettingsScreen({ classroomId, user, onTabChange, onBack,
         <div style={rowStyle(true)}>
           <span>초대 코드</span>
           <span onClick={handleCopyCode} style={{ color: "var(--accent-blue)", fontWeight: 600, cursor: "pointer" }}>{classroom.inviteCode} 📋</span>
+        </div>
+        <div onClick={handleInvite} style={{ ...rowStyle(false, false), cursor: "pointer" }}>
+          <span>친구 초대하기</span>
+          <span style={{ color: "var(--text-secondary)" }}>공유 ›</span>
         </div>
         <div onClick={() => setShowMembers(!showMembers)} style={{ ...rowStyle(false, !showMembers), cursor: "pointer" }}>
           <span>멤버 관리</span>

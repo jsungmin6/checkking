@@ -23,7 +23,19 @@ export default function App() {
   const user = authUser ?? devPreviewUser;
   const [screen, setScreen] = useState<ScreenName>("home");
   const [activeRoomId, setActiveRoomId] = useState<number | null>(null);
+  const [pendingInviteCode, setPendingInviteCode] = useState<string | null>(null);
   const attInitRef = useRef(false);
+  const inviteLinkHandledRef = useRef(false);
+
+  // 공유 초대 링크(intoss://checkking/join?code=XXXXXX)로 앱이 열렸을 때 참여 화면으로 이동.
+  useEffect(() => {
+    if (inviteLinkHandledRef.current || loading || !user || needsTermsAgreement) return;
+    const code = new URLSearchParams(window.location.search).get("code");
+    if (!code) return;
+    inviteLinkHandledRef.current = true;
+    setPendingInviteCode(code);
+    setScreen("joinRoom");
+  }, [loading, user, needsTermsAgreement]);
 
   // 앱인토스 네이티브 뒤로가기를 SPA 화면 이동에 연결한다.
   useEffect(() => {
@@ -120,7 +132,7 @@ export default function App() {
     case "createRoom":
       return <CreateRoomScreen accountType={user.accountType} onBack={() => navigateTo("home")} onCreated={(id) => navigateTo("room", id)} />;
     case "joinRoom":
-      return <JoinRoomScreen onBack={() => navigateTo("home")} onJoined={(id) => navigateTo("room", id)} />;
+      return <JoinRoomScreen initialCode={pendingInviteCode ?? undefined} onBack={() => navigateTo("home")} onJoined={(id) => navigateTo("room", id)} />;
     case "publicRooms":
       return <PublicRoomsScreen accountType={user.accountType} onNavigateHome={() => navigateTo("home")} onNavigateProfile={() => navigateTo("profile")} onJoined={(id) => navigateTo("room", id)} />;
     case "room":
