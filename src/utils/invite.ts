@@ -1,13 +1,24 @@
 import { isTossApp } from "./platform";
+import { api } from "./api";
 
 const APP_NAME = "checkking";
 
 export type ShareInviteResult = "shared" | "copied" | "failed";
 
 /** 방 초대 메시지를 네이티브 공유시트(토스 앱) 또는 Web Share API로 보낸다. 둘 다 안 되면 클립보드에 복사한다. */
-export async function shareRoomInvite(roomName: string, inviteCode: string): Promise<ShareInviteResult> {
+export async function shareRoomInvite(roomName: string, inviteCode: string, classroomId: number): Promise<ShareInviteResult> {
   const text = `[${roomName}] 출석왕 방에 초대해요!\n초대 코드: ${inviteCode}`;
+  const result = await doShare(text, inviteCode);
+  if (result === "shared" || result === "copied") {
+    void api("/notifications/room-invited", {
+      method: "POST",
+      body: JSON.stringify({ classroomId }),
+    }).catch(() => {});
+  }
+  return result;
+}
 
+async function doShare(text: string, inviteCode: string): Promise<ShareInviteResult> {
   if (isTossApp()) {
     try {
       const { Share } = await import("@apps-in-toss/web-framework");

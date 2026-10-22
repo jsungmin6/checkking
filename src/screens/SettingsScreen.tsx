@@ -219,7 +219,7 @@ export default function SettingsScreen({ classroomId, user, onTabChange, onBack,
 
   const handleInvite = async () => {
     if (!classroom) return;
-    const result = await shareRoomInvite(classroom.name, classroom.inviteCode);
+    const result = await shareRoomInvite(classroom.name, classroom.inviteCode, classroomId);
     if (result === "copied") alert("초대 메시지가 클립보드에 복사되었습니다!");
   };
 

@@ -127,7 +127,7 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
       <BackHeader title={classroom.name} onBack={onBack} right={
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <span
-            onClick={() => void shareRoomInvite(classroom.name, classroom.inviteCode)}
+            onClick={() => void shareRoomInvite(classroom.name, classroom.inviteCode, classroomId)}
             style={{ color: "var(--accent-blue)", fontSize: 13, fontWeight: 600, cursor: "pointer" }}
           >
             초대하기
