@@ -26,16 +26,11 @@ export async function reportAdLoadFailed(adGroupId: string, reason: string) {
   }).catch(() => {});
 }
 
-/** Returns true only after the SDK reports that the user earned the reward. */
-export async function showTossRewardedAd(adGroupId: string): Promise<boolean> {
-  if (!isTossApp()) return true;
-
-  const { loadFullScreenAd, showFullScreenAd } = await import("@apps-in-toss/web-framework");
-  if (!loadFullScreenAd.isSupported() || !showFullScreenAd.isSupported()) {
-    throw new Error("현재 토스 앱 버전에서는 리워드 광고를 사용할 수 없습니다.");
-  }
-
-  await new Promise<void>((resolve, reject) => {
+async function loadAdOnce(
+  loadFullScreenAd: typeof import("@apps-in-toss/web-framework")["loadFullScreenAd"],
+  adGroupId: string,
+): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
     let cleanup: (() => void) | undefined;
     const timeout = window.setTimeout(() => {
       cleanup?.();
@@ -57,6 +52,24 @@ export async function showTossRewardedAd(adGroupId: string): Promise<boolean> {
       },
     });
   });
+}
+
+/** Returns true only after the SDK reports that the user earned the reward. */
+export async function showTossRewardedAd(adGroupId: string): Promise<boolean> {
+  if (!isTossApp()) return true;
+
+  const { loadFullScreenAd, showFullScreenAd } = await import("@apps-in-toss/web-framework");
+  if (!loadFullScreenAd.isSupported() || !showFullScreenAd.isSupported()) {
+    throw new Error("현재 토스 앱 버전에서는 리워드 광고를 사용할 수 없습니다.");
+  }
+
+  // "No fill"/일시적 JS엔진 오류처럼 재시도하면 종종 성공하는 실패가 많아서, 포기하기 전에 한 번 더 시도한다.
+  try {
+    await loadAdOnce(loadFullScreenAd, adGroupId);
+  } catch {
+    await new Promise((r) => setTimeout(r, 1500));
+    await loadAdOnce(loadFullScreenAd, adGroupId);
+  }
 
   return new Promise<boolean>((resolve, reject) => {
     let earnedReward = false;

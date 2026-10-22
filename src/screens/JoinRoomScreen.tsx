@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import BackHeader from "../components/BackHeader";
 import Toast from "../components/Toast";
 import { useToast } from "../hooks/useToast";
@@ -46,6 +46,7 @@ export default function JoinRoomScreen({ onBack, onJoined, initialCode }: JoinRo
 
   const inviteCode = code.join("");
   const isComplete = inviteCode.length === 6;
+  const autoJoinedRef = useRef(false);
 
   const handleJoin = async () => {
     if (!isComplete) return;
@@ -67,6 +68,15 @@ export default function JoinRoomScreen({ onBack, onJoined, initialCode }: JoinRo
       setLoading(false);
     }
   };
+
+  // 초대 딥링크로 들어왔고 코드가 6자리 전부 채워졌으면, 코드 입력을 기다리지 않고 바로 참여를 시도한다.
+  useEffect(() => {
+    if (autoJoinedRef.current) return;
+    if (!initialCode || !isComplete) return;
+    autoJoinedRef.current = true;
+    void handleJoin();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="page animate-fade-in" style={{ alignItems: "center", justifyContent: "center" }}>
