@@ -1,4 +1,5 @@
 import { API_BASE_URL, TOKEN_KEYS } from "../constants";
+import { isTossApp } from "./platform";
 import type { ApiResponse, TokenRefreshResponse } from "../types";
 
 function getAccessToken(): string | null {
@@ -9,15 +10,56 @@ function getRefreshToken(): string | null {
   return localStorage.getItem(TOKEN_KEYS.REFRESH);
 }
 
-function setTokens(access: string, refresh: string) {
+export function setTokens(access: string, refresh: string) {
   localStorage.setItem(TOKEN_KEYS.ACCESS, access);
   localStorage.setItem(TOKEN_KEYS.REFRESH, refresh);
+  // localStorage는 토스 딥링크 진입 등으로 웹뷰 인스턴스가 달라지면 유지가 안 될 수 있어서,
+  // 토스 앱의 네이티브 저장소(앱 단위로 유지됨)에도 같이 보관해둔다. 실패해도 조용히 무시.
+  if (isTossApp()) {
+    void (async () => {
+      try {
+        const { Storage } = await import("@apps-in-toss/web-framework");
+        await Storage.setItems({ [TOKEN_KEYS.ACCESS]: access, [TOKEN_KEYS.REFRESH]: refresh });
+      } catch { /* ignore */ }
+    })();
+  }
 }
 
 export function clearTokens() {
   console.log("[등교왕] 토큰 삭제");
   localStorage.removeItem(TOKEN_KEYS.ACCESS);
   localStorage.removeItem(TOKEN_KEYS.REFRESH);
+  if (isTossApp()) {
+    void (async () => {
+      try {
+        const { Storage } = await import("@apps-in-toss/web-framework");
+        await Storage.removeItem(TOKEN_KEYS.ACCESS);
+        await Storage.removeItem(TOKEN_KEYS.REFRESH);
+      } catch { /* ignore */ }
+    })();
+  }
+}
+
+/**
+ * localStorage에 토큰이 없을 때, 토스 네이티브 저장소에서 복구를 시도한다.
+ * 딥링크 등으로 새 웹뷰 인스턴스가 떠서 localStorage가 비어있는 경우를 위한 폴백.
+ * 복구했으면 true를 반환한다.
+ */
+export async function restoreTokensFromTossStorage(): Promise<boolean> {
+  if (!isTossApp()) return false;
+  if (getAccessToken()) return false;
+  try {
+    const { Storage } = await import("@apps-in-toss/web-framework");
+    const items = await Storage.getItems([TOKEN_KEYS.ACCESS, TOKEN_KEYS.REFRESH]);
+    const access = items[TOKEN_KEYS.ACCESS];
+    const refresh = items[TOKEN_KEYS.REFRESH];
+    if (!access || !refresh) return false;
+    localStorage.setItem(TOKEN_KEYS.ACCESS, access);
+    localStorage.setItem(TOKEN_KEYS.REFRESH, refresh);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 let refreshPromise: Promise<boolean> | null = null;
