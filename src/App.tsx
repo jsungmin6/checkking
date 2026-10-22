@@ -27,14 +27,35 @@ export default function App() {
   const attInitRef = useRef(false);
   const inviteLinkHandledRef = useRef(false);
 
-  // 공유 초대 링크(intoss://checkking/join?code=XXXXXX)로 앱이 열렸을 때 참여 화면으로 이동.
+  // 공유 초대 링크(intoss://checkking/join?inviteCode=XXXXXX)로 앱이 열렸을 때 참여 화면으로 이동.
+  // 파라미터 이름을 "code"로 하면 안 된다 — index.html의 카카오 리다이렉트 캡처 스크립트가
+  // "code" 쿼리를 전부 카카오 인가코드로 오인해 가로채서, 초대 코드가 카카오 로그인 시도로 새버린다.
+  // window.location.search 뿐 아니라, 토스 앱이 실제로 전달하는 원본 스킴 URL(Environment.initialURL)도 같이 확인한다.
   useEffect(() => {
     if (inviteLinkHandledRef.current || loading || !user || needsTermsAgreement) return;
-    const code = new URLSearchParams(window.location.search).get("code");
-    if (!code) return;
-    inviteLinkHandledRef.current = true;
-    setPendingInviteCode(code);
-    setScreen("joinRoom");
+
+    const fromLocation = new URLSearchParams(window.location.search).get("inviteCode");
+    if (fromLocation) {
+      inviteLinkHandledRef.current = true;
+      setPendingInviteCode(fromLocation);
+      setScreen("joinRoom");
+      return;
+    }
+
+    if (!isTossApp()) return;
+    (async () => {
+      try {
+        const { Environment } = await import("@apps-in-toss/web-framework");
+        const code = new URL(Environment.initialURL).searchParams.get("inviteCode");
+        if (code && !inviteLinkHandledRef.current) {
+          inviteLinkHandledRef.current = true;
+          setPendingInviteCode(code);
+          setScreen("joinRoom");
+        }
+      } catch {
+        // initialURL이 없거나 파싱 불가 — 무시
+      }
+    })();
   }, [loading, user, needsTermsAgreement]);
 
   // 앱인토스 네이티브 뒤로가기를 SPA 화면 이동에 연결한다.

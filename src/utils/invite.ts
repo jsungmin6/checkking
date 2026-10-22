@@ -22,7 +22,7 @@ async function doShare(text: string, inviteCode: string): Promise<ShareInviteRes
   if (isTossApp()) {
     try {
       const { Share } = await import("@apps-in-toss/web-framework");
-      const link = await Share.createLink({ path: `intoss://${APP_NAME}/join?code=${inviteCode}` });
+      const link = await Share.createLink({ path: `intoss://${APP_NAME}/join?inviteCode=${inviteCode}` });
       await Share.sendMessage({ message: `${text}\n${link}` });
       return "shared";
     } catch {
