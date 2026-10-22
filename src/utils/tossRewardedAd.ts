@@ -1,11 +1,28 @@
 import { isTossApp } from "./platform";
 import { api } from "./api";
 
-/** 광고 로딩/재생 실패를 서버에 보고한다(텔레그램 알림용). 실패해도 UI에 영향 없는 best-effort 호출. */
-export function reportAdLoadFailed(adGroupId: string, reason: string) {
+/** 광고 로딩/재생 실패를 서버에 보고한다(로그 집계용). 실패해도 UI에 영향 없는 best-effort 호출. */
+export async function reportAdLoadFailed(adGroupId: string, reason: string) {
+  const errorCodeMatch = reason.match(/code=(-?\d+)/);
+  let platform: string | undefined;
+  try {
+    if (isTossApp()) {
+      const { getPlatformOS } = await import("@apps-in-toss/web-framework");
+      platform = getPlatformOS();
+    }
+  } catch {
+    // SDK 미지원 환경 — platform 없이 보고
+  }
+
   void api("/notifications/ad-load-failed", {
     method: "POST",
-    body: JSON.stringify({ adGroupId, reason }),
+    body: JSON.stringify({
+      adGroupId,
+      reason,
+      errorCode: errorCodeMatch ? errorCodeMatch[1] : undefined,
+      platform,
+      userAgent: navigator.userAgent,
+    }),
   }).catch(() => {});
 }
 
