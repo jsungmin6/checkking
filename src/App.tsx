@@ -2,7 +2,8 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { closeView, graniteEvent } from "@apps-in-toss/web-framework";
 import { useAuth } from "./hooks/useAuth";
 import { isCapacitor, isIOS, isTossApp } from "./utils/platform";
-import { resetDevPreview } from "./utils/api";
+import { resetDevPreview, api } from "./utils/api";
+import { TOKEN_KEYS } from "./constants";
 import LoginScreen from "./screens/LoginScreen";
 import HomeScreen from "./screens/HomeScreen";
 import ProfileScreen from "./screens/ProfileScreen";
@@ -26,6 +27,35 @@ export default function App() {
   const [pendingInviteCode, setPendingInviteCode] = useState<string | null>(null);
   const attInitRef = useRef(false);
   const inviteLinkHandledRef = useRef(false);
+  const entryLoggedRef = useRef(false);
+
+  // 초대 딥링크로 들어올 때마다 "토스 전체탭에서 멈춤"/"출석왕 홈으로 옴"이 왜 매번 다른지,
+  // 왜 로그인이 매번 풀리는지 확인하기 위한 진단 로그 — 로그인 여부와 무관하게 앱 진입 시 1회 전송.
+  useEffect(() => {
+    if (entryLoggedRef.current) return;
+    entryLoggedRef.current = true;
+    (async () => {
+      let initialURL: string | null = null;
+      try {
+        if (isTossApp()) {
+          const { Environment } = await import("@apps-in-toss/web-framework");
+          initialURL = Environment.initialURL;
+        }
+      } catch { /* ignore */ }
+
+      void api("/diagnostics/app-entry", {
+        method: "POST",
+        body: JSON.stringify({
+          hasToken: !!localStorage.getItem(TOKEN_KEYS.ACCESS),
+          isTossApp: isTossApp(),
+          inviteCode: new URLSearchParams(window.location.search).get("inviteCode"),
+          initialURL,
+          locationSearch: window.location.search,
+          userAgent: navigator.userAgent,
+        }),
+      }).catch(() => {});
+    })();
+  }, []);
 
   // 공유 초대 링크(intoss://checkking/join?inviteCode=XXXXXX)로 앱이 열렸을 때 참여 화면으로 이동.
   // 파라미터 이름을 "code"로 하면 안 된다 — index.html의 카카오 리다이렉트 캡처 스크립트가
