@@ -16,8 +16,11 @@ const ICON_STROKE: React.SVGProps<SVGSVGElement> = {
 function GpsIcon() {
   return (
     <svg {...ICON_STROKE} width={40} height={40} aria-hidden="true">
-      <path d="M24 6c-7.2 0-13 5.7-13 12.8C11 28 24 42 24 42s13-14 13-23.2C37 11.7 31.2 6 24 6Z" />
-      <circle cx="24" cy="19" r="5" />
+      <path d="M8 16 20 11l8 4 12-5" strokeOpacity={0.35} />
+      <path d="M8 16v21l12-5 8 4 12-5V10" strokeOpacity={0.35} />
+      <path d="M20 11v21M28 15v21" strokeOpacity={0.35} />
+      <circle cx="26" cy="24" r="13" strokeDasharray="3.5 4" />
+      <circle cx="26" cy="24" r="4" fill="var(--accent-blue)" stroke="none" />
     </svg>
   );
 }
