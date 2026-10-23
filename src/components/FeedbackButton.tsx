@@ -9,7 +9,7 @@ export default function FeedbackButton({ onClick, bottomOffset }: FeedbackButton
       onClick={onClick}
       aria-label="문의하기"
       style={{
-        position: "fixed",
+        position: "absolute",
         right: 16,
         bottom: bottomOffset,
         zIndex: 30,
