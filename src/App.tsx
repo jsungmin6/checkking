@@ -15,6 +15,7 @@ import StatsScreen from "./screens/StatsScreen";
 import SettingsScreen from "./screens/SettingsScreen";
 import TermsAgreementScreen from "./screens/TermsAgreementScreen";
 import PublicRoomsScreen from "./screens/PublicRoomsScreen";
+import OnboardingModal from "./components/OnboardingModal";
 import type { ScreenName, User } from "./types";
 
 export default function App() {
@@ -124,6 +125,12 @@ export default function App() {
   const handleLogin = useCallback((_user: User) => {
     setScreen("home");
   }, []);
+
+  const guidePreview = import.meta.env.DEV && new URLSearchParams(window.location.search).get("guidePreview") === "1";
+
+  if (guidePreview) {
+    return <OnboardingModal onClose={() => window.location.assign("/")} />;
+  }
 
   if (loading) {
     return (

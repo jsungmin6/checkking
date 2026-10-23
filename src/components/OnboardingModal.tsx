@@ -4,65 +4,30 @@ interface OnboardingModalProps {
   onClose: () => void;
 }
 
-const ICON_STROKE: React.SVGProps<SVGSVGElement> = {
-  viewBox: "0 0 48 48",
-  fill: "none",
-  stroke: "var(--accent-blue)",
-  strokeWidth: 2.6,
-  strokeLinecap: "round",
-  strokeLinejoin: "round",
-};
-
-function GpsIcon() {
-  return (
-    <svg {...ICON_STROKE} width={40} height={40} aria-hidden="true">
-      <path d="M8 16 20 11l8 4 12-5" strokeOpacity={0.35} />
-      <path d="M8 16v21l12-5 8 4 12-5V10" strokeOpacity={0.35} />
-      <path d="M20 11v21M28 15v21" strokeOpacity={0.35} />
-      <circle cx="26" cy="24" r="13" strokeDasharray="3.5 4" />
-      <circle cx="26" cy="24" r="4" fill="var(--accent-blue)" stroke="none" />
-    </svg>
-  );
-}
-
-function PodiumIcon() {
-  return (
-    <svg {...ICON_STROKE} width={40} height={40} aria-hidden="true">
-      <rect x="6" y="24" width="11" height="16" rx="1.5" />
-      <rect x="18.5" y="14" width="11" height="26" rx="1.5" />
-      <rect x="31" y="29" width="11" height="11" rx="1.5" />
-      <path d="M20 23.5 24 19l4 4.5" />
-    </svg>
-  );
-}
-
-function GiftIcon() {
-  return (
-    <svg {...ICON_STROKE} width={40} height={40} aria-hidden="true">
-      <rect x="8" y="20" width="32" height="22" rx="2" />
-      <path d="M8 27h32" />
-      <path d="M24 20v22" />
-      <path d="M24 20c-3-6-7-8-10-6.5-2.5 1.3-1.5 6.5 10 6.5Z" />
-      <path d="M24 20c3-6 7-8 10-6.5 2.5 1.3 1.5 6.5-10 6.5Z" />
-    </svg>
-  );
-}
-
 const STEPS = [
   {
-    Icon: GpsIcon,
-    title: "방을 만들고 GPS로 출석해요",
-    desc: "모임, 스터디, 반 등 원하는 방을 만들고, GPS 위치 인증으로 정확하게 출석을 확인할 수 있어요.",
+    image: "/guide/guide-challenge.png",
+    alt: "토끼와 거북이가 함께 챌린지 출석 달력을 만들어요",
+    title: "방을 만들고 함께 출석해 보세요",
+    desc: "모임이나 챌린지 방을 만들고, 함께 출석을 기록할 수 있어요.",
   },
   {
-    Icon: PodiumIcon,
-    title: "먼저 온 순서로 순위가 매겨져요",
-    desc: "출석하면 그날의 등수가 자동으로 기록돼요. 순위가 높을수록 더 많은 포인트를 받아가요.",
+    image: "/guide/guide-gps-private.png",
+    alt: "지도에 GPS 출석 반경이 표시되고 거북이가 비밀방 초대 코드를 들고 있어요",
+    title: "이런 기능도 있어요!",
+    desc: "GPS 인증을 선택한 방은 정해진 반경 안에서만 출석할 수 있어요. 비밀방은 초대 코드로 입장할 수 있어요.",
   },
   {
-    Icon: GiftIcon,
-    title: "하루 3번까지 출석 선물을 받아요",
-    desc: "출석할 때마다 선물상자를 열어 포인트를 모으고, 모은 포인트는 토스 포인트로 전환할 수 있어요.",
+    image: "/guide/guide-ranking.png",
+    alt: "토끼와 거북이가 도착 순서대로 시상대에 올라 있어요",
+    title: "출석 순위도 확인할 수 있어요",
+    desc: "출석한 순서대로 오늘의 순위가 기록돼요. 먼저 출석할수록 높은 순위에 올라가요.",
+  },
+  {
+    image: "/guide/guide-points.png",
+    alt: "1위 토끼가 더 많은 포인트 동전을 받고 거북이도 선물을 받아요",
+    title: "높은 순위일수록 포인트 보너스가 커져요",
+    desc: "출석 선물을 열어 포인트를 모아 보세요. 1~3등은 순위가 높을수록 더 많은 보너스를 받아요.",
   },
 ];
 
@@ -70,48 +35,25 @@ export default function OnboardingModal({ onClose }: OnboardingModalProps) {
   const [step, setStep] = useState(0);
   const isLast = step === STEPS.length - 1;
   const current = STEPS[step]!;
-  const CurrentIcon = current.Icon;
 
   return (
-    <div style={{
-      position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.45)",
-      display: "flex", alignItems: "center", justifyContent: "center", padding: 20,
-    }}>
-      <div style={{
-        width: "100%", maxWidth: 360, background: "var(--bg-card)", borderRadius: 20,
-        padding: "28px 22px 22px", display: "flex", flexDirection: "column", alignItems: "center",
-      }}>
-        <div style={{
-          width: 84, height: 84, borderRadius: "50%", marginBottom: 18,
-          background: "rgba(49, 130, 246, 0.1)", display: "flex", alignItems: "center", justifyContent: "center",
-        }}>
-          <CurrentIcon />
-        </div>
-        <div style={{ fontSize: 19, fontWeight: 800, textAlign: "center", marginBottom: 10 }}>{current.title}</div>
-        <div style={{ fontSize: 14, color: "var(--text-secondary)", textAlign: "center", lineHeight: 1.6, marginBottom: 26 }}>
-          {current.desc}
+    <div className="onboarding-overlay">
+      <section className="onboarding-dialog" role="dialog" aria-modal="true" aria-label="출석왕 사용 안내">
+        <img className="onboarding-character" src={current.image} alt={current.alt} key={current.image} />
+        <div className="onboarding-speech">
+          <span className="onboarding-speaker">출석왕</span>
+          <h2>{current.title}</h2>
+          <p>{current.desc}</p>
         </div>
 
-        <div style={{ display: "flex", gap: 6, marginBottom: 20 }}>
-          {STEPS.map((_, i) => (
-            <span key={i} style={{
-              width: i === step ? 18 : 6, height: 6, borderRadius: 3,
-              background: i === step ? "var(--accent-blue)" : "var(--border-light)",
-              transition: "width 0.2s ease",
-            }} />
-          ))}
+        <div className="onboarding-progress" aria-label={`${step + 1} / ${STEPS.length}`}>
+          {STEPS.map((_, i) => <span key={i} className={i === step ? "active" : ""} />)}
         </div>
 
-        <button
-          onClick={() => (isLast ? onClose() : setStep((s) => s + 1))}
-          style={{
-            width: "100%", padding: 15, borderRadius: "var(--radius-button)", border: "none",
-            background: "var(--accent-blue)", color: "#fff", fontSize: 15, fontWeight: 700,
-          }}
-        >
+        <button className="onboarding-next" onClick={() => (isLast ? onClose() : setStep((s) => s + 1))}>
           {isLast ? "시작하기" : "다음"}
         </button>
-      </div>
+      </section>
     </div>
   );
 }
