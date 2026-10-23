@@ -79,7 +79,7 @@ export default function FeedbackModal({ onClose, onRewarded, alreadyRewarded }: 
             </div>
             {!wasAlreadyRewarded && !giftOpened && (
               <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
-                <GiftBox onOpened={handleGiftOpened} />
+                <GiftBox onOpened={handleGiftOpened} label="감사 선물이 도착했어요" />
               </div>
             )}
             {!wasAlreadyRewarded && giftOpened && (
