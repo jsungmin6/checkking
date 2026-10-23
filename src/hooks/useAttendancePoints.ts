@@ -51,6 +51,13 @@ export function useDailyRewardLimit() {
   return { remaining, increment };
 }
 
+/** "문의하기" 완료 보상(5000P)은 기기당 1회만 — 로컬 플래그로만 중복 방지한다. */
+export function useFeedbackReward() {
+  const [rewarded, setRewarded] = useLocalStorage<boolean>("att-points-feedback-rewarded", false);
+  const markRewarded = () => setRewarded(true);
+  return { alreadyRewarded: rewarded, markRewarded };
+}
+
 /** 방 전체 누적 출석 포인트 — 토스 포인트 전환의 기준이 되는 총량 */
 export function useAttendancePoints() {
   const [totalPoints, setTotalPoints] = useLocalStorage<number>(TOTAL_POINTS_KEY, 0);

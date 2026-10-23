@@ -9,7 +9,7 @@ import ConvertPointsModal from "../components/ConvertPointsModal";
 import FeedbackButton from "../components/FeedbackButton";
 import FeedbackModal from "../components/FeedbackModal";
 import { useToast } from "../hooks/useToast";
-import { useAttendancePoints, POINTS_TO_WON_RATE } from "../hooks/useAttendancePoints";
+import { useAttendancePoints, useFeedbackReward, POINTS_TO_WON_RATE } from "../hooks/useAttendancePoints";
 import { maybePromptPushConsentOnHome } from "../utils/pushConsent";
 import type { HomeTab } from "../components/HomeTabBar";
 import type { AccountType, ClassroomListItem } from "../types";
@@ -30,7 +30,8 @@ export default function HomeScreen({
   const [loading, setLoading] = useState(true);
   const { toastMessage, showToast } = useToast();
   const roomLimit = accountType === "PREMIUM" ? 50 : 3;
-  const { totalPoints, requestConversion } = useAttendancePoints();
+  const { totalPoints, addPoints, requestConversion } = useAttendancePoints();
+  const { alreadyRewarded: feedbackAlreadyRewarded, markRewarded: markFeedbackRewarded } = useFeedbackReward();
   const [showConvertModal, setShowConvertModal] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
 
@@ -147,7 +148,13 @@ export default function HomeScreen({
           onConverted={handleConverted}
         />
       )}
-      {showFeedbackModal && <FeedbackModal onClose={() => setShowFeedbackModal(false)} />}
+      {showFeedbackModal && (
+        <FeedbackModal
+          onClose={() => setShowFeedbackModal(false)}
+          alreadyRewarded={feedbackAlreadyRewarded}
+          onRewarded={(amount) => { addPoints(amount); markFeedbackRewarded(); }}
+        />
+      )}
     </div>
   );
 }
