@@ -80,20 +80,20 @@ export default function FeedbackModal({ onClose, onRewarded, alreadyRewarded }: 
               giftOpened ? (
                 <div style={{
                   display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2,
-                  padding: "20px 0", marginBottom: 20, borderRadius: "var(--radius-card)",
+                  padding: "14px 0", marginBottom: 20, borderRadius: "var(--radius-card)",
                   background: "linear-gradient(135deg, var(--accent-blue), #5B9CF6)", color: "#fff",
                 }}>
-                  <span style={{ fontSize: 28 }}>🎉</span>
+                  <img src="/rewards/gift-box-open.png" alt="열린 선물 상자" style={{ width: 64, height: 64, objectFit: "contain" }} />
                   <span style={{ fontSize: 18, fontWeight: 800 }}>+{FEEDBACK_REWARD.toLocaleString()}P 획득!</span>
                 </div>
               ) : (
                 <button onClick={handleGiftOpened} style={{
-                  display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4,
-                  width: "100%", padding: "18px 0", marginBottom: 20, borderRadius: "var(--radius-card)",
+                  display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2,
+                  width: "100%", padding: "10px 0", marginBottom: 20, borderRadius: "var(--radius-card)",
                   border: "1px dashed var(--accent-blue)", background: "rgba(49, 130, 246, 0.08)", color: "var(--accent-blue)",
                   cursor: "pointer",
                 }}>
-                  <span style={{ fontSize: 40 }}>🎁</span>
+                  <img src="/rewards/gift-box-closed.png" alt="파란 리본이 달린 선물 상자" style={{ width: 64, height: 64, objectFit: "contain" }} />
                   <span style={{ fontSize: 14, fontWeight: 700 }}>탭해서 감사 선물 열기</span>
                 </button>
               )
