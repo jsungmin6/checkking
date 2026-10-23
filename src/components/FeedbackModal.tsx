@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import { api, ApiError } from "../utils/api";
+import GiftBox from "./GiftBox";
 
 const FEEDBACK_REWARD = 5000;
 
@@ -55,6 +56,37 @@ export default function FeedbackModal({ onClose, onRewarded, alreadyRewarded }: 
     setGiftOpened(true);
   };
 
+  if (sent && !wasAlreadyRewarded) {
+    // 출석 선물(AttendanceGiftModal)과 동일한 연출 — 선물상자 탭해서 열면 포인트 결과 화면으로 전환.
+    return (
+      <div className="attendance-gift-overlay">
+        <section className="attendance-gift-dialog" role="dialog" aria-modal="true" aria-label="감사 선물">
+          <button className="attendance-gift-close" onClick={onClose} aria-label="닫기">×</button>
+          {!giftOpened ? (
+            <>
+              <h2 className="attendance-gift-title">의견 감사합니다</h2>
+              <GiftBox onOpened={handleGiftOpened} label="감사 선물이 도착했어요" />
+            </>
+          ) : (
+            <>
+              <img className="attendance-gift-open-image" src="/rewards/gift-box-open.png" alt="포인트 동전이 나온 열린 선물 상자" />
+              <h2 className="attendance-gift-title attendance-gift-result-title">와! 선물이 열렸어요!</h2>
+              <div className="attendance-gift-points-list">
+                <div className="attendance-gift-point-row">
+                  <span>문의 선물</span>
+                  <strong>+{FEEDBACK_REWARD.toLocaleString()}P</strong>
+                </div>
+              </div>
+              <div className="attendance-gift-total-label">총 지급 포인트</div>
+              <div className="attendance-gift-total">+{FEEDBACK_REWARD.toLocaleString()}P</div>
+              <button className="attendance-gift-confirm" onClick={onClose}>확인</button>
+            </>
+          )}
+        </section>
+      </div>
+    );
+  }
+
   return (
     <div
       onClick={onClose}
@@ -76,35 +108,10 @@ export default function FeedbackModal({ onClose, onRewarded, alreadyRewarded }: 
             <div style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.6, marginBottom: 16 }}>
               보내주신 내용은 꼼꼼히 읽고 서비스에 반영하도록 하겠습니다.
             </div>
-            {!wasAlreadyRewarded && (
-              giftOpened ? (
-                <div style={{
-                  display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2,
-                  padding: "14px 0", marginBottom: 20, borderRadius: "var(--radius-card)",
-                  background: "linear-gradient(135deg, var(--accent-blue), #5B9CF6)", color: "#fff",
-                }}>
-                  <img src="/rewards/gift-box-open.png" alt="열린 선물 상자" style={{ width: 64, height: 64, objectFit: "contain" }} />
-                  <span style={{ fontSize: 18, fontWeight: 800 }}>+{FEEDBACK_REWARD.toLocaleString()}P 획득!</span>
-                </div>
-              ) : (
-                <button onClick={handleGiftOpened} style={{
-                  display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2,
-                  width: "100%", padding: "10px 0", marginBottom: 20, borderRadius: "var(--radius-card)",
-                  border: "1px dashed var(--accent-blue)", background: "rgba(49, 130, 246, 0.08)", color: "var(--accent-blue)",
-                  cursor: "pointer",
-                }}>
-                  <img src="/rewards/gift-box-closed.png" alt="파란 리본이 달린 선물 상자" style={{ width: 64, height: 64, objectFit: "contain" }} />
-                  <span style={{ fontSize: 14, fontWeight: 700 }}>탭해서 감사 선물 열기</span>
-                </button>
-              )
-            )}
-            <button
-              onClick={onClose}
-              style={{
-                width: "100%", padding: 14, borderRadius: "var(--radius-button)", border: "none",
-                background: "var(--accent-blue)", color: "#fff", fontSize: 15, fontWeight: 700,
-              }}
-            >
+            <button onClick={onClose} style={{
+              width: "100%", padding: 14, borderRadius: "var(--radius-button)", border: "none",
+              background: "var(--accent-blue)", color: "#fff", fontSize: 15, fontWeight: 700,
+            }}>
               닫기
             </button>
           </>
