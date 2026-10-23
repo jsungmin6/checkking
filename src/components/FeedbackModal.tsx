@@ -79,34 +79,33 @@ export default function FeedbackModal({ onClose, onRewarded, alreadyRewarded }: 
             {!wasAlreadyRewarded && (
               giftOpened ? (
                 <div style={{
-                  display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-                  padding: "14px 0", marginBottom: 20, borderRadius: "var(--radius-card)",
+                  display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2,
+                  padding: "20px 0", marginBottom: 20, borderRadius: "var(--radius-card)",
                   background: "linear-gradient(135deg, var(--accent-blue), #5B9CF6)", color: "#fff",
-                  fontSize: 16, fontWeight: 800,
                 }}>
-                  +{FEEDBACK_REWARD.toLocaleString()}P 적립 완료!
+                  <span style={{ fontSize: 28 }}>🎉</span>
+                  <span style={{ fontSize: 18, fontWeight: 800 }}>+{FEEDBACK_REWARD.toLocaleString()}P 획득!</span>
                 </div>
               ) : (
                 <button onClick={handleGiftOpened} style={{
-                  display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-                  width: "100%", padding: "14px 0", marginBottom: 20, borderRadius: "var(--radius-card)",
-                  border: "none", background: "linear-gradient(135deg, var(--accent-blue), #5B9CF6)", color: "#fff",
-                  fontSize: 16, fontWeight: 800, cursor: "pointer",
+                  display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4,
+                  width: "100%", padding: "18px 0", marginBottom: 20, borderRadius: "var(--radius-card)",
+                  border: "1px dashed var(--accent-blue)", background: "rgba(49, 130, 246, 0.08)", color: "var(--accent-blue)",
+                  cursor: "pointer",
                 }}>
-                  🎁 탭해서 감사 선물 열기
+                  <span style={{ fontSize: 40 }}>🎁</span>
+                  <span style={{ fontSize: 14, fontWeight: 700 }}>탭해서 감사 선물 열기</span>
                 </button>
               )
             )}
             <button
               onClick={onClose}
-              disabled={!wasAlreadyRewarded && !giftOpened}
               style={{
                 width: "100%", padding: 14, borderRadius: "var(--radius-button)", border: "none",
                 background: "var(--accent-blue)", color: "#fff", fontSize: 15, fontWeight: 700,
-                opacity: !wasAlreadyRewarded && !giftOpened ? 0.5 : 1,
               }}
             >
-              확인
+              닫기
             </button>
           </>
         ) : (
