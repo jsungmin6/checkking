@@ -89,7 +89,7 @@ export default function FeedbackModal({ onClose, onRewarded, alreadyRewarded }: 
           <>
             <div style={{ fontSize: 17, fontWeight: 700, marginBottom: 6 }}>문의하기</div>
             <div style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 14, lineHeight: 1.5 }}>
-              출석왕을 찾아주신 것만으로도 꿈만 같아요 😭 여러분 덕분에 매일매일이 설레요. 소중한 의견 하나하나가 저에게는 정말 큰 힘이 됩니다!
+              안녕하세요, 출석왕 개발자입니다. 사용해주셔서 진심으로 감사드립니다. 기대를 충족시키기 위해 매일 열심히 개발하고 고민하고 있어요. 계속해서 열심히 할 테니 많은 이용 부탁드립니다. 소중한 의견 하나하나가 저에게는 정말 큰 힘이 됩니다!
             </div>
 
             {!alreadyRewarded && (
