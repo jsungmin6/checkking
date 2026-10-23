@@ -1,6 +1,5 @@
 import { useState, useRef } from "react";
 import { api, ApiError } from "../utils/api";
-import GiftBox from "./GiftBox";
 
 const FEEDBACK_REWARD = 5000;
 
@@ -77,20 +76,26 @@ export default function FeedbackModal({ onClose, onRewarded, alreadyRewarded }: 
             <div style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.6, marginBottom: 16 }}>
               보내주신 내용은 꼼꼼히 읽고 서비스에 반영하도록 하겠습니다.
             </div>
-            {!wasAlreadyRewarded && !giftOpened && (
-              <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
-                <GiftBox onOpened={handleGiftOpened} label="감사 선물이 도착했어요" />
-              </div>
-            )}
-            {!wasAlreadyRewarded && giftOpened && (
-              <div style={{
-                display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-                padding: "12px 0", marginBottom: 20, borderRadius: "var(--radius-card)",
-                background: "linear-gradient(135deg, var(--accent-blue), #5B9CF6)", color: "#fff",
-                fontSize: 16, fontWeight: 800,
-              }}>
-                +{FEEDBACK_REWARD.toLocaleString()}P 적립 완료!
-              </div>
+            {!wasAlreadyRewarded && (
+              giftOpened ? (
+                <div style={{
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                  padding: "14px 0", marginBottom: 20, borderRadius: "var(--radius-card)",
+                  background: "linear-gradient(135deg, var(--accent-blue), #5B9CF6)", color: "#fff",
+                  fontSize: 16, fontWeight: 800,
+                }}>
+                  +{FEEDBACK_REWARD.toLocaleString()}P 적립 완료!
+                </div>
+              ) : (
+                <button onClick={handleGiftOpened} style={{
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                  width: "100%", padding: "14px 0", marginBottom: 20, borderRadius: "var(--radius-card)",
+                  border: "none", background: "linear-gradient(135deg, var(--accent-blue), #5B9CF6)", color: "#fff",
+                  fontSize: 16, fontWeight: 800, cursor: "pointer",
+                }}>
+                  🎁 탭해서 감사 선물 열기
+                </button>
+              )
             )}
             <button
               onClick={onClose}
