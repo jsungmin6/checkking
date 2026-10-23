@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { api, ApiError } from "../utils/api";
+import GiftBox from "./GiftBox";
 
 const FEEDBACK_REWARD = 5000;
 
@@ -16,11 +17,15 @@ const inputStyle: React.CSSProperties = {
 };
 
 export default function FeedbackModal({ onClose, onRewarded, alreadyRewarded }: FeedbackModalProps) {
+  // 선물을 여는 순간 alreadyRewarded prop이 true로 바뀌어버리므로(보상 지급과 동시에 플래그가 세워짐),
+  // "이 모달을 열었을 때 이미 받은 상태였는지"는 최초 값으로 고정해서 써야 한다.
+  const wasAlreadyRewarded = useRef(alreadyRewarded).current;
   const [message, setMessage] = useState("");
   const [featureRequest, setFeatureRequest] = useState("");
   const [rating, setRating] = useState(0);
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
+  const [giftOpened, setGiftOpened] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const canSubmit = featureRequest.trim().length > 0 && rating > 0;
@@ -38,13 +43,17 @@ export default function FeedbackModal({ onClose, onRewarded, alreadyRewarded }: 
           rating,
         }),
       });
-      if (!alreadyRewarded) onRewarded(FEEDBACK_REWARD);
       setSent(true);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "전송에 실패했어요. 잠시 후 다시 시도해주세요");
     } finally {
       setSending(false);
     }
+  };
+
+  const handleGiftOpened = () => {
+    onRewarded(FEEDBACK_REWARD);
+    setGiftOpened(true);
   };
 
   return (
@@ -68,7 +77,12 @@ export default function FeedbackModal({ onClose, onRewarded, alreadyRewarded }: 
             <div style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.6, marginBottom: 16 }}>
               보내주신 내용은 꼼꼼히 읽고 서비스에 반영하도록 하겠습니다.
             </div>
-            {!alreadyRewarded && (
+            {!wasAlreadyRewarded && !giftOpened && (
+              <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
+                <GiftBox onOpened={handleGiftOpened} />
+              </div>
+            )}
+            {!wasAlreadyRewarded && giftOpened && (
               <div style={{
                 display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
                 padding: "12px 0", marginBottom: 20, borderRadius: "var(--radius-card)",
@@ -78,10 +92,15 @@ export default function FeedbackModal({ onClose, onRewarded, alreadyRewarded }: 
                 +{FEEDBACK_REWARD.toLocaleString()}P 적립 완료!
               </div>
             )}
-            <button onClick={onClose} style={{
-              width: "100%", padding: 14, borderRadius: "var(--radius-button)", border: "none",
-              background: "var(--accent-blue)", color: "#fff", fontSize: 15, fontWeight: 700,
-            }}>
+            <button
+              onClick={onClose}
+              disabled={!wasAlreadyRewarded && !giftOpened}
+              style={{
+                width: "100%", padding: 14, borderRadius: "var(--radius-button)", border: "none",
+                background: "var(--accent-blue)", color: "#fff", fontSize: 15, fontWeight: 700,
+                opacity: !wasAlreadyRewarded && !giftOpened ? 0.5 : 1,
+              }}
+            >
               확인
             </button>
           </>
@@ -92,7 +111,7 @@ export default function FeedbackModal({ onClose, onRewarded, alreadyRewarded }: 
               안녕하세요, 출석왕 개발자입니다 🙇 사용해주셔서 진심으로 감사드려요. 기대를 충족시키기 위해 매일 열심히 개발하고 고민하고 있습니다. 계속해서 열심히 할 테니 많은 이용 부탁드려요! 소중한 의견 하나하나가 저에게는 정말 큰 힘이 됩니다 💪
             </div>
 
-            {!alreadyRewarded && (
+            {!wasAlreadyRewarded && (
               <div style={{
                 display: "flex", alignItems: "center", gap: 6, padding: "8px 12px", marginBottom: 16,
                 borderRadius: "var(--radius-card)", background: "rgba(49, 130, 246, 0.1)",

@@ -199,6 +199,13 @@ const ROOM1_MONTHLY_RANKS = [1, 2, 3, 1, 4, 2, 1, 3, 2, 1, 4, 2, 1, 3];
 function devMock(path: string, method: string): unknown | undefined {
   if (!import.meta.env.DEV) return undefined;
 
+  if (path === "/notifications/feedback" && method === "POST") {
+    return { received: true };
+  }
+  if (path === "/diagnostics/app-entry" && method === "POST") {
+    return { received: true };
+  }
+
   if (path === "/classrooms/my") {
     return { classrooms: DEV_ROOM_IDS.map((id) => ({
       classroomId: id, name: DEV_ROOM_NAMES.get(id), ownerId: -1, ownerNickname: "민준",
