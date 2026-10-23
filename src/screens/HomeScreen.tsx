@@ -6,6 +6,8 @@ import TossBannerAd from "../components/TossBannerAd";
 import AdMobBanner from "../components/AdMobBanner";
 import Toast from "../components/Toast";
 import ConvertPointsModal from "../components/ConvertPointsModal";
+import FeedbackButton from "../components/FeedbackButton";
+import FeedbackModal from "../components/FeedbackModal";
 import { useToast } from "../hooks/useToast";
 import { useAttendancePoints, POINTS_TO_WON_RATE } from "../hooks/useAttendancePoints";
 import { maybePromptPushConsentOnHome } from "../utils/pushConsent";
@@ -30,6 +32,7 @@ export default function HomeScreen({
   const roomLimit = accountType === "PREMIUM" ? 50 : 3;
   const { totalPoints, requestConversion } = useAttendancePoints();
   const [showConvertModal, setShowConvertModal] = useState(false);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
 
   const handleConvertPoints = () => {
     if (totalPoints < POINTS_TO_WON_RATE) {
@@ -135,6 +138,7 @@ export default function HomeScreen({
         <HomeTabBar active="home" onSelect={handleTabChange} />
         <AdMobBanner />
       </div>
+      <FeedbackButton onClick={() => setShowFeedbackModal(true)} bottomOffset={120} />
       <Toast message={toastMessage} />
       {showConvertModal && (
         <ConvertPointsModal
@@ -143,6 +147,7 @@ export default function HomeScreen({
           onConverted={handleConverted}
         />
       )}
+      {showFeedbackModal && <FeedbackModal onClose={() => setShowFeedbackModal(false)} />}
     </div>
   );
 }
