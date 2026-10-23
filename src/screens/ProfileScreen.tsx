@@ -6,6 +6,7 @@ import AdMobBanner from "../components/AdMobBanner";
 import { api } from "../utils/api";
 import { validateNickname } from "../utils/profanity";
 import { hasAgreedToPushConsent, requestPushConsent } from "../utils/pushConsent";
+import DevRequestModal from "../components/DevRequestModal";
 import type { User } from "../types";
 
 interface ProfileScreenProps {
@@ -25,6 +26,7 @@ export default function ProfileScreen({ user, onNavigateHome, onNavigatePublicRo
   const [error, setError] = useState<string | null>(null);
   const [pushAgreed, setPushAgreed] = useState(hasAgreedToPushConsent());
   const [pushRequesting, setPushRequesting] = useState(false);
+  const [showDevRequestModal, setShowDevRequestModal] = useState(false);
 
   const handleTogglePushConsent = async () => {
     setPushRequesting(true);
@@ -164,8 +166,22 @@ export default function ProfileScreen({ user, onNavigateHome, onNavigatePublicRo
           </div>
         </div>
 
+        <div style={{ padding: "24px 16px 0" }}>
+          <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 8 }}>기타</div>
+          <div style={{ background: "var(--bg-card)", borderRadius: "var(--radius-card)", overflow: "hidden", boxShadow: "var(--shadow-card)" }}>
+            <div onClick={() => setShowDevRequestModal(true)} style={{
+              display: "flex", justifyContent: "space-between", alignItems: "center",
+              padding: "14px 20px", fontSize: 15, color: "var(--text-primary)", cursor: "pointer",
+            }}>
+              <span>개발 요구하기</span>
+              <span style={{ color: "var(--text-secondary)", fontSize: 13 }}>{">"}</span>
+            </div>
+          </div>
+        </div>
+
         <div style={{ height: 32 }} />
       </div>
+      {showDevRequestModal && <DevRequestModal onClose={() => setShowDevRequestModal(false)} />}
 
       <div style={{ flexShrink: 0 }}>
         <TossBannerAd />

@@ -139,7 +139,7 @@ export default function HomeScreen({
         <HomeTabBar active="home" onSelect={handleTabChange} />
         <AdMobBanner />
       </div>
-      <FeedbackButton onClick={() => setShowFeedbackModal(true)} bottomOffset={120} />
+      {!feedbackAlreadyRewarded && <FeedbackButton onClick={() => setShowFeedbackModal(true)} bottomOffset={120} />}
       <Toast message={toastMessage} />
       {showConvertModal && (
         <ConvertPointsModal
