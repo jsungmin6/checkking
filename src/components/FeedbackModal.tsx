@@ -66,7 +66,7 @@ export default function FeedbackModal({ onClose, onRewarded, alreadyRewarded }: 
           <>
             <div style={{ fontSize: 17, fontWeight: 700, marginBottom: 10 }}>진짜 꿈만 같아요 🥹</div>
             <div style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.6, marginBottom: 16 }}>
-              이렇게 시간 내서 의견까지 남겨주시다니... 너무 행복하고 감사해서 눈물 날 것 같아요. 보내주신 말씀 하나하나 다 읽고, 꼭 더 좋은 모습으로 보답할게요!
+              이렇게 시간 내서 의견까지 남겨주시다니... 진심으로 감사하고, 너무 행복해서 눈물 날 것 같아요. 보내주신 말씀 하나하나 다 읽고, 꼭 더 좋은 모습으로 보답할게요!
             </div>
             {!alreadyRewarded && (
               <div style={{
@@ -89,7 +89,7 @@ export default function FeedbackModal({ onClose, onRewarded, alreadyRewarded }: 
           <>
             <div style={{ fontSize: 17, fontWeight: 700, marginBottom: 6 }}>문의하기</div>
             <div style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 14, lineHeight: 1.5 }}>
-              출석왕을 찾아주신 것만으로도 꿈만 같아요 😭 여러분 덕분에 매일매일이 설레요. 소중한 의견 하나하나가 저에게는 정말 큰 힘이 됩니다!
+              출석왕을 찾아주신 것만으로도 꿈만 같아요 😭 진심으로 감사드리고, 여러분 덕분에 매일매일이 설레요. 소중한 의견 하나하나가 저에게는 정말 큰 힘이 됩니다!
             </div>
 
             {!alreadyRewarded && (
