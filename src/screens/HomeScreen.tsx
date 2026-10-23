@@ -8,6 +8,7 @@ import Toast from "../components/Toast";
 import ConvertPointsModal from "../components/ConvertPointsModal";
 import FeedbackButton from "../components/FeedbackButton";
 import FeedbackModal from "../components/FeedbackModal";
+import OnboardingModal from "../components/OnboardingModal";
 import { useToast } from "../hooks/useToast";
 import { useAttendancePoints, useFeedbackReward, POINTS_TO_WON_RATE } from "../hooks/useAttendancePoints";
 import { maybePromptPushConsentOnHome } from "../utils/pushConsent";
@@ -34,6 +35,7 @@ export default function HomeScreen({
   const { alreadyRewarded: feedbackAlreadyRewarded, markRewarded: markFeedbackRewarded } = useFeedbackReward();
   const [showConvertModal, setShowConvertModal] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(() => localStorage.getItem("att-onboarding-seen") !== "1");
 
   const handleConvertPoints = () => {
     if (totalPoints < POINTS_TO_WON_RATE) {
@@ -154,6 +156,12 @@ export default function HomeScreen({
           alreadyRewarded={feedbackAlreadyRewarded}
           onRewarded={(amount) => { addPoints(amount); markFeedbackRewarded(); }}
         />
+      )}
+      {showOnboarding && (
+        <OnboardingModal onClose={() => {
+          localStorage.setItem("att-onboarding-seen", "1");
+          setShowOnboarding(false);
+        }} />
       )}
     </div>
   );
