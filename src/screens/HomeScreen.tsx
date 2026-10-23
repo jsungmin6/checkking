@@ -134,12 +134,12 @@ export default function HomeScreen({
         )}
       </div>
 
-      <div style={{ flexShrink: 0 }}>
+      <div style={{ flexShrink: 0, position: "relative" }}>
+        {!feedbackAlreadyRewarded && <FeedbackButton onClick={() => setShowFeedbackModal(true)} />}
         <TossBannerAd />
         <HomeTabBar active="home" onSelect={handleTabChange} />
         <AdMobBanner />
       </div>
-      {!feedbackAlreadyRewarded && <FeedbackButton onClick={() => setShowFeedbackModal(true)} bottomOffset={120} />}
       <Toast message={toastMessage} />
       {showConvertModal && (
         <ConvertPointsModal

@@ -1,9 +1,8 @@
 interface FeedbackButtonProps {
   onClick: () => void;
-  bottomOffset: number;
 }
 
-export default function FeedbackButton({ onClick, bottomOffset }: FeedbackButtonProps) {
+export default function FeedbackButton({ onClick }: FeedbackButtonProps) {
   return (
     <button
       onClick={onClick}
@@ -11,7 +10,7 @@ export default function FeedbackButton({ onClick, bottomOffset }: FeedbackButton
       style={{
         position: "absolute",
         right: 16,
-        bottom: bottomOffset,
+        bottom: "calc(100% + 16px)",
         zIndex: 30,
         width: 52,
         height: 52,
@@ -25,15 +24,28 @@ export default function FeedbackButton({ onClick, bottomOffset }: FeedbackButton
         cursor: "pointer",
       }}
     >
-      <svg width="26" height="26" viewBox="0 0 100 100" fill="none" aria-hidden="true">
-        <path
-          d="M18 24 C18 18 23 14 29 14 L71 14 C77 14 82 18 82 24 L82 56 C82 62 77 66 71 66 L40 66 L22 84 L24 66 L29 66 C23 66 18 62 18 56 Z"
-          fill="#fff"
-        />
-        <circle cx="35" cy="40" r="5" fill="var(--accent-blue)" />
-        <circle cx="50" cy="40" r="5" fill="var(--accent-blue)" />
-        <circle cx="65" cy="40" r="5" fill="var(--accent-blue)" />
+      <svg width="28" height="28" viewBox="0 0 100 100" fill="none" aria-hidden="true">
+        <rect x="14" y="26" width="72" height="50" rx="9" fill="#fff" />
+        <path d="M18 30 L50 58 L82 30" stroke="var(--accent-blue)" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" fill="none" />
       </svg>
+      <span style={{
+        position: "absolute",
+        top: -3,
+        right: -3,
+        width: 18,
+        height: 18,
+        borderRadius: "50%",
+        background: "var(--accent-red, #E5484D)",
+        color: "#fff",
+        fontSize: 12,
+        fontWeight: 800,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        boxShadow: "0 0 0 2px var(--bg-primary)",
+      }}>
+        !
+      </span>
     </button>
   );
 }

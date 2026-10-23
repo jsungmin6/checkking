@@ -23,17 +23,19 @@ export default function FeedbackModal({ onClose, onRewarded, alreadyRewarded }: 
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const canSubmit = featureRequest.trim().length > 0 && rating > 0;
+
   const handleSubmit = async () => {
-    if (!message.trim()) return;
+    if (!canSubmit) return;
     setSending(true);
     setError(null);
     try {
       await api("/notifications/feedback", {
         method: "POST",
         body: JSON.stringify({
-          content: message.trim(),
-          featureRequest: featureRequest.trim() || undefined,
-          rating: rating || undefined,
+          content: message.trim() || undefined,
+          featureRequest: featureRequest.trim(),
+          rating,
         }),
       });
       if (!alreadyRewarded) onRewarded(FEEDBACK_REWARD);
@@ -62,9 +64,9 @@ export default function FeedbackModal({ onClose, onRewarded, alreadyRewarded }: 
       >
         {sent ? (
           <>
-            <div style={{ fontSize: 17, fontWeight: 700, marginBottom: 10 }}>소중한 의견 감사해요 🙏</div>
+            <div style={{ fontSize: 17, fontWeight: 700, marginBottom: 10 }}>진짜 꿈만 같아요 🥹</div>
             <div style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.6, marginBottom: 16 }}>
-              출석왕을 사용해주셔서 진심으로 감사드려요. 보내주신 의견 하나하나 꼼꼼히 읽고 더 좋은 서비스로 보답할게요!
+              이렇게 시간 내서 의견까지 남겨주시다니... 너무 행복하고 감사해서 눈물 날 것 같아요. 보내주신 말씀 하나하나 다 읽고, 꼭 더 좋은 모습으로 보답할게요!
             </div>
             {!alreadyRewarded && (
               <div style={{
@@ -87,7 +89,7 @@ export default function FeedbackModal({ onClose, onRewarded, alreadyRewarded }: 
           <>
             <div style={{ fontSize: 17, fontWeight: 700, marginBottom: 6 }}>문의하기</div>
             <div style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 14, lineHeight: 1.5 }}>
-              출석왕을 사용해주셔서 진심으로 감사드려요. 열심히 하겠으니 앞으로도 많은 사용 부탁드립니다 🙏
+              출석왕을 찾아주신 것만으로도 꿈만 같아요 😭 여러분 덕분에 매일매일이 설레요. 소중한 의견 하나하나가 저에게는 정말 큰 힘이 됩니다!
             </div>
 
             {!alreadyRewarded && (
@@ -100,27 +102,17 @@ export default function FeedbackModal({ onClose, onRewarded, alreadyRewarded }: 
               </div>
             )}
 
-            <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 6 }}>개발자에게 하고 싶은 말</div>
+            <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 6 }}>기대했던 기능 / 있었으면 하는 기능 <span style={{ color: "var(--accent-red)" }}>*</span></div>
             <textarea
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
+              value={featureRequest}
+              onChange={(e) => setFeatureRequest(e.target.value)}
               placeholder="편하게 적어주세요"
               maxLength={1000}
               rows={3}
               style={{ ...inputStyle, marginBottom: 14 }}
             />
 
-            <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 6 }}>기대했던 기능 / 있었으면 하는 기능</div>
-            <textarea
-              value={featureRequest}
-              onChange={(e) => setFeatureRequest(e.target.value)}
-              placeholder="선택 입력"
-              maxLength={1000}
-              rows={2}
-              style={{ ...inputStyle, marginBottom: 14 }}
-            />
-
-            <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8 }}>만족도</div>
+            <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8 }}>만족도 <span style={{ color: "var(--accent-red)" }}>*</span></div>
             <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
               {[1, 2, 3, 4, 5].map((n) => (
                 <span
@@ -134,6 +126,16 @@ export default function FeedbackModal({ onClose, onRewarded, alreadyRewarded }: 
               ))}
             </div>
 
+            <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 6 }}>개발자에게 하고 싶은 말 <span style={{ color: "var(--text-muted)", fontWeight: 400 }}>(선택)</span></div>
+            <textarea
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder="편하게 적어주세요"
+              maxLength={1000}
+              rows={3}
+              style={{ ...inputStyle, marginBottom: 14 }}
+            />
+
             {error && <div style={{ color: "var(--accent-red)", fontSize: 13, marginBottom: 8 }}>{error}</div>}
             <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
               <button onClick={onClose} style={{
@@ -144,11 +146,11 @@ export default function FeedbackModal({ onClose, onRewarded, alreadyRewarded }: 
               </button>
               <button
                 onClick={handleSubmit}
-                disabled={!message.trim() || sending}
+                disabled={!canSubmit || sending}
                 style={{
                   flex: 2, padding: 13, borderRadius: "var(--radius-button)", border: "none",
                   background: "var(--accent-blue)", color: "#fff", fontSize: 14, fontWeight: 700,
-                  opacity: !message.trim() || sending ? 0.5 : 1,
+                  opacity: !canSubmit || sending ? 0.5 : 1,
                 }}
               >
                 {sending ? "보내는 중..." : "보내기"}
