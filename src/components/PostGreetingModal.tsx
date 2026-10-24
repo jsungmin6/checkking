@@ -11,9 +11,11 @@ interface PostGreetingModalProps {
 const QUICK_EMOJIS = ["👋", "🔥", "😊", "💪", "☀️", "🙌", "✅", "😴"];
 
 export default function PostGreetingModal({ classroomId, onClose, onPosted }: PostGreetingModalProps) {
-  const [content, setContent] = useState("");
+  const [text, setText] = useState("");
+  const [selectedEmoji, setSelectedEmoji] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const content = selectedEmoji ?? text;
 
   const handleSubmit = async () => {
     if (!content.trim()) return;
@@ -56,10 +58,10 @@ export default function PostGreetingModal({ classroomId, onClose, onPosted }: Po
             <button
               key={emoji}
               type="button"
-              onClick={() => setContent(emoji)}
+              onClick={() => setSelectedEmoji(emoji)}
               style={{
                 width: 44, height: 44, borderRadius: "50%",
-                border: content === emoji ? "2px solid var(--accent-blue)" : "1px solid var(--border-light)",
+                border: selectedEmoji === emoji ? "2px solid var(--accent-blue)" : "1px solid var(--border-light)",
                 background: "var(--bg-secondary)", fontSize: 26, lineHeight: 1, display: "flex", alignItems: "center",
                 justifyContent: "center", flexShrink: 0, padding: 0,
               }}
@@ -68,20 +70,38 @@ export default function PostGreetingModal({ classroomId, onClose, onPosted }: Po
             </button>
           ))}
         </div>
-        <textarea
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          placeholder="오늘도 화이팅!"
-          maxLength={200}
-          rows={4}
-          autoFocus
-          style={{
-            width: "100%", padding: 12, borderRadius: "var(--radius-input)", border: "1px solid var(--border-light)",
-            background: "var(--bg-secondary)", color: "var(--text-primary)", fontSize: 14, resize: "none",
-            boxSizing: "border-box", marginBottom: 4,
-          }}
-        />
-        <div style={{ textAlign: "right", fontSize: 12, color: "var(--text-muted)", marginBottom: 8 }}>{content.length}/200</div>
+        {selectedEmoji ? (
+          <div style={{
+            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10,
+            width: "100%", height: 112, borderRadius: "var(--radius-input)", border: "1px solid var(--border-light)",
+            background: "var(--bg-secondary)", boxSizing: "border-box", marginBottom: 8,
+          }}>
+            <span style={{ fontSize: 48, lineHeight: 1 }}>{selectedEmoji}</span>
+            <span
+              onClick={() => setSelectedEmoji(null)}
+              style={{ fontSize: 12, color: "var(--text-muted)", cursor: "pointer" }}
+            >
+              직접 입력하기
+            </span>
+          </div>
+        ) : (
+          <textarea
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="오늘도 화이팅!"
+            maxLength={200}
+            rows={4}
+            autoFocus
+            style={{
+              width: "100%", padding: 12, borderRadius: "var(--radius-input)", border: "1px solid var(--border-light)",
+              background: "var(--bg-secondary)", color: "var(--text-primary)", fontSize: 14, resize: "none",
+              boxSizing: "border-box", marginBottom: 4,
+            }}
+          />
+        )}
+        {!selectedEmoji && (
+          <div style={{ textAlign: "right", fontSize: 12, color: "var(--text-muted)", marginBottom: 8 }}>{content.length}/200</div>
+        )}
         {error && <div style={{ color: "var(--accent-red)", fontSize: 13, marginBottom: 8 }}>{error}</div>}
         <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
           <button onClick={onClose} style={{
