@@ -54,39 +54,44 @@ export default function PostGreetingModal({ classroomId, onClose, onPosted }: Po
         <div style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 14, lineHeight: 1.5 }}>
           하루에 한 번, 짧게 한마디 남겨보세요.
         </div>
-        {selectedEmoji && (
-          <div style={{
-            position: "relative", display: "flex", alignItems: "center", justifyContent: "center",
-            width: "100%", height: 96, borderRadius: "var(--radius-input)", border: "1px solid var(--border-light)",
-            background: "var(--bg-secondary)", boxSizing: "border-box", marginBottom: 8,
-          }}>
-            <span style={{ fontSize: 44, lineHeight: 1 }}>{selectedEmoji}</span>
-            <button
-              type="button"
-              onClick={() => setSelectedEmoji(null)}
-              style={{
-                position: "absolute", top: 8, right: 8, width: 24, height: 24, borderRadius: "50%",
-                border: "none", background: "rgba(0,0,0,0.08)", color: "var(--text-secondary)",
-                fontSize: 13, display: "flex", alignItems: "center", justifyContent: "center", padding: 0,
-              }}
-            >
-              ✕
-            </button>
-          </div>
-        )}
-        <textarea
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="오늘도 화이팅!"
-          maxLength={200}
-          rows={selectedEmoji ? 2 : 4}
-          autoFocus
-          style={{
-            width: "100%", padding: 12, borderRadius: "var(--radius-input)", border: "1px solid var(--border-light)",
-            background: "var(--bg-secondary)", color: "var(--text-primary)", fontSize: 14, resize: "none",
-            boxSizing: "border-box", marginBottom: 4,
-          }}
-        />
+        <div style={{
+          borderRadius: "var(--radius-input)", border: "1px solid var(--border-light)",
+          overflow: "hidden", marginBottom: 4,
+        }}>
+          {selectedEmoji && (
+            <div style={{
+              position: "relative", display: "flex", alignItems: "center", justifyContent: "center",
+              width: "100%", height: 90, background: "var(--bg-secondary)",
+              borderBottom: "1px solid var(--border-light)",
+            }}>
+              <span style={{ fontSize: 44, lineHeight: 1 }}>{selectedEmoji}</span>
+              <button
+                type="button"
+                onClick={() => setSelectedEmoji(null)}
+                style={{
+                  position: "absolute", top: 8, right: 8, width: 24, height: 24, borderRadius: "50%",
+                  border: "none", background: "rgba(0,0,0,0.08)", color: "var(--text-secondary)",
+                  fontSize: 13, display: "flex", alignItems: "center", justifyContent: "center", padding: 0,
+                }}
+              >
+                ✕
+              </button>
+            </div>
+          )}
+          <textarea
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="메시지 입력"
+            maxLength={200}
+            rows={selectedEmoji ? 2 : 4}
+            autoFocus
+            style={{
+              width: "100%", padding: 12, border: "none", outline: "none", background: "var(--bg-card)",
+              color: "var(--text-primary)", fontSize: 14, resize: "none", boxSizing: "border-box",
+              display: "block",
+            }}
+          />
+        </div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: showEmojiPicker ? 8 : 10 }}>
           <button
             type="button"
