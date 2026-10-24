@@ -1,6 +1,5 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { api, ApiError } from "../utils/api";
-import { isEmojiOnly } from "../utils/emoji";
 import type { RoomGreeting } from "../types";
 
 interface PostGreetingModalProps {
@@ -13,30 +12,11 @@ const QUICK_EMOJIS = ["👋", "🔥", "😊", "💪", "☀️", "🙌", "✅", "
 
 export default function PostGreetingModal({ classroomId, onClose, onPosted }: PostGreetingModalProps) {
   const [text, setText] = useState("");
+  const [selectedEmoji, setSelectedEmoji] = useState<string | null>(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const content = text;
-  const pureEmoji = isEmojiOnly(text);
-
-  const insertEmoji = (emoji: string) => {
-    const el = textareaRef.current;
-    if (!el) {
-      if (text.length + emoji.length <= 200) setText(text + emoji);
-      return;
-    }
-    const start = el.selectionStart ?? text.length;
-    const end = el.selectionEnd ?? text.length;
-    const next = text.slice(0, start) + emoji + text.slice(end);
-    if (next.length > 200) return;
-    setText(next);
-    requestAnimationFrame(() => {
-      el.focus();
-      const pos = start + emoji.length;
-      el.setSelectionRange(pos, pos);
-    });
-  };
+  const content = selectedEmoji ? [selectedEmoji, text.trim()].filter(Boolean).join(" ") : text.trim();
 
   const handleSubmit = async () => {
     if (!content.trim()) return;
@@ -74,16 +54,16 @@ export default function PostGreetingModal({ classroomId, onClose, onPosted }: Po
         <div style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 14, lineHeight: 1.5 }}>
           하루에 한 번, 짧게 한마디 남겨보세요.
         </div>
-        {pureEmoji ? (
+        {selectedEmoji && (
           <div style={{
             position: "relative", display: "flex", alignItems: "center", justifyContent: "center",
-            width: "100%", height: 112, borderRadius: "var(--radius-input)", border: "1px solid var(--border-light)",
-            background: "var(--bg-secondary)", boxSizing: "border-box", marginBottom: 4,
+            width: "100%", height: 96, borderRadius: "var(--radius-input)", border: "1px solid var(--border-light)",
+            background: "var(--bg-secondary)", boxSizing: "border-box", marginBottom: 8,
           }}>
-            <span style={{ fontSize: 48, lineHeight: 1 }}>{text.trim()}</span>
+            <span style={{ fontSize: 44, lineHeight: 1 }}>{selectedEmoji}</span>
             <button
               type="button"
-              onClick={() => setText("")}
+              onClick={() => setSelectedEmoji(null)}
               style={{
                 position: "absolute", top: 8, right: 8, width: 24, height: 24, borderRadius: "50%",
                 border: "none", background: "rgba(0,0,0,0.08)", color: "var(--text-secondary)",
@@ -93,22 +73,20 @@ export default function PostGreetingModal({ classroomId, onClose, onPosted }: Po
               ✕
             </button>
           </div>
-        ) : (
-          <textarea
-            ref={textareaRef}
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder="오늘도 화이팅!"
-            maxLength={200}
-            rows={4}
-            autoFocus
-            style={{
-              width: "100%", padding: 12, borderRadius: "var(--radius-input)", border: "1px solid var(--border-light)",
-              background: "var(--bg-secondary)", color: "var(--text-primary)", fontSize: 14, resize: "none",
-              boxSizing: "border-box", marginBottom: 4,
-            }}
-          />
         )}
+        <textarea
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder="오늘도 화이팅!"
+          maxLength={200}
+          rows={selectedEmoji ? 2 : 4}
+          autoFocus
+          style={{
+            width: "100%", padding: 12, borderRadius: "var(--radius-input)", border: "1px solid var(--border-light)",
+            background: "var(--bg-secondary)", color: "var(--text-primary)", fontSize: 14, resize: "none",
+            boxSizing: "border-box", marginBottom: 4,
+          }}
+        />
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: showEmojiPicker ? 8 : 10 }}>
           <button
             type="button"
@@ -133,9 +111,10 @@ export default function PostGreetingModal({ classroomId, onClose, onPosted }: Po
               <button
                 key={emoji}
                 type="button"
-                onClick={() => insertEmoji(emoji)}
+                onClick={() => setSelectedEmoji(emoji)}
                 style={{
-                  width: 38, height: 38, borderRadius: "50%", border: "1px solid var(--border-light)",
+                  width: 38, height: 38, borderRadius: "50%",
+                  border: selectedEmoji === emoji ? "2px solid var(--accent-blue)" : "1px solid var(--border-light)",
                   background: "var(--bg-card)", fontSize: 20, lineHeight: 1, display: "flex", alignItems: "center",
                   justifyContent: "center", flexShrink: 0, padding: 0,
                 }}
