@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import { api, ApiError } from "../utils/api";
+import { isEmojiOnly } from "../utils/emoji";
 import type { RoomGreeting } from "../types";
 
 interface PostGreetingModalProps {
@@ -17,18 +18,23 @@ export default function PostGreetingModal({ classroomId, onClose, onPosted }: Po
   const [error, setError] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const content = text;
+  const pureEmoji = isEmojiOnly(text);
 
   const insertEmoji = (emoji: string) => {
     const el = textareaRef.current;
-    const start = el?.selectionStart ?? text.length;
-    const end = el?.selectionEnd ?? text.length;
+    if (!el) {
+      if (text.length + emoji.length <= 200) setText(text + emoji);
+      return;
+    }
+    const start = el.selectionStart ?? text.length;
+    const end = el.selectionEnd ?? text.length;
     const next = text.slice(0, start) + emoji + text.slice(end);
     if (next.length > 200) return;
     setText(next);
     requestAnimationFrame(() => {
-      el?.focus();
+      el.focus();
       const pos = start + emoji.length;
-      el?.setSelectionRange(pos, pos);
+      el.setSelectionRange(pos, pos);
     });
   };
 
@@ -68,20 +74,41 @@ export default function PostGreetingModal({ classroomId, onClose, onPosted }: Po
         <div style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 14, lineHeight: 1.5 }}>
           하루에 한 번, 짧게 한마디 남겨보세요.
         </div>
-        <textarea
-          ref={textareaRef}
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="오늘도 화이팅!"
-          maxLength={200}
-          rows={4}
-          autoFocus
-          style={{
-            width: "100%", padding: 12, borderRadius: "var(--radius-input)", border: "1px solid var(--border-light)",
-            background: "var(--bg-secondary)", color: "var(--text-primary)", fontSize: 14, resize: "none",
-            boxSizing: "border-box", marginBottom: 4,
-          }}
-        />
+        {pureEmoji ? (
+          <div style={{
+            position: "relative", display: "flex", alignItems: "center", justifyContent: "center",
+            width: "100%", height: 112, borderRadius: "var(--radius-input)", border: "1px solid var(--border-light)",
+            background: "var(--bg-secondary)", boxSizing: "border-box", marginBottom: 4,
+          }}>
+            <span style={{ fontSize: 48, lineHeight: 1 }}>{text.trim()}</span>
+            <button
+              type="button"
+              onClick={() => setText("")}
+              style={{
+                position: "absolute", top: 8, right: 8, width: 24, height: 24, borderRadius: "50%",
+                border: "none", background: "rgba(0,0,0,0.08)", color: "var(--text-secondary)",
+                fontSize: 13, display: "flex", alignItems: "center", justifyContent: "center", padding: 0,
+              }}
+            >
+              ✕
+            </button>
+          </div>
+        ) : (
+          <textarea
+            ref={textareaRef}
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="오늘도 화이팅!"
+            maxLength={200}
+            rows={4}
+            autoFocus
+            style={{
+              width: "100%", padding: 12, borderRadius: "var(--radius-input)", border: "1px solid var(--border-light)",
+              background: "var(--bg-secondary)", color: "var(--text-primary)", fontSize: 14, resize: "none",
+              boxSizing: "border-box", marginBottom: 4,
+            }}
+          />
+        )}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: showEmojiPicker ? 8 : 10 }}>
           <button
             type="button"

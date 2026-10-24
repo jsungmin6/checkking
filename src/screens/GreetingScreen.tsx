@@ -5,6 +5,7 @@ import AnnouncementModal from "../components/AnnouncementModal";
 import PostGreetingModal from "../components/PostGreetingModal";
 import { hideAdBanner } from "../utils/admob";
 import { api, ApiError } from "../utils/api";
+import { isEmojiOnly } from "../utils/emoji";
 import type { TabName } from "../components/TabBar";
 import type { Classroom, RoomGreeting, User } from "../types";
 
@@ -19,13 +20,6 @@ const AVATAR_COLORS = ["#F2994A", "#56CCF2", "#BB6BD9", "#6FCF97", "#F2C94C", "#
 
 function avatarColor(userId: number): string {
   return AVATAR_COLORS[userId % AVATAR_COLORS.length]!;
-}
-
-const EMOJI_ONLY_REGEX = /^(?:\p{Extended_Pictographic}️?‍?)+$/u;
-
-function isEmojiOnly(content: string): boolean {
-  const trimmed = content.trim();
-  return trimmed.length > 0 && trimmed.length <= 16 && EMOJI_ONLY_REGEX.test(trimmed);
 }
 
 function formatGreetingTime(iso: string): string {
