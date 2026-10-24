@@ -199,7 +199,7 @@ const ROOM1_MONTHLY_DAYS = [3, 4, 5, 6, 7, 10, 11, 12, 13, 14, 17, 18, 19, 20];
 const ROOM1_MONTHLY_TIMES = ["07:58:12", "08:10:45", "07:45:03", "08:25:30", "07:50:19"];
 const ROOM1_MONTHLY_RANKS = [1, 2, 3, 1, 4, 2, 1, 3, 2, 1, 4, 2, 1, 3];
 
-function devMock(path: string, method: string): unknown | undefined {
+function devMock(path: string, method: string, body?: string): unknown | undefined {
   if (!import.meta.env.DEV) return undefined;
 
   if (path === "/notifications/feedback" && method === "POST") {
@@ -250,8 +250,13 @@ function devMock(path: string, method: string): unknown | undefined {
   }
   if (sub === "/greetings" && method === "POST") {
     const list = devGreetings.get(id) ?? [];
+    let content = "(새 인사)";
+    try {
+      const parsed = body ? JSON.parse(body) : null;
+      if (parsed?.content) content = parsed.content;
+    } catch { /* ignore */ }
     const greeting = {
-      greetingId: devGreetingSeq++, userId: -1, nickname: "민준", content: "(새 인사)",
+      greetingId: devGreetingSeq++, userId: -1, nickname: "민준", content,
       reportCount: 0, hidden: false, mine: true, createdAt: new Date().toISOString(),
     };
     devGreetings.set(id, [greeting, ...list]);
@@ -319,7 +324,7 @@ export async function api<T>(
   options: RequestInit = {}
 ): Promise<T> {
   const method = options.method ?? "GET";
-  const mocked = devMock(path, method);
+  const mocked = devMock(path, method, options.body as string | undefined);
   if (mocked !== undefined) return mocked as T;
   console.log(`[등교왕] API ${method} ${path}`);
   const startTime = Date.now();
