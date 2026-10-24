@@ -1,18 +1,22 @@
 import { useState } from "react";
 import { api, ApiError } from "../utils/api";
+import { parseGreetingContent } from "../utils/emoji";
 import type { RoomGreeting } from "../types";
 
 interface PostGreetingModalProps {
   classroomId: number;
+  editGreeting?: RoomGreeting;
   onClose: () => void;
   onPosted: (greeting: RoomGreeting) => void;
 }
 
 const QUICK_EMOJIS = ["👋", "🔥", "😊", "💪", "☀️", "🙌", "✅", "😴", "💛", "👍", "🎉", "😆"];
 
-export default function PostGreetingModal({ classroomId, onClose, onPosted }: PostGreetingModalProps) {
-  const [text, setText] = useState("");
-  const [selectedEmoji, setSelectedEmoji] = useState<string | null>(null);
+export default function PostGreetingModal({ classroomId, editGreeting, onClose, onPosted }: PostGreetingModalProps) {
+  const isEdit = !!editGreeting;
+  const initial = editGreeting ? parseGreetingContent(editGreeting.content) : { emoji: null, text: "" };
+  const [text, setText] = useState(initial.text);
+  const [selectedEmoji, setSelectedEmoji] = useState<string | null>(initial.emoji);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -23,8 +27,11 @@ export default function PostGreetingModal({ classroomId, onClose, onPosted }: Po
     setSending(true);
     setError(null);
     try {
-      const greeting = await api<RoomGreeting>(`/classrooms/${classroomId}/greetings`, {
-        method: "POST",
+      const url = isEdit
+        ? `/classrooms/${classroomId}/greetings/${editGreeting!.greetingId}`
+        : `/classrooms/${classroomId}/greetings`;
+      const greeting = await api<RoomGreeting>(url, {
+        method: isEdit ? "PUT" : "POST",
         body: JSON.stringify({ content: content.trim() }),
       });
       onPosted(greeting);
@@ -50,9 +57,9 @@ export default function PostGreetingModal({ classroomId, onClose, onPosted }: Po
           width: "100%", maxWidth: 360, background: "var(--bg-card)", borderRadius: 20, padding: "22px 20px",
         }}
       >
-        <div style={{ fontSize: 17, fontWeight: 700, marginBottom: 6 }}>오늘의 출석 인사</div>
+        <div style={{ fontSize: 17, fontWeight: 700, marginBottom: 6 }}>{isEdit ? "인사 수정" : "오늘의 출석 인사"}</div>
         <div style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 14, lineHeight: 1.5 }}>
-          하루에 한 번, 짧게 한마디 남겨보세요.
+          {isEdit ? "이모지와 코멘트를 함께 수정할 수 있어요." : "하루에 한 번, 짧게 한마디 남겨보세요."}
         </div>
         <div style={{
           borderRadius: "var(--radius-input)", border: "1px solid var(--border-light)",
@@ -146,7 +153,7 @@ export default function PostGreetingModal({ classroomId, onClose, onPosted }: Po
               opacity: !content.trim() || sending ? 0.5 : 1,
             }}
           >
-            {sending ? "남기는 중..." : "남기기"}
+            {sending ? (isEdit ? "수정 중..." : "남기는 중...") : (isEdit ? "수정하기" : "남기기")}
           </button>
         </div>
       </div>

@@ -141,6 +141,27 @@ const devAnnouncement = new Map<number, string>();
 const devGreetings = new Map<number, Array<{ greetingId: number; userId: number; nickname: string; content: string; reportCount: number; hidden: boolean; mine: boolean; createdAt: string }>>();
 let devGreetingSeq = 1000;
 
+function seedTime(minutesAgo: number): string {
+  return new Date(Date.now() - minutesAgo * 60_000).toISOString();
+}
+
+// 출석인사 탭 UI/스크롤 점검용 — 이모지만/이모지+코멘트/코멘트만 3가지 조합을 방 1에 미리 채워둔다.
+devGreetings.set(-1, [
+  { greetingId: 1, userId: -3, nickname: "서연", content: "✅", reportCount: 0, hidden: false, mine: false, createdAt: seedTime(2) },
+  { greetingId: 2, userId: -2, nickname: "하준", content: "🔥 오늘도 화이팅입니다!", reportCount: 0, hidden: false, mine: false, createdAt: seedTime(9) },
+  { greetingId: 3, userId: -4, nickname: "지우", content: "출석 완료! 다들 좋은 하루 보내세요", reportCount: 0, hidden: false, mine: false, createdAt: seedTime(16) },
+  { greetingId: 4, userId: -5, nickname: "아린", content: "😴", reportCount: 1, hidden: false, mine: false, createdAt: seedTime(24) },
+  { greetingId: 5, userId: -1, nickname: "민준", content: "👋 굿모닝", reportCount: 0, hidden: false, mine: true, createdAt: seedTime(31) },
+  { greetingId: 6, userId: -3, nickname: "서연", content: "늦잠 잘뻔했는데 겨우 출석했어요 ㅠㅠ", reportCount: 0, hidden: false, mine: false, createdAt: seedTime(40) },
+  { greetingId: 7, userId: -2, nickname: "하준", content: "🙌", reportCount: 0, hidden: false, mine: false, createdAt: seedTime(48) },
+  { greetingId: 8, userId: -4, nickname: "지우", content: "☀️ 날씨 좋네요 다들 화이팅", reportCount: 0, hidden: false, mine: false, createdAt: seedTime(57) },
+  { greetingId: 9, userId: -5, nickname: "아린", content: "오늘 7시에 일어나서 출석했어요!", reportCount: 0, hidden: false, mine: false, createdAt: seedTime(66) },
+  { greetingId: 10, userId: -1, nickname: "민준", content: "💪 할수있다", reportCount: 0, hidden: false, mine: false, createdAt: seedTime(75) },
+  { greetingId: 11, userId: -3, nickname: "서연", content: "🎉", reportCount: 0, hidden: false, mine: false, createdAt: seedTime(84) },
+  { greetingId: 12, userId: -2, nickname: "하준", content: "이제 막 출석했어요, 오늘 하루도 모두 힘내봐요", reportCount: 0, hidden: false, mine: false, createdAt: seedTime(93) },
+]);
+devGreetingSeq = 100;
+
 /** "로컬 미리보기" 버튼을 누를 때마다 호출 — 다시 출석할 수 있도록 상태를 초기화한다 */
 export function resetDevPreview() {
   for (const id of DEV_ROOM_IDS) {
@@ -277,6 +298,23 @@ function devMock(path: string, method: string, body?: string): unknown | undefin
     const found = list.find((g) => g.greetingId === gid);
     if (found) { found.hidden = true; found.content = "삭제된 코멘트입니다"; }
     return { hidden: true };
+  }
+  const editMatch = sub.match(/^\/greetings\/(\d+)$/);
+  if (editMatch && method === "PUT") {
+    const gid = Number(editMatch[1]);
+    const list = devGreetings.get(id) ?? [];
+    const found = list.find((g) => g.greetingId === gid);
+    try {
+      const parsed = body ? JSON.parse(body) : null;
+      if (found && parsed?.content) found.content = parsed.content;
+    } catch { /* ignore */ }
+    return found;
+  }
+  if (editMatch && method === "DELETE") {
+    const gid = Number(editMatch[1]);
+    const list = devGreetings.get(id) ?? [];
+    devGreetings.set(id, list.filter((g) => g.greetingId !== gid));
+    return { deleted: true };
   }
   if (sub === "/attendance/today") {
     if (id === -1) return buildRoom1Today(checkedIn, "09:00:00");

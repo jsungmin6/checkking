@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import BackHeader from "../components/BackHeader";
 import TabBar from "../components/TabBar";
 import AnnouncementModal from "../components/AnnouncementModal";
 import PostGreetingModal from "../components/PostGreetingModal";
+import GreetingActionSheet from "../components/GreetingActionSheet";
 import { hideAdBanner } from "../utils/admob";
 import { api, ApiError } from "../utils/api";
 import { parseGreetingContent } from "../utils/emoji";
@@ -37,7 +38,10 @@ export default function GreetingScreen({ classroomId, user, onBack, onTabChange 
   const [fetchError, setFetchError] = useState(false);
   const [showAnnouncementModal, setShowAnnouncementModal] = useState(false);
   const [showPostModal, setShowPostModal] = useState(false);
+  const [editingGreeting, setEditingGreeting] = useState<RoomGreeting | null>(null);
+  const [actionSheetGreeting, setActionSheetGreeting] = useState<RoomGreeting | null>(null);
   const [reportingId, setReportingId] = useState<number | null>(null);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isOwner = classroom?.ownerId === user.userId;
   const alreadyPostedToday = greetings?.some((g) => g.mine) ?? false;
@@ -81,6 +85,27 @@ export default function GreetingScreen({ classroomId, user, onBack, onTabChange 
       setGreetings((prev) => prev?.map((g) => (g.greetingId === greetingId ? { ...g, hidden: true, content: "삭제된 코멘트입니다" } : g)) ?? null);
     } catch (e) {
       alert(e instanceof ApiError ? e.message : "처리에 실패했어요");
+    }
+  };
+
+  const handleDeleteOwn = async (greetingId: number) => {
+    if (!confirm("이 인사를 삭제할까요?")) return;
+    try {
+      await api(`/classrooms/${classroomId}/greetings/${greetingId}`, { method: "DELETE" });
+      setGreetings((prev) => prev?.filter((g) => g.greetingId !== greetingId) ?? null);
+    } catch (e) {
+      alert(e instanceof ApiError ? e.message : "삭제에 실패했어요");
+    }
+  };
+
+  const startLongPress = (g: RoomGreeting) => {
+    if (g.hidden) return;
+    longPressTimer.current = setTimeout(() => setActionSheetGreeting(g), 450);
+  };
+  const cancelLongPress = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
     }
   };
 
@@ -138,7 +163,18 @@ export default function GreetingScreen({ classroomId, user, onBack, onTabChange 
           </div>
         ) : (
           greetings.map((g) => (
-            <div key={g.greetingId} style={{ display: "flex", gap: 10, padding: "14px 0", borderBottom: "1px solid var(--border-light)" }}>
+            <div
+              key={g.greetingId}
+              onPointerDown={() => startLongPress(g)}
+              onPointerUp={cancelLongPress}
+              onPointerLeave={cancelLongPress}
+              onPointerCancel={cancelLongPress}
+              onContextMenu={(e) => e.preventDefault()}
+              style={{
+                display: "flex", gap: 10, padding: "14px 0", borderBottom: "1px solid var(--border-light)",
+                userSelect: "none", WebkitUserSelect: "none",
+              }}
+            >
               <div style={{
                 flexShrink: 0, width: 36, height: 36, borderRadius: "50%",
                 background: avatarColor(g.userId), color: "#fff", fontSize: 14, fontWeight: 700,
@@ -170,28 +206,8 @@ export default function GreetingScreen({ classroomId, user, onBack, onTabChange 
                     </>
                   );
                 })()}
-                {!g.hidden && (
-                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 6 }}>
-                    {!g.mine && (
-                      <span
-                        onClick={() => handleReport(g.greetingId)}
-                        style={{ fontSize: 12, color: "var(--text-muted)", cursor: "pointer" }}
-                      >
-                        🚩 신고{g.reportCount > 0 ? ` ${g.reportCount}` : ""}
-                      </span>
-                    )}
-                    {g.mine && g.reportCount > 0 && (
-                      <span style={{ fontSize: 12, color: "var(--accent-red)" }}>신고 {g.reportCount}건</span>
-                    )}
-                    {isOwner && (
-                      <span
-                        onClick={() => handleHide(g.greetingId)}
-                        style={{ fontSize: 12, color: "var(--text-muted)", cursor: "pointer" }}
-                      >
-                        삭제 처리
-                      </span>
-                    )}
-                  </div>
+                {!g.hidden && g.mine && g.reportCount > 0 && (
+                  <div style={{ fontSize: 12, color: "var(--accent-red)", marginTop: 6 }}>신고 {g.reportCount}건</div>
                 )}
               </div>
             </div>
@@ -231,6 +247,25 @@ export default function GreetingScreen({ classroomId, user, onBack, onTabChange 
           classroomId={classroomId}
           onClose={() => setShowPostModal(false)}
           onPosted={(g) => setGreetings((prev) => [g, ...(prev ?? [])])}
+        />
+      )}
+      {editingGreeting && (
+        <PostGreetingModal
+          classroomId={classroomId}
+          editGreeting={editingGreeting}
+          onClose={() => setEditingGreeting(null)}
+          onPosted={(g) => setGreetings((prev) => prev?.map((x) => (x.greetingId === g.greetingId ? g : x)) ?? null)}
+        />
+      )}
+      {actionSheetGreeting && (
+        <GreetingActionSheet
+          greeting={actionSheetGreeting}
+          isOwner={isOwner}
+          onClose={() => setActionSheetGreeting(null)}
+          onEdit={() => { setEditingGreeting(actionSheetGreeting); setActionSheetGreeting(null); }}
+          onDeleteOwn={() => { handleDeleteOwn(actionSheetGreeting.greetingId); setActionSheetGreeting(null); }}
+          onReport={() => { handleReport(actionSheetGreeting.greetingId); setActionSheetGreeting(null); }}
+          onHideOthers={() => { handleHide(actionSheetGreeting.greetingId); setActionSheetGreeting(null); }}
         />
       )}
     </div>
