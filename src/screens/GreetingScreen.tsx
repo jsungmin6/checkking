@@ -5,7 +5,7 @@ import AnnouncementModal from "../components/AnnouncementModal";
 import PostGreetingModal from "../components/PostGreetingModal";
 import { hideAdBanner } from "../utils/admob";
 import { api, ApiError } from "../utils/api";
-import { isEmojiOnly } from "../utils/emoji";
+import { parseGreetingContent } from "../utils/emoji";
 import type { TabName } from "../components/TabBar";
 import type { Classroom, RoomGreeting, User } from "../types";
 
@@ -150,15 +150,25 @@ export default function GreetingScreen({ classroomId, user, onBack, onTabChange 
                   <span style={{ fontSize: 14, fontWeight: 700 }}>{g.mine ? `${g.nickname} (나)` : g.nickname}</span>
                   <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{formatGreetingTime(g.createdAt)}</span>
                 </div>
-                <div style={{
-                  fontSize: !g.hidden && isEmojiOnly(g.content) ? 34 : 14,
-                  color: g.hidden ? "var(--text-muted)" : "var(--text-primary)",
-                  fontStyle: g.hidden ? "italic" : "normal",
-                  lineHeight: !g.hidden && isEmojiOnly(g.content) ? 1.3 : 1.5,
-                  wordBreak: "break-word",
-                }}>
-                  {g.content}
-                </div>
+                {g.hidden ? (
+                  <div style={{ fontSize: 14, color: "var(--text-muted)", fontStyle: "italic", lineHeight: 1.5, wordBreak: "break-word" }}>
+                    {g.content}
+                  </div>
+                ) : (() => {
+                  const { emoji, text } = parseGreetingContent(g.content);
+                  return (
+                    <>
+                      {emoji && (
+                        <div style={{ fontSize: 34, lineHeight: 1.3, marginBottom: text ? 2 : 0 }}>{emoji}</div>
+                      )}
+                      {text && (
+                        <div style={{ fontSize: 14, color: "var(--text-primary)", lineHeight: 1.5, wordBreak: "break-word" }}>
+                          {text}
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
                 {!g.hidden && (
                   <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 6 }}>
                     {!g.mine && (
