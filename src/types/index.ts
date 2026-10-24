@@ -74,6 +74,18 @@ export interface Classroom {
   isPublic: boolean;
   memberCount: number;
   createdAt: string;
+  announcement?: string | null;
+}
+
+export interface RoomGreeting {
+  greetingId: number;
+  userId: number;
+  nickname: string;
+  content: string;
+  reportCount: number;
+  hidden: boolean;
+  mine: boolean;
+  createdAt: string;
 }
 
 export interface ClassroomListItem {
@@ -198,6 +210,7 @@ export type ScreenName =
   | "joinRoom"
   | "publicRooms"
   | "room"
+  | "greeting"
   | "ranking"
   | "stats"
   | "settings";

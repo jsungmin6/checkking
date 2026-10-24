@@ -137,6 +137,9 @@ const DEV_ROOM_NAMES = new Map<number, string>(DEV_ROOM_IDS.map((id) => [id, `�
 const DEV_PUBLIC_ROOM_IDS = Array.from({ length: 15 }, (_, i) => -(100 + i));
 const devCheckInCount = new Map<number, number>(DEV_ROOM_IDS.map((id) => [id, 0]));
 const devDailyRank = new Map<number, number | null>(DEV_ROOM_IDS.map((id) => [id, null]));
+const devAnnouncement = new Map<number, string>();
+const devGreetings = new Map<number, Array<{ greetingId: number; userId: number; nickname: string; content: string; reportCount: number; hidden: boolean; mine: boolean; createdAt: string }>>();
+let devGreetingSeq = 1000;
 
 /** "로컬 미리보기" 버튼을 누를 때마다 호출 — 다시 출석할 수 있도록 상태를 초기화한다 */
 export function resetDevPreview() {
@@ -236,7 +239,39 @@ function devMock(path: string, method: string): unknown | undefined {
       validationType: "NONE", gpsConfig: null, wifiConfig: null,
       checkInStartTime: null, checkInEndTime: null, includeWeekends: true, isPublic: false,
       memberCount: id === -1 ? DEV_MEMBERS.length : 3, createdAt: "2026-10-01T00:00:00",
+      announcement: devAnnouncement.get(id) ?? null,
     };
+  }
+  if (sub === "/announcement" && method === "PUT") {
+    return { classroomId: id, announcement: "" };
+  }
+  if (sub === "/greetings" && method === "GET") {
+    return { greetings: devGreetings.get(id) ?? [] };
+  }
+  if (sub === "/greetings" && method === "POST") {
+    const list = devGreetings.get(id) ?? [];
+    const greeting = {
+      greetingId: devGreetingSeq++, userId: -1, nickname: "민준", content: "(새 인사)",
+      reportCount: 0, hidden: false, mine: true, createdAt: new Date().toISOString(),
+    };
+    devGreetings.set(id, [greeting, ...list]);
+    return greeting;
+  }
+  const reportMatch = sub.match(/^\/greetings\/(\d+)\/report$/);
+  if (reportMatch && method === "POST") {
+    const gid = Number(reportMatch[1]);
+    const list = devGreetings.get(id) ?? [];
+    const found = list.find((g) => g.greetingId === gid);
+    if (found) found.reportCount++;
+    return { reportCount: found?.reportCount ?? 0 };
+  }
+  const hideMatch = sub.match(/^\/greetings\/(\d+)\/hide$/);
+  if (hideMatch && method === "PUT") {
+    const gid = Number(hideMatch[1]);
+    const list = devGreetings.get(id) ?? [];
+    const found = list.find((g) => g.greetingId === gid);
+    if (found) { found.hidden = true; found.content = "삭제된 코멘트입니다"; }
+    return { hidden: true };
   }
   if (sub === "/attendance/today") {
     if (id === -1) return buildRoom1Today(checkedIn, "09:00:00");

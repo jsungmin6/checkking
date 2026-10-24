@@ -1,4 +1,4 @@
-type TabName = "today" | "ranking" | "stats" | "settings";
+type TabName = "today" | "greeting" | "ranking" | "stats" | "settings";
 
 interface TabBarProps {
   active: TabName;
@@ -7,6 +7,7 @@ interface TabBarProps {
 
 const TABS: { key: TabName; label: string }[] = [
   { key: "today", label: "순위" },
+  { key: "greeting", label: "인사" },
   { key: "ranking", label: "랭킹" },
   { key: "stats", label: "통계" },
   { key: "settings", label: "설정" },

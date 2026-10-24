@@ -15,6 +15,7 @@ import StatsScreen from "./screens/StatsScreen";
 import SettingsScreen from "./screens/SettingsScreen";
 import TermsAgreementScreen from "./screens/TermsAgreementScreen";
 import PublicRoomsScreen from "./screens/PublicRoomsScreen";
+import GreetingScreen from "./screens/GreetingScreen";
 import OnboardingModal from "./components/OnboardingModal";
 import type { ScreenName, User } from "./types";
 
@@ -201,7 +202,21 @@ export default function App() {
           user={user}
           onBack={() => navigateTo("home")}
           onTabChange={(tab) => {
-            if (tab === "ranking") navigateTo("ranking");
+            if (tab === "greeting") navigateTo("greeting");
+            else if (tab === "ranking") navigateTo("ranking");
+            else if (tab === "stats") navigateTo("stats");
+            else if (tab === "settings") navigateTo("settings");
+          }}
+        />
+      );
+    case "greeting":
+      if (!activeRoomId) { setScreen("home"); return null; }
+      return (
+        <GreetingScreen classroomId={activeRoomId} user={user}
+          onBack={() => navigateTo("home")}
+          onTabChange={(tab) => {
+            if (tab === "today") navigateTo("room", activeRoomId);
+            else if (tab === "ranking") navigateTo("ranking");
             else if (tab === "stats") navigateTo("stats");
             else if (tab === "settings") navigateTo("settings");
           }}
@@ -214,6 +229,7 @@ export default function App() {
           onBack={() => navigateTo("home")}
           onTabChange={(tab) => {
             if (tab === "today") navigateTo("room", activeRoomId);
+            else if (tab === "greeting") navigateTo("greeting");
             else if (tab === "stats") navigateTo("stats");
             else if (tab === "settings") navigateTo("settings");
           }}
@@ -226,6 +242,7 @@ export default function App() {
           onBack={() => navigateTo("home")}
           onTabChange={(tab) => {
             if (tab === "today") navigateTo("room", activeRoomId);
+            else if (tab === "greeting") navigateTo("greeting");
             else if (tab === "ranking") navigateTo("ranking");
             else if (tab === "settings") navigateTo("settings");
           }}
@@ -238,6 +255,7 @@ export default function App() {
           onBack={() => navigateTo("home")}
           onTabChange={(tab) => {
             if (tab === "today") navigateTo("room", activeRoomId);
+            else if (tab === "greeting") navigateTo("greeting");
             else if (tab === "ranking") navigateTo("ranking");
             else if (tab === "stats") navigateTo("stats");
           }}
