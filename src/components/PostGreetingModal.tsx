@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { api, ApiError } from "../utils/api";
 import type { RoomGreeting } from "../types";
 
@@ -8,14 +8,29 @@ interface PostGreetingModalProps {
   onPosted: (greeting: RoomGreeting) => void;
 }
 
-const QUICK_EMOJIS = ["👋", "🔥", "😊", "💪", "☀️", "🙌", "✅", "😴"];
+const QUICK_EMOJIS = ["👋", "🔥", "😊", "💪", "☀️", "🙌", "✅", "😴", "💛", "👍", "🎉", "😆"];
 
 export default function PostGreetingModal({ classroomId, onClose, onPosted }: PostGreetingModalProps) {
   const [text, setText] = useState("");
-  const [selectedEmoji, setSelectedEmoji] = useState<string | null>(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const content = selectedEmoji ?? text;
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const content = text;
+
+  const insertEmoji = (emoji: string) => {
+    const el = textareaRef.current;
+    const start = el?.selectionStart ?? text.length;
+    const end = el?.selectionEnd ?? text.length;
+    const next = text.slice(0, start) + emoji + text.slice(end);
+    if (next.length > 200) return;
+    setText(next);
+    requestAnimationFrame(() => {
+      el?.focus();
+      const pos = start + emoji.length;
+      el?.setSelectionRange(pos, pos);
+    });
+  };
 
   const handleSubmit = async () => {
     if (!content.trim()) return;
@@ -53,54 +68,55 @@ export default function PostGreetingModal({ classroomId, onClose, onPosted }: Po
         <div style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 14, lineHeight: 1.5 }}>
           하루에 한 번, 짧게 한마디 남겨보세요.
         </div>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 14 }}>
-          {QUICK_EMOJIS.map((emoji) => (
-            <button
-              key={emoji}
-              type="button"
-              onClick={() => setSelectedEmoji(emoji)}
-              style={{
-                width: 44, height: 44, borderRadius: "50%",
-                border: selectedEmoji === emoji ? "2px solid var(--accent-blue)" : "1px solid var(--border-light)",
-                background: "var(--bg-secondary)", fontSize: 26, lineHeight: 1, display: "flex", alignItems: "center",
-                justifyContent: "center", flexShrink: 0, padding: 0,
-              }}
-            >
-              {emoji}
-            </button>
-          ))}
-        </div>
-        {selectedEmoji ? (
-          <div style={{
-            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10,
-            width: "100%", height: 112, borderRadius: "var(--radius-input)", border: "1px solid var(--border-light)",
-            background: "var(--bg-secondary)", boxSizing: "border-box", marginBottom: 8,
-          }}>
-            <span style={{ fontSize: 48, lineHeight: 1 }}>{selectedEmoji}</span>
-            <span
-              onClick={() => setSelectedEmoji(null)}
-              style={{ fontSize: 12, color: "var(--text-muted)", cursor: "pointer" }}
-            >
-              직접 입력하기
-            </span>
-          </div>
-        ) : (
-          <textarea
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder="오늘도 화이팅!"
-            maxLength={200}
-            rows={4}
-            autoFocus
+        <textarea
+          ref={textareaRef}
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder="오늘도 화이팅!"
+          maxLength={200}
+          rows={4}
+          autoFocus
+          style={{
+            width: "100%", padding: 12, borderRadius: "var(--radius-input)", border: "1px solid var(--border-light)",
+            background: "var(--bg-secondary)", color: "var(--text-primary)", fontSize: 14, resize: "none",
+            boxSizing: "border-box", marginBottom: 4,
+          }}
+        />
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: showEmojiPicker ? 8 : 10 }}>
+          <button
+            type="button"
+            onClick={() => setShowEmojiPicker((v) => !v)}
             style={{
-              width: "100%", padding: 12, borderRadius: "var(--radius-input)", border: "1px solid var(--border-light)",
-              background: "var(--bg-secondary)", color: "var(--text-primary)", fontSize: 14, resize: "none",
-              boxSizing: "border-box", marginBottom: 4,
+              width: 32, height: 32, borderRadius: "50%",
+              border: showEmojiPicker ? "1px solid var(--accent-blue)" : "1px solid var(--border-light)",
+              background: showEmojiPicker ? "var(--accent-blue-light, var(--bg-secondary))" : "var(--bg-secondary)",
+              fontSize: 17, display: "flex", alignItems: "center", justifyContent: "center", padding: 0,
             }}
-          />
-        )}
-        {!selectedEmoji && (
-          <div style={{ textAlign: "right", fontSize: 12, color: "var(--text-muted)", marginBottom: 8 }}>{content.length}/200</div>
+          >
+            😊
+          </button>
+          <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{content.length}/200</span>
+        </div>
+        {showEmojiPicker && (
+          <div style={{
+            display: "flex", flexWrap: "wrap", gap: 6, padding: 10, marginBottom: 10,
+            background: "var(--bg-secondary)", borderRadius: "var(--radius-input)",
+          }}>
+            {QUICK_EMOJIS.map((emoji) => (
+              <button
+                key={emoji}
+                type="button"
+                onClick={() => insertEmoji(emoji)}
+                style={{
+                  width: 38, height: 38, borderRadius: "50%", border: "1px solid var(--border-light)",
+                  background: "var(--bg-card)", fontSize: 20, lineHeight: 1, display: "flex", alignItems: "center",
+                  justifyContent: "center", flexShrink: 0, padding: 0,
+                }}
+              >
+                {emoji}
+              </button>
+            ))}
+          </div>
         )}
         {error && <div style={{ color: "var(--accent-red)", fontSize: 13, marginBottom: 8 }}>{error}</div>}
         <div style={{ display: "flex", gap: 8, marginTop: 4 }}>

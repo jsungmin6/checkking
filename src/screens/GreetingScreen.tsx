@@ -21,6 +21,13 @@ function avatarColor(userId: number): string {
   return AVATAR_COLORS[userId % AVATAR_COLORS.length]!;
 }
 
+const EMOJI_ONLY_REGEX = /^(?:\p{Extended_Pictographic}️?‍?)+$/u;
+
+function isEmojiOnly(content: string): boolean {
+  const trimmed = content.trim();
+  return trimmed.length > 0 && trimmed.length <= 16 && EMOJI_ONLY_REGEX.test(trimmed);
+}
+
 function formatGreetingTime(iso: string): string {
   const date = new Date(iso);
   if (isNaN(date.getTime())) return "";
@@ -150,8 +157,11 @@ export default function GreetingScreen({ classroomId, user, onBack, onTabChange 
                   <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{formatGreetingTime(g.createdAt)}</span>
                 </div>
                 <div style={{
-                  fontSize: 14, color: g.hidden ? "var(--text-muted)" : "var(--text-primary)",
-                  fontStyle: g.hidden ? "italic" : "normal", lineHeight: 1.5, wordBreak: "break-word",
+                  fontSize: !g.hidden && isEmojiOnly(g.content) ? 34 : 14,
+                  color: g.hidden ? "var(--text-muted)" : "var(--text-primary)",
+                  fontStyle: g.hidden ? "italic" : "normal",
+                  lineHeight: !g.hidden && isEmojiOnly(g.content) ? 1.3 : 1.5,
+                  wordBreak: "break-word",
                 }}>
                   {g.content}
                 </div>
