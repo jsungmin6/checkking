@@ -56,9 +56,10 @@ export default function PostGreetingModal({ classroomId, onClose, onPosted }: Po
             <button
               key={emoji}
               type="button"
-              onClick={() => setContent((prev) => (prev.length < 200 ? prev + emoji : prev))}
+              onClick={() => setContent(emoji)}
               style={{
-                width: 44, height: 44, borderRadius: "50%", border: "1px solid var(--border-light)",
+                width: 44, height: 44, borderRadius: "50%",
+                border: content === emoji ? "2px solid var(--accent-blue)" : "1px solid var(--border-light)",
                 background: "var(--bg-secondary)", fontSize: 26, lineHeight: 1, display: "flex", alignItems: "center",
                 justifyContent: "center", flexShrink: 0, padding: 0,
               }}
