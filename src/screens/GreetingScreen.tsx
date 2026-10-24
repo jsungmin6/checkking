@@ -159,7 +159,7 @@ export default function GreetingScreen({ classroomId, user, onBack, onTabChange 
                   return (
                     <>
                       {emoji && (
-                        <div style={{ fontSize: 68, lineHeight: 1.2, marginBottom: text ? 2 : 0 }}>{emoji}</div>
+                        <div style={{ fontSize: 102, lineHeight: 1.1, marginBottom: text ? 4 : 0 }}>{emoji}</div>
                       )}
                       {text && (
                         <div style={{ fontSize: 14, color: "var(--text-primary)", lineHeight: 1.5, wordBreak: "break-word" }}>
