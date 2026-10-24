@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { api, ApiError } from "../utils/api";
-import { parseGreetingContent } from "../utils/emoji";
+import { customEmojiMarker, getCustomEmojiSrc, GREETING_EMOJIS, parseGreetingContent } from "../utils/emoji";
 import type { RoomGreeting } from "../types";
 
 interface PostGreetingModalProps {
@@ -9,8 +9,6 @@ interface PostGreetingModalProps {
   onClose: () => void;
   onPosted: (greeting: RoomGreeting) => void;
 }
-
-const QUICK_EMOJIS = ["👋", "🔥", "😊", "💪", "☀️", "🙌", "✅", "😴", "💛", "👍", "🎉", "😆"];
 
 export default function PostGreetingModal({ classroomId, editGreeting, onClose, onPosted }: PostGreetingModalProps) {
   const isEdit = !!editGreeting;
@@ -21,6 +19,7 @@ export default function PostGreetingModal({ classroomId, editGreeting, onClose, 
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const content = selectedEmoji ? [selectedEmoji, text.trim()].filter(Boolean).join(" ") : text.trim();
+  const selectedEmojiSrc = selectedEmoji ? getCustomEmojiSrc(selectedEmoji) : null;
 
   const handleSubmit = async () => {
     if (!content.trim()) return;
@@ -71,7 +70,11 @@ export default function PostGreetingModal({ classroomId, editGreeting, onClose, 
               width: "100%", height: 90, background: "var(--bg-secondary)",
               borderBottom: "1px solid var(--border-light)",
             }}>
-              <span style={{ fontSize: 44, lineHeight: 1 }}>{selectedEmoji}</span>
+              {selectedEmojiSrc ? (
+                <img src={selectedEmojiSrc} alt="선택한 캐릭터" style={{ width: 76, height: 76, objectFit: "contain" }} />
+              ) : (
+                <span style={{ fontSize: 44, lineHeight: 1 }}>{selectedEmoji}</span>
+              )}
               <button
                 type="button"
                 onClick={() => setSelectedEmoji(null)}
@@ -110,30 +113,39 @@ export default function PostGreetingModal({ classroomId, editGreeting, onClose, 
               fontSize: 17, display: "flex", alignItems: "center", justifyContent: "center", padding: 0,
             }}
           >
-            😊
+            <img
+              src={selectedEmojiSrc ?? GREETING_EMOJIS[0]!.src}
+              alt="캐릭터 선택"
+              style={{ width: 24, height: 24, objectFit: "contain" }}
+            />
           </button>
           <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{content.length}/200</span>
         </div>
         {showEmojiPicker && (
           <div style={{
-            display: "flex", flexWrap: "wrap", gap: 6, padding: 10, marginBottom: 10,
+            display: "grid", gridTemplateColumns: "repeat(6, minmax(0, 1fr))", gap: 6, padding: 10, marginBottom: 10,
             background: "var(--bg-secondary)", borderRadius: "var(--radius-input)",
           }}>
-            {QUICK_EMOJIS.map((emoji) => (
+            {GREETING_EMOJIS.map((emoji) => {
+              const marker = customEmojiMarker(emoji.id);
+              return (
               <button
-                key={emoji}
+                key={emoji.id}
                 type="button"
-                onClick={() => setSelectedEmoji(emoji)}
+                title={emoji.label}
+                aria-label={emoji.label}
+                onClick={() => setSelectedEmoji(marker)}
                 style={{
-                  width: 38, height: 38, borderRadius: "50%",
-                  border: selectedEmoji === emoji ? "2px solid var(--accent-blue)" : "1px solid var(--border-light)",
-                  background: "var(--bg-card)", fontSize: 20, lineHeight: 1, display: "flex", alignItems: "center",
-                  justifyContent: "center", flexShrink: 0, padding: 0,
+                  width: "100%", aspectRatio: "1", borderRadius: 10,
+                  border: selectedEmoji === marker ? "2px solid var(--accent-blue)" : "1px solid var(--border-light)",
+                  background: "var(--bg-card)", display: "flex", alignItems: "center",
+                  justifyContent: "center", padding: 3, overflow: "hidden",
                 }}
               >
-                {emoji}
+                <img src={emoji.src} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
               </button>
-            ))}
+              );
+            })}
           </div>
         )}
         {error && <div style={{ color: "var(--accent-red)", fontSize: 13, marginBottom: 8 }}>{error}</div>}

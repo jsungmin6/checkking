@@ -6,7 +6,7 @@ import PostGreetingModal from "../components/PostGreetingModal";
 import GreetingActionSheet from "../components/GreetingActionSheet";
 import { hideAdBanner } from "../utils/admob";
 import { api, ApiError } from "../utils/api";
-import { parseGreetingContent } from "../utils/emoji";
+import { getCustomEmojiSrc, parseGreetingContent } from "../utils/emoji";
 import type { TabName } from "../components/TabBar";
 import type { Classroom, RoomGreeting, User } from "../types";
 
@@ -193,10 +193,17 @@ export default function GreetingScreen({ classroomId, user, onBack, onTabChange 
                   </div>
                 ) : (() => {
                   const { emoji, text } = parseGreetingContent(g.content);
+                  const customEmojiSrc = emoji ? getCustomEmojiSrc(emoji) : null;
                   return (
                     <>
                       {emoji && (
-                        <div style={{ fontSize: 102, lineHeight: 1.1, marginBottom: text ? 4 : 0 }}>{emoji}</div>
+                        <div style={{ width: 102, height: 102, marginBottom: text ? 4 : 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          {customEmojiSrc ? (
+                            <img src={customEmojiSrc} alt="출석 캐릭터" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+                          ) : (
+                            <span style={{ fontSize: 102, lineHeight: 1.1 }}>{emoji}</span>
+                          )}
+                        </div>
                       )}
                       {text && (
                         <div style={{ fontSize: 14, color: "var(--text-primary)", lineHeight: 1.5, wordBreak: "break-word" }}>
