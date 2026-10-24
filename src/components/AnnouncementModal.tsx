@@ -14,21 +14,27 @@ export default function AnnouncementModal({ classroomId, isOwner, initialText, o
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSave = async () => {
+  const save = async (value: string) => {
     setSaving(true);
     setError(null);
     try {
       await api(`/classrooms/${classroomId}/announcement`, {
         method: "PUT",
-        body: JSON.stringify({ announcement: text.trim() }),
+        body: JSON.stringify({ announcement: value }),
       });
-      onSaved(text.trim());
+      onSaved(value);
       onClose();
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "저장에 실패했어요");
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleSave = () => save(text.trim());
+  const handleDelete = () => {
+    if (!confirm("공지를 삭제할까요?")) return;
+    save("");
   };
 
   return (
@@ -65,6 +71,14 @@ export default function AnnouncementModal({ classroomId, isOwner, initialText, o
               }}
             />
             {error && <div style={{ color: "var(--accent-red)", fontSize: 13, marginBottom: 8 }}>{error}</div>}
+            {initialText && (
+              <div
+                onClick={saving ? undefined : handleDelete}
+                style={{ fontSize: 12, color: "var(--accent-red)", cursor: "pointer", marginBottom: 10 }}
+              >
+                공지 삭제
+              </div>
+            )}
             <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
               <button onClick={onClose} style={{
                 flex: 1, padding: 13, borderRadius: "var(--radius-button)", border: "1px solid var(--border-color)",

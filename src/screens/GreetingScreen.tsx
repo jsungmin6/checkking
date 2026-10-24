@@ -111,20 +111,21 @@ export default function GreetingScreen({ classroomId, user, onBack, onTabChange 
     <div className="page" style={{ display: "flex", flexDirection: "column", height: "100dvh", minHeight: 0, overflow: "hidden" }}>
       <BackHeader title="출석인사" onBack={onBack} />
 
-      <div style={{
-        flexShrink: 0, display: "flex", alignItems: "center", gap: 8,
-        padding: "12px 16px", borderBottom: "1px solid var(--border-light)",
-      }}>
+      <div style={{ flexShrink: 0, padding: "12px 16px 4px" }}>
         <div
           onClick={() => setShowAnnouncementModal(true)}
           style={{
-            flex: 1, display: "flex", alignItems: "center", gap: 6, cursor: "pointer",
-            color: classroom.announcement ? "var(--text-primary)" : "var(--text-muted)",
-            fontSize: 13, overflow: "hidden",
+            display: "flex", alignItems: "flex-start", gap: 8, cursor: "pointer",
+            padding: "12px 14px", borderRadius: "var(--radius-card)", border: "1px solid var(--border-color)",
+            background: "var(--bg-card)",
           }}
         >
-          <span style={{ fontSize: 15 }}>📣</span>
-          <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+          <span style={{ fontSize: 15, lineHeight: "20px", flexShrink: 0 }}>📣</span>
+          <span style={{
+            flex: 1, minWidth: 0, fontSize: 13, lineHeight: 1.5,
+            color: classroom.announcement ? "var(--text-primary)" : "var(--text-muted)",
+            display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden",
+          }}>
             {classroom.announcement || (isOwner ? "공지를 남겨보세요" : "등록된 공지가 없어요")}
           </span>
         </div>
