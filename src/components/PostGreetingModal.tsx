@@ -51,15 +51,15 @@ export default function PostGreetingModal({ classroomId, onClose, onPosted }: Po
         <div style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 14, lineHeight: 1.5 }}>
           하루에 한 번, 짧게 한마디 남겨보세요.
         </div>
-        <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 14 }}>
           {QUICK_EMOJIS.map((emoji) => (
             <button
               key={emoji}
               type="button"
               onClick={() => setContent((prev) => (prev.length < 200 ? prev + emoji : prev))}
               style={{
-                width: 36, height: 36, borderRadius: "50%", border: "1px solid var(--border-light)",
-                background: "var(--bg-secondary)", fontSize: 17, display: "flex", alignItems: "center",
+                width: 44, height: 44, borderRadius: "50%", border: "1px solid var(--border-light)",
+                background: "var(--bg-secondary)", fontSize: 26, lineHeight: 1, display: "flex", alignItems: "center",
                 justifyContent: "center", flexShrink: 0, padding: 0,
               }}
             >
