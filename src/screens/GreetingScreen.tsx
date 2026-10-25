@@ -42,6 +42,7 @@ export default function GreetingScreen({ classroomId, user, onBack, onTabChange 
   const [actionSheetGreeting, setActionSheetGreeting] = useState<RoomGreeting | null>(null);
   const [reportingId, setReportingId] = useState<number | null>(null);
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const feedRef = useRef<HTMLDivElement>(null);
 
   const isOwner = classroom?.ownerId === user.userId;
   const alreadyPostedToday = greetings?.some((g) => g.mine) ?? false;
@@ -63,6 +64,12 @@ export default function GreetingScreen({ classroomId, user, onBack, onTabChange 
   }, [classroomId]);
 
   useEffect(() => { hideAdBanner(); fetchData(); }, [fetchData]);
+
+  // 최신 인사가 아래쪽에 쌓이므로, 목록이 갱신되면 맨 아래로 내려 최신을 보여준다.
+  useEffect(() => {
+    const el = feedRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [greetings]);
 
   const handleReport = async (greetingId: number) => {
     if (reportingId !== null) return;
@@ -156,7 +163,7 @@ export default function GreetingScreen({ classroomId, user, onBack, onTabChange 
         </div>
       </div>
 
-      <div style={{ flex: 1, minHeight: 0, overflowY: "auto", overscrollBehavior: "contain", padding: "4px 16px" }}>
+      <div ref={feedRef} style={{ flex: 1, minHeight: 0, overflowY: "auto", overscrollBehavior: "contain", padding: "4px 16px" }}>
         {greetings.length === 0 ? (
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", color: "var(--text-secondary)", fontSize: 14 }}>
             아직 오늘 남긴 인사가 없어요
@@ -253,7 +260,7 @@ export default function GreetingScreen({ classroomId, user, onBack, onTabChange 
         <PostGreetingModal
           classroomId={classroomId}
           onClose={() => setShowPostModal(false)}
-          onPosted={(g) => setGreetings((prev) => [g, ...(prev ?? [])])}
+          onPosted={(g) => setGreetings((prev) => [...(prev ?? []), g])}
         />
       )}
       {editingGreeting && (

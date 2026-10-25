@@ -1,5 +1,6 @@
 import { API_BASE_URL, TOKEN_KEYS } from "../constants";
 import { isTossApp } from "./platform";
+import { customEmojiMarker } from "./emoji";
 import type { ApiResponse, TokenRefreshResponse } from "../types";
 
 function getAccessToken(): string | null {
@@ -132,6 +133,19 @@ function fetchWithTimeout(url: string, options: RequestInit, timeoutMs = 15000):
 const DEV_ROOM_COUNT = 20;
 const DEV_ROOM_IDS = Array.from({ length: DEV_ROOM_COUNT }, (_, i) => -(i + 1));
 const DEV_ROOM_NAMES = new Map<number, string>(DEV_ROOM_IDS.map((id) => [id, `로컬 미리보기 방 ${-id}`]));
+const SHOWCASE_MY_ROOM_NAMES: Record<number, string> = {
+  [-1]: "아침 기상 챌린지",
+  [-2]: "스터디카페 출첵방",
+  [-3]: "헬스 루틴 인증",
+  [-4]: "매일 영어 한마디",
+  [-5]: "미라클모닝 6시반",
+  [-6]: "달리기 모임 새벽반",
+  [-7]: "다이어트 같이해요",
+  [-8]: "자격증 공부방",
+};
+for (const [id, name] of Object.entries(SHOWCASE_MY_ROOM_NAMES)) {
+  DEV_ROOM_NAMES.set(Number(id), name);
+}
 
 // 오픈방 화면 스크롤 테스트용 가짜 공개방 목록
 const DEV_PUBLIC_ROOM_IDS = Array.from({ length: 15 }, (_, i) => -(100 + i));
@@ -147,18 +161,18 @@ function seedTime(minutesAgo: number): string {
 
 // 출석인사 탭 UI/스크롤 점검용 — 이모지만/이모지+코멘트/코멘트만 3가지 조합을 방 1에 미리 채워둔다.
 devGreetings.set(-1, [
-  { greetingId: 1, userId: -3, nickname: "서연", content: "✅", reportCount: 0, hidden: false, mine: false, createdAt: seedTime(2) },
-  { greetingId: 2, userId: -2, nickname: "하준", content: "🔥 오늘도 화이팅입니다!", reportCount: 0, hidden: false, mine: false, createdAt: seedTime(9) },
-  { greetingId: 3, userId: -4, nickname: "지우", content: "출석 완료! 다들 좋은 하루 보내세요", reportCount: 0, hidden: false, mine: false, createdAt: seedTime(16) },
-  { greetingId: 4, userId: -5, nickname: "아린", content: "😴", reportCount: 1, hidden: false, mine: false, createdAt: seedTime(24) },
-  { greetingId: 5, userId: -1, nickname: "민준", content: "👋 굿모닝", reportCount: 0, hidden: false, mine: true, createdAt: seedTime(31) },
-  { greetingId: 6, userId: -3, nickname: "서연", content: "늦잠 잘뻔했는데 겨우 출석했어요 ㅠㅠ", reportCount: 0, hidden: false, mine: false, createdAt: seedTime(40) },
-  { greetingId: 7, userId: -2, nickname: "하준", content: "🙌", reportCount: 0, hidden: false, mine: false, createdAt: seedTime(48) },
-  { greetingId: 8, userId: -4, nickname: "지우", content: "☀️ 날씨 좋네요 다들 화이팅", reportCount: 0, hidden: false, mine: false, createdAt: seedTime(57) },
-  { greetingId: 9, userId: -5, nickname: "아린", content: "오늘 7시에 일어나서 출석했어요!", reportCount: 0, hidden: false, mine: false, createdAt: seedTime(66) },
-  { greetingId: 10, userId: -1, nickname: "민준", content: "💪 할수있다", reportCount: 0, hidden: false, mine: false, createdAt: seedTime(75) },
-  { greetingId: 11, userId: -3, nickname: "서연", content: "🎉", reportCount: 0, hidden: false, mine: false, createdAt: seedTime(84) },
   { greetingId: 12, userId: -2, nickname: "하준", content: "이제 막 출석했어요, 오늘 하루도 모두 힘내봐요", reportCount: 0, hidden: false, mine: false, createdAt: seedTime(93) },
+  { greetingId: 11, userId: -3, nickname: "서연", content: customEmojiMarker("wellwish-frog"), reportCount: 0, hidden: false, mine: false, createdAt: seedTime(84) },
+  { greetingId: 10, userId: -1, nickname: "민준", content: `${customEmojiMarker("attendance-penguin")} 할수있다`, reportCount: 0, hidden: false, mine: false, createdAt: seedTime(75) },
+  { greetingId: 9, userId: -5, nickname: "아린", content: "오늘 7시에 일어나서 출석했어요!", reportCount: 0, hidden: false, mine: false, createdAt: seedTime(66) },
+  { greetingId: 8, userId: -4, nickname: "지우", content: `${customEmojiMarker("wellwish-cloud")} 날씨 좋네요 다들 화이팅`, reportCount: 0, hidden: false, mine: false, createdAt: seedTime(57) },
+  { greetingId: 7, userId: -2, nickname: "하준", content: customEmojiMarker("together-rabbit-tortoise"), reportCount: 0, hidden: false, mine: false, createdAt: seedTime(48) },
+  { greetingId: 6, userId: -3, nickname: "서연", content: "늦잠 잘뻔했는데 겨우 출석했어요 ㅠㅠ", reportCount: 0, hidden: false, mine: false, createdAt: seedTime(40) },
+  { greetingId: 5, userId: -1, nickname: "민준", content: `${customEmojiMarker("hello-rabbit")} 굿모닝`, reportCount: 0, hidden: false, mine: true, createdAt: seedTime(31) },
+  { greetingId: 4, userId: -5, nickname: "아린", content: customEmojiMarker("morning-hamster"), reportCount: 1, hidden: false, mine: false, createdAt: seedTime(24) },
+  { greetingId: 3, userId: -4, nickname: "지우", content: "출석 완료! 다들 좋은 하루 보내세요", reportCount: 0, hidden: false, mine: false, createdAt: seedTime(16) },
+  { greetingId: 2, userId: -2, nickname: "하준", content: `${customEmojiMarker("cheer-puppy")} 오늘도 화이팅입니다!`, reportCount: 0, hidden: false, mine: false, createdAt: seedTime(9) },
+  { greetingId: 1, userId: -3, nickname: "서연", content: customEmojiMarker("attendance-rabbit"), reportCount: 0, hidden: false, mine: false, createdAt: seedTime(2) },
 ]);
 devGreetingSeq = 100;
 
@@ -214,6 +228,13 @@ const ROOM1_MONTHLY_RANKING = [
   { rank: 3, userId: -1, nickname: "민준", avgRank: 2.6, totalPresent: 17, totalDays: 20 },
   { rank: 4, userId: -5, nickname: "아린", avgRank: 3.0, totalPresent: 15, totalDays: 20 },
   { rank: 5, userId: -3, nickname: "서연", avgRank: 3.8, totalPresent: 12, totalDays: 20 },
+  { rank: 6, userId: -6, nickname: "도윤", avgRank: 4.2, totalPresent: 14, totalDays: 20 },
+  { rank: 7, userId: -7, nickname: "시우", avgRank: 4.9, totalPresent: 13, totalDays: 20 },
+  { rank: 8, userId: -8, nickname: "유나", avgRank: 5.3, totalPresent: 11, totalDays: 20 },
+  { rank: 9, userId: -9, nickname: "건우", avgRank: 5.8, totalPresent: 10, totalDays: 20 },
+  { rank: 10, userId: -10, nickname: "예은", avgRank: 6.4, totalPresent: 9, totalDays: 20 },
+  { rank: 11, userId: -11, nickname: "로운", avgRank: 7.1, totalPresent: 8, totalDays: 20 },
+  { rank: 12, userId: -12, nickname: "하율", avgRank: 7.9, totalPresent: 7, totalDays: 20 },
 ];
 
 const ROOM1_MONTHLY_DAYS = [3, 4, 5, 6, 7, 10, 11, 12, 13, 14, 17, 18, 19, 20];
@@ -240,11 +261,31 @@ function devMock(path: string, method: string, body?: string): unknown | undefin
   }
 
   if (path === "/classrooms/public") {
-    return { classrooms: DEV_PUBLIC_ROOM_IDS.map((id, i) => ({
-      classroomId: id, name: `로컬 오픈방 ${i + 1}`, ownerId: id, ownerNickname: `방장${i + 1}`,
-      isOwner: false, memberCount: (i % 20) + 1, maxMembers: 20, todayCheckedIn: false,
-      todayRank: null, isPublic: true, inviteCode: `PUBLIC${-id}`, joined: false, isDemo: false,
-    })) };
+    const SHOWCASE_ROOMS = [
+      { name: "광교숲도서관 출석", owner: "유재원", memberCount: 17, maxMembers: 30 },
+      { name: "50대 파이어~!", owner: "김민정", memberCount: 8, maxMembers: 30 },
+      { name: "산책", owner: "이경민", memberCount: 8, maxMembers: 30 },
+      { name: "미라클모닝 6시반", owner: "박서준", memberCount: 24, maxMembers: 30 },
+      { name: "스터디카페 출첵방", owner: "정윤우", memberCount: 12, maxMembers: 20 },
+      { name: "헬스 루틴 인증", owner: "최하은", memberCount: 19, maxMembers: 30 },
+      { name: "직장인 아침독서", owner: "강지호", memberCount: 6, maxMembers: 15 },
+      { name: "매일 영어 한마디", owner: "윤서아", memberCount: 15, maxMembers: 30 },
+      { name: "달리기 모임 새벽반", owner: "임도윤", memberCount: 9, maxMembers: 20 },
+      { name: "출석왕 도전방", owner: "한소율", memberCount: 22, maxMembers: 30 },
+      { name: "다이어트 같이해요", owner: "오은우", memberCount: 11, maxMembers: 25 },
+      { name: "자격증 공부방", owner: "신예린", memberCount: 7, maxMembers: 15 },
+      { name: "요가 조식 인증", owner: "배수민", memberCount: 13, maxMembers: 20 },
+      { name: "코딩테스트 매일풀이", owner: "조민재", memberCount: 18, maxMembers: 30 },
+      { name: "등산 동호회 주말반", owner: "홍지유", memberCount: 10, maxMembers: 25 },
+    ];
+    return { classrooms: DEV_PUBLIC_ROOM_IDS.map((id, i) => {
+      const room = SHOWCASE_ROOMS[i % SHOWCASE_ROOMS.length]!;
+      return {
+        classroomId: id, name: room.name, ownerId: id, ownerNickname: room.owner,
+        isOwner: false, memberCount: room.memberCount, maxMembers: room.maxMembers, todayCheckedIn: false,
+        todayRank: null, isPublic: true, inviteCode: `PUBLIC${-id}`, joined: false, isDemo: false,
+      };
+    }) };
   }
 
   const roomMatch = path.match(/^\/classrooms\/(-\d+)(\/.*)?$/);
@@ -280,7 +321,7 @@ function devMock(path: string, method: string, body?: string): unknown | undefin
       greetingId: devGreetingSeq++, userId: -1, nickname: "민준", content,
       reportCount: 0, hidden: false, mine: true, createdAt: new Date().toISOString(),
     };
-    devGreetings.set(id, [greeting, ...list]);
+    devGreetings.set(id, [...list, greeting]);
     return greeting;
   }
   const reportMatch = sub.match(/^\/greetings\/(\d+)\/report$/);
