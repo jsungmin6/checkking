@@ -100,16 +100,17 @@ export default function MissionModal({ done, onClose, onRewarded }: MissionModal
           </span>
         </div>
 
-        {/* 보상 */}
+        {/* 보상 — 금액은 선물상자를 열 때 알게 한다 */}
         <div style={{
           display: "flex", alignItems: "center", justifyContent: "space-between",
           padding: "13px 14px", borderRadius: "var(--radius-card)",
           border: "1px dashed var(--border-color)", marginBottom: 18,
         }}>
           <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>보상</span>
-          <strong style={{ fontSize: 16, color: "var(--accent-blue)" }}>
-            +{GREETING_MISSION.reward.toLocaleString()}P
-          </strong>
+          <span style={{ display: "flex", alignItems: "center", gap: 7 }}>
+            <img src="/rewards/gift-box-closed.png" alt="" style={{ width: 24, height: 24, objectFit: "contain" }} />
+            <strong style={{ fontSize: 15, color: "var(--text-primary)" }}>출석 선물상자</strong>
+          </span>
         </div>
 
         {done ? (
