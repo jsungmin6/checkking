@@ -8,10 +8,8 @@ export default function FeedbackButton({ onClick }: FeedbackButtonProps) {
       onClick={onClick}
       aria-label="문의하기"
       style={{
-        position: "absolute",
-        right: 16,
-        bottom: "calc(100% + 16px)",
-        zIndex: 30,
+        // 위치는 홈의 플로팅 버튼 스택(FloatingButtonStack)이 잡는다. 여기선 배지 기준점만 만든다.
+        position: "relative",
         width: 52,
         height: 52,
         borderRadius: "50%",

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { api, ApiError } from "../utils/api";
 import { customEmojiMarker, getCustomEmojiSrc, GREETING_EMOJIS, parseGreetingContent } from "../utils/emoji";
+import { markGreetingMissionDone } from "../hooks/useAttendancePoints";
 import type { RoomGreeting } from "../types";
 
 interface PostGreetingModalProps {
@@ -33,6 +34,8 @@ export default function PostGreetingModal({ classroomId, editGreeting, onClose, 
         method: isEdit ? "PUT" : "POST",
         body: JSON.stringify({ content: content.trim() }),
       });
+      // 수정이 아니라 "새로 남긴" 경우에만 미션 완료로 친다.
+      if (!isEdit) markGreetingMissionDone();
       onPosted(greeting);
       onClose();
     } catch (e) {

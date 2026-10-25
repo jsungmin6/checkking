@@ -51,6 +51,29 @@ export function useDailyRewardLimit() {
   return { remaining, increment };
 }
 
+/**
+ * 출석인사 미션 — 인사를 한 번 남기면 보상을 받을 수 있다.
+ * 완료 여부와 수령 여부를 따로 두어, "완료했지만 아직 안 받음" 상태에서 배지를 띄운다.
+ * 문의하기 보상과 마찬가지로 로컬 플래그로만 중복을 막는다.
+ */
+const GREETING_MISSION_DONE_KEY = "att-mission-greeting-done";
+
+/** 인사 작성이 성공한 순간 호출 — 미션을 켜기 전에 인사한 사람도 보상 대상이 되도록 항상 기록한다. */
+export function markGreetingMissionDone() {
+  localStorage.setItem(GREETING_MISSION_DONE_KEY, "1");
+}
+
+export function useGreetingMission() {
+  const [done, setDone] = useLocalStorage<boolean>(GREETING_MISSION_DONE_KEY, false);
+  const [rewarded, setRewarded] = useLocalStorage<boolean>("att-mission-greeting-rewarded", false);
+  return {
+    done,
+    alreadyRewarded: rewarded,
+    markDone: () => setDone(true),
+    markRewarded: () => setRewarded(true),
+  };
+}
+
 /** "문의하기" 완료 보상(5000P)은 기기당 1회만 — 로컬 플래그로만 중복 방지한다. */
 export function useFeedbackReward() {
   const [rewarded, setRewarded] = useLocalStorage<boolean>("att-points-feedback-rewarded", false);

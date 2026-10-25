@@ -7,10 +7,13 @@ import AdMobBanner from "../components/AdMobBanner";
 import Toast from "../components/Toast";
 import ConvertPointsModal from "../components/ConvertPointsModal";
 import FeedbackButton from "../components/FeedbackButton";
+import MissionButton from "../components/MissionButton";
+import MissionModal from "../components/MissionModal";
 import FeedbackModal from "../components/FeedbackModal";
 import OnboardingModal from "../components/OnboardingModal";
 import { useToast } from "../hooks/useToast";
-import { useAttendancePoints, useFeedbackReward, POINTS_TO_WON_RATE } from "../hooks/useAttendancePoints";
+import { useAttendancePoints, useFeedbackReward, useGreetingMission, POINTS_TO_WON_RATE } from "../hooks/useAttendancePoints";
+import { GREETING_MISSION_ACTIVE } from "../missions";
 import { maybePromptPushConsentOnHome } from "../utils/pushConsent";
 import type { HomeTab } from "../components/HomeTabBar";
 import type { AccountType, ClassroomListItem } from "../types";
@@ -33,6 +36,10 @@ export default function HomeScreen({
   const roomLimit = accountType === "PREMIUM" ? 50 : 3;
   const { totalPoints, addPoints, requestConversion } = useAttendancePoints();
   const { alreadyRewarded: feedbackAlreadyRewarded, markRewarded: markFeedbackRewarded } = useFeedbackReward();
+  const { done: missionDone, alreadyRewarded: missionRewarded, markRewarded: markMissionRewarded } = useGreetingMission();
+  const [showMissionModal, setShowMissionModal] = useState(false);
+  // 보상을 받고 나면 버튼이 영구히 사라진다. 이벤트를 내리면 GREETING_MISSION_ACTIVE=false.
+  const showMissionButton = GREETING_MISSION_ACTIVE && !missionRewarded;
   const [showConvertModal, setShowConvertModal] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(() => localStorage.getItem("att-onboarding-seen") !== "1");
@@ -137,7 +144,18 @@ export default function HomeScreen({
       </div>
 
       <div style={{ flexShrink: 0, position: "relative" }}>
-        {!feedbackAlreadyRewarded && <FeedbackButton onClick={() => setShowFeedbackModal(true)} />}
+        {(showMissionButton || !feedbackAlreadyRewarded) && (
+          // 아래부터 쌓는다 — 편지 버튼이 사라지면 미션 버튼이 그 자리로 내려온다.
+          <div style={{
+            position: "absolute", right: 16, bottom: "calc(100% + 16px)", zIndex: 30,
+            display: "flex", flexDirection: "column", gap: 12, alignItems: "flex-end",
+          }}>
+            {showMissionButton && (
+              <MissionButton hasReward={missionDone} onClick={() => setShowMissionModal(true)} />
+            )}
+            {!feedbackAlreadyRewarded && <FeedbackButton onClick={() => setShowFeedbackModal(true)} />}
+          </div>
+        )}
         <TossBannerAd />
         <HomeTabBar active="home" onSelect={handleTabChange} />
         <AdMobBanner />
@@ -155,6 +173,13 @@ export default function HomeScreen({
           onClose={() => setShowFeedbackModal(false)}
           alreadyRewarded={feedbackAlreadyRewarded}
           onRewarded={(amount) => { addPoints(amount); markFeedbackRewarded(); }}
+        />
+      )}
+      {showMissionModal && (
+        <MissionModal
+          done={missionDone}
+          onClose={() => setShowMissionModal(false)}
+          onRewarded={(amount) => { addPoints(amount); markMissionRewarded(); }}
         />
       )}
       {showOnboarding && (
