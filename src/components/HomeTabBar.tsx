@@ -7,7 +7,7 @@ interface HomeTabBarProps {
 
 const TABS: { key: HomeTab; label: string }[] = [
   { key: "home", label: "홈" },
-  { key: "publicRooms", label: "오픈방" },
+  { key: "publicRooms", label: "방 찾기" },
   { key: "profile", label: "내 정보" },
 ];
 

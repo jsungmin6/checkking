@@ -27,6 +27,9 @@ export default function App() {
   const [screen, setScreen] = useState<ScreenName>("home");
   const [activeRoomId, setActiveRoomId] = useState<number | null>(null);
   const [pendingInviteCode, setPendingInviteCode] = useState<string | null>(null);
+  // 방 만들기/참여코드 화면은 홈과 "방 찾기" 양쪽에서 들어올 수 있어, 뒤로가기를 들어온 곳으로 돌려보낸다.
+  // 초대 딥링크로 바로 열린 경우는 기본값인 홈으로 간다.
+  const [roomFormOrigin, setRoomFormOrigin] = useState<"home" | "publicRooms">("home");
   const attInitRef = useRef(false);
   const inviteLinkHandledRef = useRef(false);
   const entryLoggedRef = useRef(false);
@@ -159,6 +162,7 @@ export default function App() {
           localStorage.removeItem("att-mission-greeting-done");
           localStorage.removeItem("att-mission-greeting-rewarded");
           localStorage.removeItem("att-mission-greeting-seen");
+          localStorage.removeItem("att-news-seen-id");
           resetDevPreview();
           setDevPreviewUser({ userId: -1, nickname: "민준", loginType: "KAKAO", accountType: "FREE" });
         } : undefined}
@@ -176,8 +180,7 @@ export default function App() {
         <HomeScreen
           accountType={user.accountType}
           onNavigateProfile={() => navigateTo("profile")}
-          onNavigateCreateRoom={() => navigateTo("createRoom")}
-          onNavigateJoinRoom={() => navigateTo("joinRoom")}
+          onNavigateCreateRoom={() => { setRoomFormOrigin("home"); navigateTo("createRoom"); }}
           onNavigatePublicRooms={() => navigateTo("publicRooms")}
           onNavigateRoom={(id) => navigateTo("room", id)}
         />
@@ -193,11 +196,20 @@ export default function App() {
         />
       );
     case "createRoom":
-      return <CreateRoomScreen accountType={user.accountType} onBack={() => navigateTo("home")} onCreated={(id) => navigateTo("room", id)} />;
+      return <CreateRoomScreen accountType={user.accountType} onBack={() => navigateTo(roomFormOrigin)} onCreated={(id) => navigateTo("room", id)} />;
     case "joinRoom":
-      return <JoinRoomScreen initialCode={pendingInviteCode ?? undefined} onBack={() => navigateTo("home")} onJoined={(id) => navigateTo("room", id)} />;
+      return <JoinRoomScreen initialCode={pendingInviteCode ?? undefined} onBack={() => navigateTo(roomFormOrigin)} onJoined={(id) => navigateTo("room", id)} />;
     case "publicRooms":
-      return <PublicRoomsScreen accountType={user.accountType} onNavigateHome={() => navigateTo("home")} onNavigateProfile={() => navigateTo("profile")} onJoined={(id) => navigateTo("room", id)} />;
+      return (
+        <PublicRoomsScreen
+          accountType={user.accountType}
+          onNavigateHome={() => navigateTo("home")}
+          onNavigateProfile={() => navigateTo("profile")}
+          onNavigateCreateRoom={() => { setRoomFormOrigin("publicRooms"); navigateTo("createRoom"); }}
+          onNavigateJoinRoom={() => { setRoomFormOrigin("publicRooms"); navigateTo("joinRoom"); }}
+          onJoined={(id) => navigateTo("room", id)}
+        />
+      );
     case "room":
       if (!activeRoomId) { setScreen("home"); return null; }
       return (

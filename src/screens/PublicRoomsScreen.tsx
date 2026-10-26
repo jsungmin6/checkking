@@ -12,11 +12,13 @@ interface Props {
   accountType?: AccountType;
   onNavigateHome: () => void;
   onNavigateProfile: () => void;
+  onNavigateCreateRoom: () => void;
+  onNavigateJoinRoom: () => void;
   onJoined: (id: number) => void;
 }
 type Sort = "popular" | "name" | "newest";
 
-// 오픈방 화면의 마감 예시. 실제 계정이나 출석 기록은 만들지 않는다.
+// 방 찾기 화면의 마감 예시. 실제 계정이나 출석 기록은 만들지 않는다.
 const demoFullRooms: ClassroomListItem[] = [
   { classroomId: -1, name: "신송고 3-12 출석방", ownerId: -1, ownerNickname: "3학년 12반", isOwner: false, memberCount: 20, maxMembers: 20, todayCheckedIn: false, todayRank: null, isPublic: true, inviteCode: "", joined: false, isDemo: true },
   { classroomId: -2, name: "늘봄독서실 출석 챌린지", ownerId: -2, ownerNickname: "독서실 이용자", isOwner: false, memberCount: 30, maxMembers: 30, todayCheckedIn: false, todayRank: null, isPublic: true, inviteCode: "", joined: false, isDemo: true },
@@ -24,7 +26,7 @@ const demoFullRooms: ClassroomListItem[] = [
   { classroomId: -5, name: "네카라쿠배 스터디", ownerId: -5, ownerNickname: "스터디 멤버", isOwner: false, memberCount: 3, maxMembers: 3, todayCheckedIn: false, todayRank: null, isPublic: true, inviteCode: "", joined: false, isDemo: true },
 ];
 
-export default function PublicRoomsScreen({ accountType, onNavigateHome, onNavigateProfile, onJoined }: Props) {
+export default function PublicRoomsScreen({ accountType, onNavigateHome, onNavigateProfile, onNavigateCreateRoom, onNavigateJoinRoom, onJoined }: Props) {
   const [rooms, setRooms] = useState<ClassroomListItem[]>([]);
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<Sort>("popular");
@@ -72,12 +74,26 @@ export default function PublicRoomsScreen({ accountType, onNavigateHome, onNavig
     }
     finally { setJoining(null); }
   };
+  const handleCreate = () => {
+    if (roomCount !== null && roomCount >= roomLimit) {
+      showToast(`방은 ${roomLimit}개까지만 이용할 수 있어요.`);
+      return;
+    }
+    onNavigateCreateRoom();
+  };
   const handleTabChange = (tab: HomeTab) => {
     if (tab === "home") onNavigateHome();
     else if (tab === "profile") onNavigateProfile();
   };
   return <div className="page" style={{ display: "flex", flexDirection: "column", height: "100dvh", minHeight: 0, overflow: "hidden" }}>
-    <div style={{ padding: "20px 20px 12px", fontSize: 22, fontWeight: 700, flexShrink: 0 }}>오픈방</div>
+    <div style={{ padding: "20px 20px 12px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexShrink: 0 }}>
+      <div style={{ fontSize: 22, fontWeight: 700 }}>방 찾기</div>
+      {/* 방을 만들고 들어가는 동작은 모두 이 탭에 모아둔다 */}
+      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+        <span onClick={handleCreate} style={{ padding: "8px 14px", background: "var(--accent-blue)", borderRadius: "var(--radius-button)", fontSize: 13, fontWeight: 600, color: "#fff", cursor: "pointer", whiteSpace: "nowrap" }}>+ 만들기</span>
+        <span onClick={onNavigateJoinRoom} style={{ padding: "8px 14px", background: "var(--bg-card)", border: "1px solid var(--border-color)", borderRadius: "var(--radius-button)", fontSize: 13, fontWeight: 600, color: "var(--text-primary)", cursor: "pointer", whiteSpace: "nowrap" }}>참여코드</span>
+      </div>
+    </div>
     <div style={{ padding: 16, flexShrink: 0 }}>
       <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
         <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="방 제목 검색" aria-label="공개방 제목 검색" style={{ flex: 1, minWidth: 0, padding: 13, borderRadius: 10, border: "1px solid var(--border-light)", background: "var(--bg-secondary)", color: "var(--text-primary)", fontSize: 15 }} />

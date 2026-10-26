@@ -129,7 +129,7 @@ function fetchWithTimeout(url: string, options: RequestInit, timeoutMs = 15000):
 }
 
 // TEMP dev-only mock data for the "로컬 미리보기" bypass. Remove before shipping.
-// 방을 넉넉히 두어 "하루 3회 상한", 홈/오픈방 리스트가 길어질 때 하단 탭바 고정 여부 같은 걸 로컬에서 테스트할 수 있게 한다.
+// 방을 넉넉히 두어 "하루 3회 상한", 홈/방 찾기 리스트가 길어질 때 하단 탭바 고정 여부 같은 걸 로컬에서 테스트할 수 있게 한다.
 const DEV_ROOM_COUNT = 20;
 const DEV_ROOM_IDS = Array.from({ length: DEV_ROOM_COUNT }, (_, i) => -(i + 1));
 const DEV_ROOM_NAMES = new Map<number, string>(DEV_ROOM_IDS.map((id) => [id, `로컬 미리보기 방 ${-id}`]));
@@ -147,7 +147,7 @@ for (const [id, name] of Object.entries(SHOWCASE_MY_ROOM_NAMES)) {
   DEV_ROOM_NAMES.set(Number(id), name);
 }
 
-// 오픈방 화면 스크롤 테스트용 가짜 공개방 목록
+// 방 찾기 화면 스크롤 테스트용 가짜 공개방 목록
 const DEV_PUBLIC_ROOM_IDS = Array.from({ length: 15 }, (_, i) => -(100 + i));
 const devCheckInCount = new Map<number, number>(DEV_ROOM_IDS.map((id) => [id, 0]));
 const devDailyRank = new Map<number, number | null>(DEV_ROOM_IDS.map((id) => [id, null]));
@@ -252,6 +252,10 @@ function devMock(path: string, method: string, body?: string): unknown | undefin
   }
 
   if (path === "/classrooms/my") {
+    // ?emptyRooms=1 로 열면 "참여한 방이 없는" 첫 화면을 로컬에서 확인할 수 있다.
+    if (new URLSearchParams(window.location.search).get("emptyRooms") === "1") {
+      return { classrooms: [] };
+    }
     return { classrooms: DEV_ROOM_IDS.map((id) => ({
       classroomId: id, name: DEV_ROOM_NAMES.get(id), ownerId: -1, ownerNickname: "민준",
       // 방장/참여자 표시를 둘 다 확인할 수 있게 홀수 방만 방장으로 둔다.

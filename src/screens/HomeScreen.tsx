@@ -9,10 +9,13 @@ import ConvertPointsModal from "../components/ConvertPointsModal";
 import FeedbackButton from "../components/FeedbackButton";
 import MissionButton from "../components/MissionButton";
 import MissionModal from "../components/MissionModal";
+import NewsButton from "../components/NewsButton";
+import NewsModal from "../components/NewsModal";
 import FeedbackModal from "../components/FeedbackModal";
 import OnboardingModal from "../components/OnboardingModal";
 import { useToast } from "../hooks/useToast";
 import { useAttendancePoints, useFeedbackReward, useGreetingMission, POINTS_TO_WON_RATE } from "../hooks/useAttendancePoints";
+import { useNews } from "../hooks/useNews";
 import { GREETING_MISSION_ACTIVE } from "../missions";
 import { maybePromptPushConsentOnHome } from "../utils/pushConsent";
 import type { HomeTab } from "../components/HomeTabBar";
@@ -21,14 +24,13 @@ import type { AccountType, ClassroomListItem } from "../types";
 interface HomeScreenProps {
   accountType?: AccountType;
   onNavigateCreateRoom: () => void;
-  onNavigateJoinRoom: () => void;
   onNavigatePublicRooms: () => void;
   onNavigateRoom: (classroomId: number) => void;
   onNavigateProfile: () => void;
 }
 
 export default function HomeScreen({
-  accountType, onNavigateCreateRoom, onNavigateJoinRoom, onNavigatePublicRooms, onNavigateRoom, onNavigateProfile,
+  accountType, onNavigateCreateRoom, onNavigatePublicRooms, onNavigateRoom, onNavigateProfile,
 }: HomeScreenProps) {
   const [rooms, setRooms] = useState<ClassroomListItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -37,6 +39,8 @@ export default function HomeScreen({
   const { totalPoints, addPoints, requestConversion } = useAttendancePoints();
   const { alreadyRewarded: feedbackAlreadyRewarded, markRewarded: markFeedbackRewarded } = useFeedbackReward();
   const { done: missionDone, alreadyRewarded: missionRewarded, hasUpdate: missionHasUpdate, markSeen: markMissionSeen, markRewarded: markMissionRewarded } = useGreetingMission();
+  const { news, hasUnread: newsHasUnread, markSeen: markNewsSeen } = useNews();
+  const [showNewsModal, setShowNewsModal] = useState(false);
   const [showMissionModal, setShowMissionModal] = useState(false);
   // 보상을 받고 나면 버튼이 영구히 사라진다. 이벤트를 내리면 GREETING_MISSION_ACTIVE=false.
   const showMissionButton = GREETING_MISSION_ACTIVE && !missionRewarded;
@@ -98,10 +102,8 @@ export default function HomeScreen({
     <div className="page" style={{ display: "flex", flexDirection: "column", height: "100dvh", minHeight: 0, overflow: "hidden" }}>
       <div style={{ padding: "20px 20px 12px", display: "flex", justifyContent: "space-between", alignItems: "center", flexShrink: 0 }}>
         <div style={{ fontSize: 22, fontWeight: 700 }}>내 방</div>
-        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-          <span onClick={handleCreateRoom} style={{ padding: "8px 14px", background: "var(--accent-blue)", borderRadius: "var(--radius-button)", fontSize: 13, fontWeight: 600, color: "#fff", cursor: "pointer" }}>+ 만들기</span>
-          <span onClick={onNavigateJoinRoom} style={{ padding: "8px 14px", background: "var(--bg-card)", border: "1px solid var(--border-color)", borderRadius: "var(--radius-button)", fontSize: 13, fontWeight: 600, color: "var(--text-primary)", cursor: "pointer" }}>참여</span>
-        </div>
+        {/* 방 만들기/참여는 "방 찾기" 탭에 모아두어, 홈 헤더에는 소식만 남긴다. */}
+        <NewsButton hasUnread={newsHasUnread} onClick={() => { markNewsSeen(); setShowNewsModal(true); }} />
       </div>
       <div style={{
         margin: "0 16px 12px", padding: "16px 18px", borderRadius: "var(--radius-card)",
@@ -128,10 +130,11 @@ export default function HomeScreen({
         ) : rooms.length === 0 ? (
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 60, textAlign: "center" }}>
             <div style={{ fontSize: 17, fontWeight: 600, marginBottom: 8 }}>아직 참여한 방이 없어요</div>
-            <div style={{ color: "var(--text-secondary)", fontSize: 14, marginBottom: 32 }}>방을 만들거나 초대코드로 참여해보세요</div>
+            <div style={{ color: "var(--text-secondary)", fontSize: 14, marginBottom: 32 }}>방을 만들거나 다른 방에 참여해보세요</div>
             <div style={{ display: "flex", gap: 12 }}>
               <button onClick={handleCreateRoom} style={{ padding: "12px 24px", borderRadius: "var(--radius-button)", background: "var(--accent-blue)", color: "#fff", fontSize: 15, fontWeight: 600 }}>방 만들기</button>
-              <button onClick={onNavigateJoinRoom} style={{ padding: "12px 24px", borderRadius: "var(--radius-button)", background: "var(--bg-card)", border: "1px solid var(--border-color)", color: "var(--text-primary)", fontSize: 15, fontWeight: 600 }}>참여하기</button>
+              {/* 참여는 "방 찾기" 탭에 모아두었으므로, 여기서는 코드 입력 화면이 아니라 그 탭으로 보낸다. */}
+              <button onClick={onNavigatePublicRooms} style={{ padding: "12px 24px", borderRadius: "var(--radius-button)", background: "var(--bg-card)", border: "1px solid var(--border-color)", color: "var(--text-primary)", fontSize: 15, fontWeight: 600 }}>참여하기</button>
             </div>
           </div>
         ) : (
@@ -175,6 +178,7 @@ export default function HomeScreen({
           onRewarded={(amount) => { addPoints(amount); markFeedbackRewarded(); }}
         />
       )}
+      {showNewsModal && <NewsModal news={news} onClose={() => setShowNewsModal(false)} />}
       {showMissionModal && (
         <MissionModal
           done={missionDone}
