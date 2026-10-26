@@ -247,6 +247,9 @@ function devMock(path: string, method: string, body?: string): unknown | undefin
   if (path === "/notifications/feedback" && method === "POST") {
     return { received: true };
   }
+  if (path === "/notifications/mission-completed" && method === "POST") {
+    return { received: true };
+  }
   if (path === "/diagnostics/app-entry" && method === "POST") {
     return { received: true };
   }

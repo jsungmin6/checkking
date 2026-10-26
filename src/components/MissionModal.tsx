@@ -1,5 +1,6 @@
 import { useState } from "react";
 import GiftBox from "./GiftBox";
+import { api } from "../utils/api";
 import { GREETING_MISSION } from "../missions";
 
 interface MissionModalProps {
@@ -17,6 +18,12 @@ export default function MissionModal({ done, onClose, onRewarded }: MissionModal
   const handleGiftOpened = () => {
     setOpened(true);
     onRewarded(GREETING_MISSION.reward);
+    // 누가 미션을 끝냈는지 운영자가 알 수 있게 서버에 알린다.
+    // 보상은 이미 기기에 반영됐으므로, 전송이 실패해도 사용자에게는 영향이 없다.
+    void api("/notifications/mission-completed", {
+      method: "POST",
+      body: JSON.stringify({ missionId: GREETING_MISSION.id }),
+    }).catch(() => {});
   };
 
   // 보상 수령 단계 — 출석 선물(AttendanceGiftModal)과 동일한 연출을 재사용한다.

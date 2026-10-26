@@ -12,6 +12,8 @@ export const GREETING_MISSION_ACTIVE = true;
 export const GREETING_MISSION_REWARD = 2000;
 
 export const GREETING_MISSION = {
+  /** 서버가 아는 미션 id — 알림 문구는 서버가 이 값으로 결정한다. */
+  id: "greeting",
   title: "출석인사 미션",
   description: "방에 들어가 '인사' 탭에서 오늘의 출석 인사를 한 번 남겨보세요.",
   todo: "인사 탭에서 인사 남기기",
