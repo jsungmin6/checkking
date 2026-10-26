@@ -18,14 +18,6 @@ interface Props {
 }
 type Sort = "popular" | "name" | "newest";
 
-// 방 찾기 화면의 마감 예시. 실제 계정이나 출석 기록은 만들지 않는다.
-const demoFullRooms: ClassroomListItem[] = [
-  { classroomId: -1, name: "신송고 3-12 출석방", ownerId: -1, ownerNickname: "3학년 12반", isOwner: false, memberCount: 20, maxMembers: 20, todayCheckedIn: false, todayRank: null, isPublic: true, inviteCode: "", joined: false, isDemo: true },
-  { classroomId: -2, name: "늘봄독서실 출석 챌린지", ownerId: -2, ownerNickname: "독서실 이용자", isOwner: false, memberCount: 30, maxMembers: 30, todayCheckedIn: false, todayRank: null, isPublic: true, inviteCode: "", joined: false, isDemo: true },
-  { classroomId: -3, name: "빠른기상 챌린지", ownerId: -3, ownerNickname: "빠른기상 챌린지", isOwner: false, memberCount: 30, maxMembers: 30, todayCheckedIn: false, todayRank: null, isPublic: true, inviteCode: "", joined: false, isDemo: true },
-  { classroomId: -5, name: "네카라쿠배 스터디", ownerId: -5, ownerNickname: "스터디 멤버", isOwner: false, memberCount: 3, maxMembers: 3, todayCheckedIn: false, todayRank: null, isPublic: true, inviteCode: "", joined: false, isDemo: true },
-];
-
 export default function PublicRoomsScreen({ accountType, onNavigateHome, onNavigateProfile, onNavigateCreateRoom, onNavigateJoinRoom, onJoined }: Props) {
   const [rooms, setRooms] = useState<ClassroomListItem[]>([]);
   const [query, setQuery] = useState("");
@@ -38,7 +30,7 @@ export default function PublicRoomsScreen({ accountType, onNavigateHome, onNavig
   const roomLimit = accountType === "PREMIUM" ? 50 : 10;
   useEffect(() => {
     api<{ classrooms: ClassroomListItem[] }>("/classrooms/public")
-      .then((r) => setRooms([...(r.classrooms ?? []), ...demoFullRooms]))
+      .then((r) => setRooms(r.classrooms ?? []))
       .catch((e) => setError(e instanceof Error ? e.message : "공개방을 불러오지 못했습니다."))
       .finally(() => setLoading(false));
     api<{ classrooms: ClassroomListItem[] }>("/classrooms/my")
