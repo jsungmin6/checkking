@@ -33,7 +33,7 @@ export default function PublicRoomsScreen({ accountType, onNavigateHome, onNavig
   const [joining, setJoining] = useState<number | null>(null);
   const [roomCount, setRoomCount] = useState<number | null>(null);
   const { toastMessage, showToast } = useToast();
-  const roomLimit = accountType === "PREMIUM" ? 50 : 3;
+  const roomLimit = accountType === "PREMIUM" ? 50 : 10;
   useEffect(() => {
     api<{ classrooms: ClassroomListItem[] }>("/classrooms/public")
       .then((r) => setRooms([...(r.classrooms ?? []), ...demoFullRooms]))

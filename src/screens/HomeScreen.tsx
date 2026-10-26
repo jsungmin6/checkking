@@ -33,7 +33,7 @@ export default function HomeScreen({
   const [rooms, setRooms] = useState<ClassroomListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const { toastMessage, showToast } = useToast();
-  const roomLimit = accountType === "PREMIUM" ? 50 : 3;
+  const roomLimit = accountType === "PREMIUM" ? 50 : 10;
   const { totalPoints, addPoints, requestConversion } = useAttendancePoints();
   const { alreadyRewarded: feedbackAlreadyRewarded, markRewarded: markFeedbackRewarded } = useFeedbackReward();
   const { done: missionDone, alreadyRewarded: missionRewarded, hasUpdate: missionHasUpdate, markSeen: markMissionSeen, markRewarded: markMissionRewarded } = useGreetingMission();

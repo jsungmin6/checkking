@@ -254,7 +254,8 @@ function devMock(path: string, method: string, body?: string): unknown | undefin
   if (path === "/classrooms/my") {
     return { classrooms: DEV_ROOM_IDS.map((id) => ({
       classroomId: id, name: DEV_ROOM_NAMES.get(id), ownerId: -1, ownerNickname: "민준",
-      isOwner: true, memberCount: 3, maxMembers: 50, todayCheckedIn: (devCheckInCount.get(id) ?? 0) > 0,
+      // 방장/참여자 표시를 둘 다 확인할 수 있게 홀수 방만 방장으로 둔다.
+      isOwner: -id % 2 === 1, memberCount: 3, maxMembers: 100, todayCheckedIn: (devCheckInCount.get(id) ?? 0) > 0,
       todayRank: devDailyRank.get(id) ?? null, isPublic: false, inviteCode: `PREVIEW${-id}`,
       joined: true, isDemo: true,
     })) };

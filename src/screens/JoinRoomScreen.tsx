@@ -60,7 +60,7 @@ export default function JoinRoomScreen({ onBack, onJoined, initialCode }: JoinRo
       onJoined(data.classroomId);
     } catch (e) {
       if (e instanceof ApiError && e.code === "MAX_ROOMS_EXCEEDED") {
-        showToast("방은 최대 3개까지 관리할 수 있어요.");
+        showToast("방은 최대 10개까지 관리할 수 있어요.");
         return;
       }
       setError(e instanceof Error ? e.message : "참여 실패");

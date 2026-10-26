@@ -132,7 +132,7 @@ export default function CreateRoomScreen({ accountType, onBack, onCreated }: Cre
   const [error, setError] = useState<string | null>(null);
   const { toastMessage, showToast } = useToast();
   const [roomCount, setRoomCount] = useState<number | null>(null);
-  const roomLimit = accountType === "PREMIUM" ? 50 : 3;
+  const roomLimit = accountType === "PREMIUM" ? 50 : 10;
   const roomLimitReached = roomCount !== null && roomCount >= roomLimit;
 
   useEffect(() => {
