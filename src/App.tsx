@@ -155,6 +155,9 @@ export default function App() {
         kakaoError={authError}
         onDevPreview={import.meta.env.DEV ? () => {
           localStorage.setItem("att-points-total", "1500"); // TEMP: 로컬 확인용
+          // 이벤트 미션도 매번 처음 상태로 돌려서, 로컬에서는 항상 미션 버튼이 보이게 한다.
+          localStorage.removeItem("att-mission-greeting-done");
+          localStorage.removeItem("att-mission-greeting-rewarded");
           resetDevPreview();
           setDevPreviewUser({ userId: -1, nickname: "민준", loginType: "KAKAO", accountType: "FREE" });
         } : undefined}
