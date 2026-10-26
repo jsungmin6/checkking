@@ -1,3 +1,6 @@
+import TabIcon from "./TabIcon";
+import type { TabIconName } from "./TabIcon";
+
 type TabName = "today" | "greeting" | "ranking" | "stats" | "settings";
 
 interface TabBarProps {
@@ -5,34 +8,43 @@ interface TabBarProps {
   onSelect: (tab: TabName) => void;
 }
 
-const TABS: { key: TabName; label: string }[] = [
-  { key: "today", label: "순위" },
-  { key: "greeting", label: "인사" },
-  { key: "ranking", label: "랭킹" },
-  { key: "stats", label: "통계" },
-  { key: "settings", label: "설정" },
+const TABS: { key: TabName; label: string; icon: TabIconName }[] = [
+  { key: "today", label: "순위", icon: "today" },
+  { key: "greeting", label: "인사", icon: "greeting" },
+  { key: "ranking", label: "랭킹", icon: "ranking" },
+  { key: "stats", label: "통계", icon: "stats" },
+  { key: "settings", label: "설정", icon: "settings" },
 ];
 
 export default function TabBar({ active, onSelect }: TabBarProps) {
   return (
     <div style={{ display: "flex", borderTop: "1px solid var(--border-color)", paddingBottom: "env(safe-area-inset-bottom)" }}>
-      {TABS.map((tab) => (
-        <div
-          key={tab.key}
-          onClick={() => onSelect(tab.key)}
-          style={{
-            flex: 1,
-            textAlign: "center",
-            padding: "14px 0",
-            fontSize: 13,
-            color: active === tab.key ? "var(--accent-blue)" : "var(--text-muted)",
-            fontWeight: active === tab.key ? 600 : 400,
-            cursor: "pointer",
-          }}
-        >
-          {tab.label}
-        </div>
-      ))}
+      {TABS.map((tab) => {
+        const on = active === tab.key;
+        return (
+          <div
+            key={tab.key}
+            onClick={() => onSelect(tab.key)}
+            role="tab"
+            aria-selected={on}
+            style={{
+              flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 3,
+              padding: "8px 0 9px", cursor: "pointer",
+              color: on ? "var(--accent-blue)" : "var(--text-muted)",
+            }}
+          >
+            {/* 탭이 5개라 알약을 홈보다 좁게 잡는다. */}
+            <span style={{
+              display: "flex", alignItems: "center", justifyContent: "center",
+              width: 44, height: 28, borderRadius: 14,
+              background: on ? "rgba(49, 130, 246, 0.12)" : "transparent",
+            }}>
+              <TabIcon name={tab.icon} size={21} />
+            </span>
+            <span style={{ fontSize: 11, fontWeight: on ? 700 : 500 }}>{tab.label}</span>
+          </div>
+        );
+      })}
     </div>
   );
 }
