@@ -1,10 +1,10 @@
 interface MissionButtonProps {
-  /** 미션을 완료했지만 아직 보상을 안 받은 상태면 배지를 띄운다. */
-  hasReward: boolean;
+  /** 아직 확인하지 않은 변화(최초 노출·미션 완료)가 있으면 배지를 띄운다. */
+  hasUpdate: boolean;
   onClick: () => void;
 }
 
-export default function MissionButton({ hasReward, onClick }: MissionButtonProps) {
+export default function MissionButton({ hasUpdate, onClick }: MissionButtonProps) {
   return (
     <button
       onClick={onClick}
@@ -32,7 +32,7 @@ export default function MissionButton({ hasReward, onClick }: MissionButtonProps
         <path d="M32 60 L39 67 L52 53" stroke="var(--accent-orange, #FF9500)" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" />
         <rect x="58" y="56" width="14" height="6" rx="3" fill="var(--accent-orange, #FF9500)" />
       </svg>
-      {hasReward && (
+      {hasUpdate && (
         <span style={{
           position: "absolute",
           top: -3,

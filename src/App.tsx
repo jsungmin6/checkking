@@ -158,6 +158,7 @@ export default function App() {
           // 이벤트 미션도 매번 처음 상태로 돌려서, 로컬에서는 항상 미션 버튼이 보이게 한다.
           localStorage.removeItem("att-mission-greeting-done");
           localStorage.removeItem("att-mission-greeting-rewarded");
+          localStorage.removeItem("att-mission-greeting-seen");
           resetDevPreview();
           setDevPreviewUser({ userId: -1, nickname: "민준", loginType: "KAKAO", accountType: "FREE" });
         } : undefined}

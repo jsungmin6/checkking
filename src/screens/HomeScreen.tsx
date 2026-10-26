@@ -36,7 +36,7 @@ export default function HomeScreen({
   const roomLimit = accountType === "PREMIUM" ? 50 : 3;
   const { totalPoints, addPoints, requestConversion } = useAttendancePoints();
   const { alreadyRewarded: feedbackAlreadyRewarded, markRewarded: markFeedbackRewarded } = useFeedbackReward();
-  const { done: missionDone, alreadyRewarded: missionRewarded, markRewarded: markMissionRewarded } = useGreetingMission();
+  const { done: missionDone, alreadyRewarded: missionRewarded, hasUpdate: missionHasUpdate, markSeen: markMissionSeen, markRewarded: markMissionRewarded } = useGreetingMission();
   const [showMissionModal, setShowMissionModal] = useState(false);
   // 보상을 받고 나면 버튼이 영구히 사라진다. 이벤트를 내리면 GREETING_MISSION_ACTIVE=false.
   const showMissionButton = GREETING_MISSION_ACTIVE && !missionRewarded;
@@ -151,7 +151,7 @@ export default function HomeScreen({
             display: "flex", flexDirection: "column", gap: 12, alignItems: "flex-end",
           }}>
             {showMissionButton && (
-              <MissionButton hasReward={missionDone} onClick={() => setShowMissionModal(true)} />
+              <MissionButton hasUpdate={missionHasUpdate} onClick={() => { markMissionSeen(); setShowMissionModal(true); }} />
             )}
             {!feedbackAlreadyRewarded && <FeedbackButton onClick={() => setShowFeedbackModal(true)} />}
           </div>

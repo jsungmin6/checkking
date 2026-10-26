@@ -66,9 +66,15 @@ export function markGreetingMissionDone() {
 export function useGreetingMission() {
   const [done, setDone] = useLocalStorage<boolean>(GREETING_MISSION_DONE_KEY, false);
   const [rewarded, setRewarded] = useLocalStorage<boolean>("att-mission-greeting-rewarded", false);
+  // 마지막으로 열어본 시점의 미션 상태. 지금 상태와 다르면 "아직 못 본 변화"가 있다는 뜻이라 배지를 띄운다.
+  // 처음에는 ""이라 "none"과도 달라서, 한 번도 안 본 사용자에게도 배지가 보인다.
+  const [seenState, setSeenState] = useLocalStorage<string>("att-mission-greeting-seen", "");
+  const state = done ? "done" : "none";
   return {
     done,
     alreadyRewarded: rewarded,
+    hasUpdate: seenState !== state,
+    markSeen: () => setSeenState(state),
     markDone: () => setDone(true),
     markRewarded: () => setRewarded(true),
   };
