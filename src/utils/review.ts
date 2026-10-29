@@ -31,7 +31,7 @@ export function markSatisfactionAsked() {
 }
 
 /** 어느 쪽을 골랐는지 서버에 알려 텔레그램으로 받는다. 실패해도 사용자 흐름에는 영향이 없다. */
-export function reportSatisfaction(choice: "GOOD" | "BAD") {
+export function reportSatisfaction(choice: "GOOD" | "DISMISS") {
   void api("/notifications/review-prompt", {
     method: "POST",
     body: JSON.stringify({ choice }),

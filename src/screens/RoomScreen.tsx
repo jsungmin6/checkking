@@ -12,12 +12,10 @@ import { formatTime } from "../utils/time";
 import { launchConfetti } from "../utils/confetti";
 import { shareRoomInvite } from "../utils/invite";
 import SatisfactionModal from "../components/SatisfactionModal";
-import FeedbackModal from "../components/FeedbackModal";
 import {
   recordCheckInForReview, shouldAskSatisfaction, markSatisfactionAsked,
   reportSatisfaction, requestTossReview,
 } from "../utils/review";
-import { useFeedbackReward } from "../hooks/useAttendancePoints";
 import { useAttendancePoints, useAttendanceGift, useDailyRewardLimit, rollDailyRankBonus } from "../hooks/useAttendancePoints";
 import type { TabName } from "../components/TabBar";
 import type { Classroom, TodayAttendance, CheckInResponse, CheckInRequest, User } from "../types";
@@ -42,8 +40,6 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
   const [celebrating, setCelebrating] = useState(false);
   const celebrationTimer = useRef<number | null>(null);
   const [showSatisfaction, setShowSatisfaction] = useState(false);
-  const [showFeedback, setShowFeedback] = useState(false);
-  const { alreadyRewarded: feedbackAlreadyRewarded, markRewarded: markFeedbackRewarded } = useFeedbackReward();
   const { addPoints } = useAttendancePoints();
   const { claim: claimGift } = useAttendanceGift(classroomId);
   const { remaining: rewardRemaining, increment: incrementReward } = useDailyRewardLimit();
@@ -236,18 +232,10 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
             // 토스 리뷰 창은 떴는지도 알 수 없으므로 뒷일을 연결하지 않는다.
             void requestTossReview();
           }}
-          onBad={() => {
-            reportSatisfaction("BAD");
+          onClose={() => {
+            reportSatisfaction("DISMISS");
             setShowSatisfaction(false);
-            setShowFeedback(true);
           }}
-        />
-      )}
-      {showFeedback && (
-        <FeedbackModal
-          onClose={() => setShowFeedback(false)}
-          alreadyRewarded={feedbackAlreadyRewarded}
-          onRewarded={(amount) => { addPoints(amount); markFeedbackRewarded(); }}
         />
       )}
       {rankOnlyModal !== null && (
