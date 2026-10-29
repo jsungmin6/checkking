@@ -206,7 +206,6 @@ export default function App() {
           onNavigateHome={() => navigateTo("home")}
           onNavigateProfile={() => navigateTo("profile")}
           onNavigateCreateRoom={() => { setRoomFormOrigin("publicRooms"); navigateTo("createRoom"); }}
-          onNavigateJoinRoom={() => { setRoomFormOrigin("publicRooms"); navigateTo("joinRoom"); }}
           onJoined={(id) => navigateTo("room", id)}
         />
       );
