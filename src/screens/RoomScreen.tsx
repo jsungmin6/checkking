@@ -11,6 +11,7 @@ import { collectCheckInData } from "../utils/location";
 import { formatTime } from "../utils/time";
 import { launchConfetti } from "../utils/confetti";
 import { shareRoomInvite } from "../utils/invite";
+import { recordCheckInForReview, maybeRequestReview } from "../utils/review";
 import { useAttendancePoints, useAttendanceGift, useDailyRewardLimit, rollDailyRankBonus } from "../hooks/useAttendancePoints";
 import type { TabName } from "../components/TabBar";
 import type { Classroom, TodayAttendance, CheckInResponse, CheckInRequest, User } from "../types";
@@ -34,6 +35,7 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
   const [rankOnlyModal, setRankOnlyModal] = useState<number | null>(null);
   const [celebrating, setCelebrating] = useState(false);
   const celebrationTimer = useRef<number | null>(null);
+  const reviewTimer = useRef<number | null>(null);
   const { addPoints } = useAttendancePoints();
   const { claim: claimGift } = useAttendanceGift(classroomId);
   const { remaining: rewardRemaining, increment: incrementReward } = useDailyRewardLimit();
@@ -42,6 +44,9 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
     if (celebrationTimer.current !== null) window.clearTimeout(celebrationTimer.current);
     setCelebrating(true);
     celebrationTimer.current = window.setTimeout(() => setCelebrating(false), 1500);
+    // 축하 연출이 끝난 뒤 리뷰를 물어본다. 조건에 안 맞으면 아무 일도 일어나지 않는다.
+    if (reviewTimer.current !== null) window.clearTimeout(reviewTimer.current);
+    reviewTimer.current = window.setTimeout(() => { void maybeRequestReview(); }, 1800);
   };
 
   const fetchData = useCallback(async () => {
@@ -61,8 +66,10 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
   }, [classroomId]);
 
   useEffect(() => { hideAdBanner(); fetchData(); }, [fetchData]);
+  // 화면을 떠난 뒤에 리뷰 창이 뜨면 뜬금없으므로 타이머를 같이 정리한다.
   useEffect(() => () => {
     if (celebrationTimer.current !== null) window.clearTimeout(celebrationTimer.current);
+    if (reviewTimer.current !== null) window.clearTimeout(reviewTimer.current);
   }, []);
 
   const handleCheckIn = async () => {
@@ -76,6 +83,7 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
         body: JSON.stringify(locationData),
       });
       await fetchData();
+      recordCheckInForReview();
       // 출석 성공 — 방을 넘나들어도 "보상을 받는 체크인"은 하루 최대 3번까지만.
       // 그 안에 들면 선물상자(+1~3등이면 보너스도 같이)를 보여주고, 넘으면 등수만 보여준다.
       if (rewardRemaining > 0) {
