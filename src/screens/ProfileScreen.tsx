@@ -1,8 +1,6 @@
 import { useState } from "react";
 import HomeTabBar from "../components/HomeTabBar";
 import TermsViewer from "../components/TermsViewer";
-import TossBannerAd from "../components/TossBannerAd";
-import AdMobBanner from "../components/AdMobBanner";
 import { api } from "../utils/api";
 import { validateNickname } from "../utils/profanity";
 import { hasAgreedToPushConsent, requestPushConsent } from "../utils/pushConsent";
@@ -183,13 +181,12 @@ export default function ProfileScreen({ user, onNavigateHome, onNavigatePublicRo
       </div>
       {showDevRequestModal && <DevRequestModal onClose={() => setShowDevRequestModal(false)} />}
 
+      {/* 배너 광고는 홈에서만 띄운다 */}
       <div style={{ flexShrink: 0 }}>
-        <TossBannerAd />
         <HomeTabBar active="profile" onSelect={(tab) => {
           if (tab === "home") onNavigateHome();
           else if (tab === "publicRooms") onNavigatePublicRooms();
         }} />
-        <AdMobBanner />
       </div>
     </div>
   );

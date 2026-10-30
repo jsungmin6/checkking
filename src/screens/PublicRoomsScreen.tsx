@@ -2,8 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import HomeTabBar from "../components/HomeTabBar";
 import JoinRoomModal from "../components/JoinRoomModal";
 import Toast from "../components/Toast";
-import TossBannerAd from "../components/TossBannerAd";
-import AdMobBanner from "../components/AdMobBanner";
 import { useToast } from "../hooks/useToast";
 import type { HomeTab } from "../components/HomeTabBar";
 import { api, ApiError } from "../utils/api";
@@ -181,10 +179,9 @@ export default function PublicRoomsScreen({ accountType, onNavigateHome, onNavig
         <div style={{ color: "var(--text-secondary)", fontSize: 12, marginTop: 5 }}>{room.ownerNickname} · {room.memberCount}/{room.maxMembers}</div>
       </div>})}
     </div>
+    {/* 배너 광고는 홈에서만 띄운다 */}
     <div style={{ flexShrink: 0 }}>
-      <TossBannerAd />
       <HomeTabBar active="publicRooms" onSelect={handleTabChange} />
-      <AdMobBanner />
     </div>
     {codeModalRoom !== null && (
       <JoinRoomModal
