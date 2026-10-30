@@ -7,6 +7,7 @@ import { hasAgreedToPushConsent, requestPushConsent } from "../utils/pushConsent
 import DevRequestModal from "../components/DevRequestModal";
 import type { User } from "../types";
 import { markMissionDone } from "../hooks/useMissions";
+import { avatarEmojiSrc } from "../utils/emoji";
 
 interface ProfileScreenProps {
   user: User;
@@ -85,6 +86,15 @@ export default function ProfileScreen({ user, onNavigateHome, onNavigatePublicRo
       <div style={{ flex: 1, minHeight: 0, overflowY: "auto", overscrollBehavior: "contain" }}>
         <div style={{ padding: "24px 16px 0" }}>
           <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 8 }}>프로필</div>
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 14 }}>
+            <div style={{
+              width: 76, height: 76, borderRadius: "50%", background: "var(--bg-card)",
+              boxShadow: "var(--shadow-card)", overflow: "hidden", padding: 6, boxSizing: "border-box",
+              display: "flex", alignItems: "center", justifyContent: "center",
+            }}>
+              <img src={avatarEmojiSrc(user.userId)} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+            </div>
+          </div>
           <div style={{ background: "var(--bg-card)", borderRadius: "var(--radius-card)", overflow: "hidden", boxShadow: "var(--shadow-card)" }}>
             <div style={{ padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 15 }}>
               <span>닉네임</span>
