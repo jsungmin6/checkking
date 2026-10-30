@@ -28,7 +28,7 @@ export const MISSIONS: MissionDef[] = [
     title: "친구 초대 미션",
     description: "방에 자리가 남아 있으면 '순위' 탭에서 친구를 초대할 수 있어요.",
     todo: "순위 탭에서 친구 초대하기",
-    reward: 7000,
+    reward: 5000,
   },
 ];
 
