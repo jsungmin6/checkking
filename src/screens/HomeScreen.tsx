@@ -17,6 +17,7 @@ import { useToast } from "../hooks/useToast";
 import { useAttendancePoints, useFeedbackReward, POINTS_TO_WON_RATE } from "../hooks/useAttendancePoints";
 import { useMissions } from "../hooks/useMissions";
 import { useNews } from "../hooks/useNews";
+import { maybePromptMissionPushConsent } from "../utils/pushConsent";
 import type { HomeTab } from "../components/HomeTabBar";
 import type { AccountType, ClassroomListItem } from "../types";
 
@@ -41,6 +42,8 @@ export default function HomeScreen({
   const { news, hasUnread: newsHasUnread, markSeen: markNewsSeen } = useNews();
   const [showNewsModal, setShowNewsModal] = useState(false);
   const [showMissionModal, setShowMissionModal] = useState(false);
+  // 이번에 보상을 받았는지 — 모달을 닫은 뒤 미션 알림 동의를 물어볼지 판단한다.
+  const [missionJustRewarded, setMissionJustRewarded] = useState(false);
   // 남은 미션이 없으면(전부 보상받았거나 이벤트를 내렸으면) 버튼이 사라진다.
   const showMissionButton = missions.length > 0;
   const [showConvertModal, setShowConvertModal] = useState(false);
@@ -178,8 +181,19 @@ export default function HomeScreen({
       {showMissionModal && (
         <MissionModal
           missions={missions}
-          onClose={() => setShowMissionModal(false)}
-          onRewarded={(missionId, amount) => { addPoints(amount); claimMission(missionId); }}
+          onClose={() => {
+            setShowMissionModal(false);
+            // 선물상자 연출과 겹치지 않게 모달을 닫은 뒤에 물어본다.
+            if (missionJustRewarded) {
+              setMissionJustRewarded(false);
+              maybePromptMissionPushConsent();
+            }
+          }}
+          onRewarded={(missionId, amount) => {
+            addPoints(amount);
+            claimMission(missionId);
+            setMissionJustRewarded(true);
+          }}
         />
       )}
       {showOnboarding && (
