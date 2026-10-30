@@ -106,7 +106,7 @@ export function useAttendancePoints() {
 }
 
 /**
- * 방별 출석 선물 — 같은 방에서는 하루 1회만 200~800P 랜덤 지급한다.
+ * 방별 출석 선물 — 같은 방에서는 하루 1회만 700~1000P 랜덤 지급한다.
  * (방을 넘나드는 하루 전체 상한은 {@link useDailyRewardLimit}에서 체크인 단위로 따로 관리한다.)
  */
 export function useAttendanceGift(classroomId: number) {
@@ -117,7 +117,7 @@ export function useAttendanceGift(classroomId: number) {
 
   const claim = (): number | null => {
     if (alreadyClaimedToday) return null;
-    const amount = randomInt(200, 800);
+    const amount = randomInt(700, 1000);
     setClaimedDate(todayKey);
     return amount;
   };
