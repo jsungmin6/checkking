@@ -6,6 +6,7 @@ import { validateNickname } from "../utils/profanity";
 import { hasAgreedToPushConsent, requestPushConsent } from "../utils/pushConsent";
 import DevRequestModal from "../components/DevRequestModal";
 import type { User } from "../types";
+import { markMissionDone } from "../hooks/useMissions";
 
 interface ProfileScreenProps {
   user: User;
@@ -53,6 +54,8 @@ export default function ProfileScreen({ user, onNavigateHome, onNavigatePublicRo
         method: "PUT",
         body: JSON.stringify({ nickname }),
       });
+      // 저장만 눌러도 완료되면 미션이 아니다 — 쓰던 이름과 달라졌을 때만 쳐준다.
+      if (nickname !== user.nickname) markMissionDone("nickname");
       onNicknameUpdate(nickname);
       setEditing(false);
     } catch (e) {

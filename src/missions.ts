@@ -30,6 +30,13 @@ export const MISSIONS: MissionDef[] = [
     todo: "순위 탭에서 친구 초대하기",
     reward: 5000,
   },
+  {
+    id: "nickname",
+    title: "닉네임 바꾸기 미션",
+    description: "처음 이름은 아무렇게나 지어드려요. '내 정보'에서 마음에 드는 이름으로 바꿔보세요.",
+    todo: "내 정보에서 닉네임 바꾸기",
+    reward: 5000,
+  },
 ];
 
 export function findMission(id: string): MissionDef | undefined {
