@@ -1,13 +1,4 @@
-/** 글 사이에 끼워 넣는 작은 캐릭터 이모지 — 기본 이모지 대신 직접 그린 것을 쓴다. */
-function InlineEmoji({ src }: { src: string }) {
-  return (
-    <img
-      src={src}
-      alt=""
-      style={{ width: 19, height: 19, objectFit: "contain", verticalAlign: "-4px", display: "inline-block" }}
-    />
-  );
-}
+import InlineEmoji from "./InlineEmoji";
 
 interface SatisfactionModalProps {
   /** "좋아요" — 토스 리뷰 창으로 보낸다 */

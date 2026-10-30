@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { api, ApiError } from "../utils/api";
 import GiftBox from "./GiftBox";
+import InlineEmoji from "./InlineEmoji";
 
 const FEEDBACK_REWARD = 5000;
 
@@ -22,13 +23,12 @@ export default function FeedbackModal({ onClose, onRewarded, alreadyRewarded }: 
   const wasAlreadyRewarded = useRef(alreadyRewarded).current;
   const [message, setMessage] = useState("");
   const [featureRequest, setFeatureRequest] = useState("");
-  const [rating, setRating] = useState(0);
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [giftOpened, setGiftOpened] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const canSubmit = featureRequest.trim().length > 0 && rating > 0;
+  const canSubmit = featureRequest.trim().length > 0;
 
   const handleSubmit = async () => {
     if (!canSubmit) return;
@@ -40,7 +40,6 @@ export default function FeedbackModal({ onClose, onRewarded, alreadyRewarded }: 
         body: JSON.stringify({
           content: message.trim() || undefined,
           featureRequest: featureRequest.trim(),
-          rating,
         }),
       });
       setSent(true);
@@ -119,7 +118,10 @@ export default function FeedbackModal({ onClose, onRewarded, alreadyRewarded }: 
           <>
             <div style={{ fontSize: 17, fontWeight: 700, marginBottom: 6 }}>문의하기</div>
             <div style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 14, lineHeight: 1.5 }}>
-              안녕하세요, 출석왕 개발자입니다 🙇 사용해주셔서 진심으로 감사드려요. 기대를 충족시키기 위해 매일 열심히 개발하고 고민하고 있습니다. 계속해서 열심히 할 테니 많은 이용 부탁드려요! 소중한 의견 하나하나가 저에게는 정말 큰 힘이 됩니다 💪
+              안녕하세요, 출석왕 개발자입니다 <InlineEmoji src="/emojis/redrawn/hello-tortoise.png" size={17} />
+              {" "}사용해주셔서 진심으로 감사드려요. 기대를 충족시키기 위해 매일 열심히 개발하고 고민하고 있습니다.
+              계속해서 열심히 할 테니 많은 이용 부탁드려요! 소중한 의견 하나하나가 저에게는 정말 큰 힘이 됩니다
+              {" "}<InlineEmoji src="/emojis/redrawn/cheer-tortoise.png" size={17} />
             </div>
 
             {!wasAlreadyRewarded && (
@@ -128,7 +130,8 @@ export default function FeedbackModal({ onClose, onRewarded, alreadyRewarded }: 
                 borderRadius: "var(--radius-card)", background: "rgba(49, 130, 246, 0.1)",
                 color: "var(--accent-blue)", fontSize: 13, fontWeight: 700,
               }}>
-                🎁 문의 완료하면 +{FEEDBACK_REWARD.toLocaleString()}P 드려요!
+                <img src="/rewards/gift-box-closed.png" alt="" style={{ width: 20, height: 20, objectFit: "contain" }} />
+                문의 완료하면 +{FEEDBACK_REWARD.toLocaleString()}P 드려요!
               </div>
             )}
 
@@ -141,20 +144,6 @@ export default function FeedbackModal({ onClose, onRewarded, alreadyRewarded }: 
               rows={3}
               style={{ ...inputStyle, marginBottom: 14 }}
             />
-
-            <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8 }}>만족도 <span style={{ color: "var(--accent-red)" }}>*</span></div>
-            <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
-              {[1, 2, 3, 4, 5].map((n) => (
-                <span
-                  key={n}
-                  onClick={() => setRating(n)}
-                  style={{ fontSize: 28, cursor: "pointer", color: n <= rating ? "#FFC107" : "var(--border-light)" }}
-                  aria-label={`${n}점`}
-                >
-                  ★
-                </span>
-              ))}
-            </div>
 
             <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 6 }}>개발자에게 하고 싶은 말 <span style={{ color: "var(--text-muted)", fontWeight: 400 }}>(선택)</span></div>
             <textarea
