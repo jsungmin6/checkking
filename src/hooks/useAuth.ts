@@ -79,6 +79,7 @@ export function useAuth() {
               nickname: profile.nickname,
               loginType: profile.loginType,
               accountType: profile.accountType,
+              avatarIndex: profile.avatarIndex,
             },
             loading: false,
             error: null,
@@ -102,7 +103,7 @@ export function useAuth() {
       .then((profile) => {
         if (!active) return;
         setState((prev) => prev.user?.userId === profile.userId
-          ? { ...prev, user: { ...prev.user, accountType: profile.accountType } }
+          ? { ...prev, user: { ...prev.user, accountType: profile.accountType, avatarIndex: profile.avatarIndex } }
           : prev);
       })
       .catch((e) => console.error("[출석왕] 계정 유형 조회 실패:", e));
@@ -175,6 +176,13 @@ export function useAuth() {
     });
   }, []);
 
+  const updateAvatar = useCallback((avatarIndex: number) => {
+    setState((prev) => {
+      if (!prev.user) return prev;
+      return { ...prev, user: { ...prev.user, avatarIndex } };
+    });
+  }, []);
+
   return {
     user: state.user,
     loading: state.loading,
@@ -187,5 +195,6 @@ export function useAuth() {
     acceptTerms,
     logout,
     updateNickname,
+    updateAvatar,
   };
 }

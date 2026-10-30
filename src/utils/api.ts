@@ -256,6 +256,10 @@ function devMock(path: string, method: string, body?: string): unknown | undefin
   if (path === "/diagnostics/app-entry" && method === "POST") {
     return { received: true };
   }
+  if (path === "/users/me/avatar" && method === "PUT") {
+    const parsed = body ? (JSON.parse(body) as { avatarIndex: number }) : { avatarIndex: 0 };
+    return { userId: -1, avatarIndex: parsed.avatarIndex };
+  }
 
   if (path === "/classrooms/my") {
     // ?emptyRooms=1 로 열면 "참여한 방이 없는" 첫 화면을 로컬에서 확인할 수 있다.

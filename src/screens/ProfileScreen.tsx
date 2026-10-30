@@ -8,6 +8,7 @@ import DevRequestModal from "../components/DevRequestModal";
 import type { User } from "../types";
 import { markMissionDone } from "../hooks/useMissions";
 import { avatarEmojiSrc } from "../utils/emoji";
+import AvatarChangeModal from "../components/AvatarChangeModal";
 
 interface ProfileScreenProps {
   user: User;
@@ -15,9 +16,11 @@ interface ProfileScreenProps {
   onNavigatePublicRooms: () => void;
   onLogout: () => void;
   onNicknameUpdate: (nickname: string) => void;
+  onAvatarUpdate: (avatarIndex: number) => void;
 }
 
-export default function ProfileScreen({ user, onNavigateHome, onNavigatePublicRooms, onLogout, onNicknameUpdate }: ProfileScreenProps) {
+export default function ProfileScreen({ user, onNavigateHome, onNavigatePublicRooms, onLogout, onNicknameUpdate, onAvatarUpdate }: ProfileScreenProps) {
+  const [changingAvatar, setChangingAvatar] = useState(false);
   const [editing, setEditing] = useState(false);
   const [viewingTerms, setViewingTerms] = useState<{ url: string; title: string } | null>(null);
   const [accountOpen, setAccountOpen] = useState(false);
@@ -79,6 +82,14 @@ export default function ProfileScreen({ user, onNavigateHome, onNavigatePublicRo
   return (
     <div className="page" style={{ display: "flex", flexDirection: "column", height: "100dvh", minHeight: 0, overflow: "hidden" }}>
       {viewingTerms && <TermsViewer url={viewingTerms.url} title={viewingTerms.title} onClose={() => setViewingTerms(null)} />}
+      {changingAvatar && (
+        <AvatarChangeModal
+          userId={user.userId}
+          currentIndex={user.avatarIndex ?? user.userId}
+          onClose={() => setChangingAvatar(false)}
+          onChanged={onAvatarUpdate}
+        />
+      )}
       <div style={{ padding: "20px 20px 12px" }}>
         <div style={{ fontSize: 22, fontWeight: 700 }}>내 정보</div>
       </div>
@@ -87,13 +98,17 @@ export default function ProfileScreen({ user, onNavigateHome, onNavigatePublicRo
         <div style={{ padding: "24px 16px 0" }}>
           <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 8 }}>프로필</div>
           <div style={{ display: "flex", justifyContent: "center", marginBottom: 14 }}>
-            <div style={{
-              width: 76, height: 76, borderRadius: "50%", background: "var(--bg-card)",
-              boxShadow: "var(--shadow-card)", overflow: "hidden", padding: 6, boxSizing: "border-box",
-              display: "flex", alignItems: "center", justifyContent: "center",
-            }}>
-              <img src={avatarEmojiSrc(user.userId)} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
-            </div>
+            <button
+              onClick={() => setChangingAvatar(true)}
+              aria-label="프로필 캐릭터 바꾸기"
+              style={{
+                width: 76, height: 76, borderRadius: "50%", background: "var(--bg-card)",
+                boxShadow: "var(--shadow-card)", overflow: "hidden", padding: 6, boxSizing: "border-box",
+                display: "flex", alignItems: "center", justifyContent: "center", border: "none", cursor: "pointer",
+              }}
+            >
+              <img src={avatarEmojiSrc(user.userId, user.avatarIndex)} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+            </button>
           </div>
           <div style={{ background: "var(--bg-card)", borderRadius: "var(--radius-card)", overflow: "hidden", boxShadow: "var(--shadow-card)" }}>
             <div style={{ padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 15 }}>

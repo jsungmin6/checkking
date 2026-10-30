@@ -65,12 +65,24 @@ export const AVATAR_EMOJIS: GreetingEmoji[] = [
   ...RETIRED_EMOJIS,
 ];
 
-/** 사람마다 늘 같은 그림이 나오도록 userId 로 고른다. */
-export function avatarEmojiSrc(userId: number): string {
-  const count = AVATAR_EMOJIS.length;
-  // userId 가 음수여도 안전하게 범위 안으로 넣는다.
-  const index = ((userId % count) + count) % count;
-  return AVATAR_EMOJIS[index]!.src;
+/** 바꿀 때 골라야 할 캐릭터 개수. 서버 UserService의 AVATAR_COUNT와 같은 값을 유지해야 한다. */
+export const AVATAR_COUNT = AVATAR_EMOJIS.length;
+
+function emojiAt(index: number): string {
+  // 음수가 들어와도(userId가 음수인 로컬 미리보기 포함) 안전하게 범위 안으로 넣는다.
+  const i = ((index % AVATAR_COUNT) + AVATAR_COUNT) % AVATAR_COUNT;
+  return AVATAR_EMOJIS[i]!.src;
+}
+
+/**
+ * 프로필 캐릭터를 고른다.
+ *
+ * avatarIndex를 직접 고른 적이 있으면 그 값을 쓰고(모든 기기·모든 사람에게 똑같이 보여야
+ * 하므로 서버가 내려준 값이다), 아직 없으면 userId로 결정해 가입 직후에도 사람마다
+ * 다른 그림이 보이게 한다.
+ */
+export function avatarEmojiSrc(userId: number, avatarIndex?: number | null): string {
+  return emojiAt(avatarIndex ?? userId);
 }
 
 export function customEmojiMarker(id: string): string {

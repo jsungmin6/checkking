@@ -20,10 +20,20 @@ import OnboardingModal from "./components/OnboardingModal";
 import type { ScreenName, User } from "./types";
 
 export default function App() {
-  const { user: authUser, loading, authError, needsTermsAgreement, loginWithKakaoToken, loginWithApple, loginWithToss, acceptTerms, logout, updateNickname } = useAuth();
+  const { user: authUser, loading, authError, needsTermsAgreement, loginWithKakaoToken, loginWithApple, loginWithToss, acceptTerms, logout, updateNickname, updateAvatar } = useAuth();
   // TEMP dev-only local preview bypass (no real login). Remove before shipping.
   const [devPreviewUser, setDevPreviewUser] = useState<User | null>(null);
   const user = authUser ?? devPreviewUser;
+  // updateNickname/updateAvatar는 실제 로그인 세션(authUser)만 바꾼다.
+  // 로컬 미리보기는 별도 상태라 거기도 같이 바꿔야 화면에 바로 보인다.
+  const handleNicknameUpdate = useCallback((nickname: string) => {
+    updateNickname(nickname);
+    setDevPreviewUser((prev) => (prev ? { ...prev, nickname } : prev));
+  }, [updateNickname]);
+  const handleAvatarUpdate = useCallback((avatarIndex: number) => {
+    updateAvatar(avatarIndex);
+    setDevPreviewUser((prev) => (prev ? { ...prev, avatarIndex } : prev));
+  }, [updateAvatar]);
   const [screen, setScreen] = useState<ScreenName>("home");
   const [activeRoomId, setActiveRoomId] = useState<number | null>(null);
   const [pendingInviteCode, setPendingInviteCode] = useState<string | null>(null);
@@ -192,7 +202,8 @@ export default function App() {
           onNavigateHome={() => navigateTo("home")}
           onNavigatePublicRooms={() => navigateTo("publicRooms")}
           onLogout={() => { logout(); setScreen("home"); }}
-          onNicknameUpdate={updateNickname}
+          onNicknameUpdate={handleNicknameUpdate}
+          onAvatarUpdate={handleAvatarUpdate}
         />
       );
     case "createRoom":

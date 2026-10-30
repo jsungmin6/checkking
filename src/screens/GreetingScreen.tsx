@@ -219,7 +219,7 @@ export default function GreetingScreen({ classroomId, user, onBack, onTabChange 
                   display: "flex", alignItems: "center", justifyContent: "center",
                 }}
               >
-                <img src={avatarEmojiSrc(g.userId)} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+                <img src={avatarEmojiSrc(g.userId, g.avatarIndex)} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 3 }}>

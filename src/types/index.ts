@@ -30,6 +30,8 @@ export interface User {
   nickname: string;
   loginType: LoginType;
   accountType?: AccountType;
+  /** 직접 고른 프로필 캐릭터. 없으면 userId로 결정한다. */
+  avatarIndex?: number | null;
 }
 
 export interface AuthResponse {
@@ -93,6 +95,7 @@ export interface RoomGreeting {
   hidden: boolean;
   mine: boolean;
   createdAt: string;
+  avatarIndex?: number | null;
 }
 
 export interface ClassroomListItem {
@@ -201,6 +204,7 @@ export interface PersonalStats {
   currentStreak: number;
   earliestCheckIn: string;
   latestCheckIn: string;
+  avatarIndex?: number | null;
 }
 
 // === Profile ===
@@ -211,6 +215,7 @@ export interface Profile {
   loginType: LoginType;
   accountType: AccountType;
   createdAt: string;
+  avatarIndex?: number | null;
 }
 
 // === Screen State ===

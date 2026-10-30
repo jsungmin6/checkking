@@ -72,7 +72,7 @@ export default function MemberProfileModal({ classroomId, userId, nickname, isOw
             overflow: "hidden", padding: 6, boxSizing: "border-box",
             display: "flex", alignItems: "center", justifyContent: "center",
           }}>
-            <img src={avatarEmojiSrc(userId)} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+            <img src={avatarEmojiSrc(userId, stats?.avatarIndex)} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <span style={{ fontSize: 17, fontWeight: 700 }}>{nickname}</span>
