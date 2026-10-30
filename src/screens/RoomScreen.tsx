@@ -11,6 +11,9 @@ import { collectCheckInData } from "../utils/location";
 import { formatTime } from "../utils/time";
 import { launchConfetti } from "../utils/confetti";
 import { shareRoomInvite } from "../utils/invite";
+import { markMissionDone } from "../hooks/useMissions";
+import Toast from "../components/Toast";
+import { useToast } from "../hooks/useToast";
 import SatisfactionModal from "../components/SatisfactionModal";
 import {
   recordCheckInForReview, shouldAskSatisfaction, markSatisfactionAsked,
@@ -40,9 +43,19 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
   const [celebrating, setCelebrating] = useState(false);
   const celebrationTimer = useRef<number | null>(null);
   const [showSatisfaction, setShowSatisfaction] = useState(false);
+  const { toastMessage, showToast } = useToast();
   const { addPoints } = useAttendancePoints();
   const { claim: claimGift } = useAttendanceGift(classroomId);
   const { remaining: rewardRemaining, increment: incrementReward } = useDailyRewardLimit();
+
+  const handleInvite = async () => {
+    if (!classroom) return;
+    const result = await shareRoomInvite(classroom.name, classroom.inviteCode, classroomId);
+    if (result === "failed") return;
+    // 공유시트를 띄운 것까지만 알 수 있다(실제로 보냈는지는 확인할 방법이 없다).
+    markMissionDone("invite");
+    if (result === "copied") showToast("초대 메시지를 복사했어요");
+  };
 
   const playCheckInCelebration = () => {
     if (celebrationTimer.current !== null) window.clearTimeout(celebrationTimer.current);
@@ -142,7 +155,7 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
       <BackHeader title={classroom.name} onBack={onBack} right={
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <span
-            onClick={() => void shareRoomInvite(classroom.name, classroom.inviteCode, classroomId)}
+            onClick={() => void handleInvite()}
             style={{ color: "var(--accent-blue)", fontSize: 13, fontWeight: 600, cursor: "pointer" }}
           >
             초대하기
@@ -176,31 +189,32 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
 
         {/* 하단: 오늘의 순위 리스트 */}
         <div style={{ flex: 1, padding: "0 16px", overflow: "auto" }}>
-          {today.rankings.length > 0 && (
-            <>
-              <div style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 8 }}>오늘의 순위</div>
-              {today.rankings.filter((r) => !isBlocked(r.userId)).map((r) => (
-                <div key={r.userId} onClick={() => r.userId !== user.userId && setActionTarget({ userId: r.userId, nickname: r.nickname })}>
-                  <RankRow rank={r.rank} nickname={r.nickname} checkInTime={r.checkInTime} isMe={r.userId === user.userId} />
-                </div>
-              ))}
-              {today.absentMembers.length > 0 && (
-                <>
-                  <div style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 16, marginBottom: 8 }}>미출석</div>
-                  {[...today.absentMembers].filter((m) => !isBlocked(m.userId)).sort((a, b) => a.nickname.localeCompare(b.nickname, "ko")).map((m) => (
-                    <div key={m.userId} onClick={() => m.userId !== user.userId && setActionTarget({ userId: m.userId, nickname: m.nickname })} style={{
-                      display: "flex", alignItems: "center", padding: 14,
-                      background: "var(--bg-card)", borderRadius: "var(--radius-card)",
-                      marginBottom: 8, fontSize: 14, color: "var(--text-muted)",
-                      boxShadow: "var(--shadow-card)", cursor: "pointer",
-                    }}>
-                      <span>{m.nickname}</span>
-                      <span style={{ marginLeft: "auto", fontSize: 12, color: "var(--text-muted)", background: "var(--bg-secondary)", padding: "2px 8px", borderRadius: "var(--radius-badge)" }}>미출석</span>
-                    </div>
-                  ))}
-                </>
-              )}
-            </>
+          {/* 아직 아무도 출석하지 않은 방에서도 초대할 수 있어야 하므로 이 줄은 항상 보여준다.
+              토스 앱에서는 헤더(BackHeader)가 통째로 숨겨져서, 초대 버튼은 본문에 있어야 보인다. */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 8 }}>
+            <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>오늘의 순위</span>
+            {classroom.memberCount < classroom.maxMembers && (
+              <button
+                onClick={handleInvite}
+                style={{
+                  flexShrink: 0, padding: "6px 11px", borderRadius: 999,
+                  border: "1px solid var(--border-color)", background: "var(--bg-card)",
+                  color: "var(--accent-blue)", fontSize: 12, fontWeight: 700, cursor: "pointer",
+                }}
+              >
+                ＋ 친구 초대하기
+              </button>
+            )}
+          </div>
+          {today.rankings.filter((r) => !isBlocked(r.userId)).map((r) => (
+            <div key={r.userId} onClick={() => r.userId !== user.userId && setActionTarget({ userId: r.userId, nickname: r.nickname })}>
+              <RankRow rank={r.rank} nickname={r.nickname} checkInTime={r.checkInTime} isMe={r.userId === user.userId} />
+            </div>
+          ))}
+          {today.rankings.length === 0 && (
+            <div style={{ textAlign: "center", padding: "28px 0", color: "var(--text-muted)", fontSize: 13 }}>
+              아직 아무도 출석하지 않았어요
+            </div>
           )}
         </div>
       </div>
@@ -241,6 +255,7 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
       {rankOnlyModal !== null && (
         <RankOnlyModal rank={rankOnlyModal} onClose={() => { setRankOnlyModal(null); playCheckInCelebration(); }} />
       )}
+      <Toast message={toastMessage} />
       <TabBar active="today" onSelect={onTabChange} />
     </div>
   );

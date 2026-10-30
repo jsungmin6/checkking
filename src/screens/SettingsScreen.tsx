@@ -4,7 +4,6 @@ import TabBar from "../components/TabBar";
 import UserActionSheet from "../components/UserActionSheet";
 import { hideAdBanner } from "../utils/admob";
 import { api, ApiError } from "../utils/api";
-import { shareRoomInvite } from "../utils/invite";
 import type { TabName } from "../components/TabBar";
 import type { Classroom, ClassroomMember, User, ValidationType, ClassroomSettingsRequest, GpsConfig } from "../types";
 
@@ -217,11 +216,6 @@ export default function SettingsScreen({ classroomId, user, onTabChange, onBack,
     }
   };
 
-  const handleInvite = async () => {
-    if (!classroom) return;
-    const result = await shareRoomInvite(classroom.name, classroom.inviteCode, classroomId);
-    if (result === "copied") alert("초대 메시지가 클립보드에 복사되었습니다!");
-  };
 
   const handleKick = async (userId: number, nickname: string) => {
     if (!confirm(`${nickname}님을 강퇴하시겠습니까?`)) return;
@@ -294,10 +288,6 @@ export default function SettingsScreen({ classroomId, user, onTabChange, onBack,
           <span>초대 코드</span>
           <span onClick={handleCopyCode} style={{ color: "var(--accent-blue)", fontWeight: 600, cursor: "pointer" }}>{classroom.inviteCode} 📋</span>
         </div>
-        <div onClick={handleInvite} style={{ ...rowStyle(false, false), cursor: "pointer" }}>
-          <span>친구 초대하기</span>
-          <span style={{ color: "var(--text-secondary)" }}>공유 ›</span>
-        </div>
         <div onClick={() => setShowMembers(!showMembers)} style={{ ...rowStyle(false, !showMembers), cursor: "pointer" }}>
           <span>멤버 관리</span>
           <span style={{ color: "var(--text-secondary)" }}>{members.length}명 {showMembers ? "▲" : "▼"}</span>
@@ -327,7 +317,7 @@ export default function SettingsScreen({ classroomId, user, onTabChange, onBack,
 
         <div style={rowStyle(true)}>
           <span>방 공개 범위</span>
-          <span style={{ color: "var(--text-secondary)" }}>{classroom.isPublic ? "공개방" : "비밀방"}</span>
+          <span style={{ color: "var(--text-secondary)" }}>{classroom.isPublic ? "공개방" : "암호방"}</span>
         </div>
         <div style={rowStyle()}>
           <span>출석 검증 방식</span>
@@ -363,7 +353,7 @@ export default function SettingsScreen({ classroomId, user, onTabChange, onBack,
             <div style={{ fontSize: 17, fontWeight: 700, marginBottom: 18 }}>방 설정 수정</div>
             <div style={{ fontSize: 13, marginBottom: 8 }}>방 공개 범위</div>
             <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-              {([{ value: false, label: "비밀방" }, { value: true, label: "공개방" }] as const).map((option) => (
+              {([{ value: false, label: "암호방" }, { value: true, label: "공개방" }] as const).map((option) => (
                 <button key={option.label} onClick={() => setEditIsPublic(option.value)} style={{
                   flex: 1, padding: 10, borderRadius: 8, fontSize: 13, fontWeight: 600,
                   background: editIsPublic === option.value ? "var(--accent-blue)" : "transparent",

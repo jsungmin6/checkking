@@ -409,9 +409,12 @@ export default function CreateRoomScreen({ accountType, onBack, onCreated }: Cre
             <div style={{ marginBottom: 20 }}>
               <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 10 }}>방 공개 범위</div>
               <div style={{ display: "flex", gap: 8 }}>
-                {([{ value: false, label: "비밀방" }, { value: true, label: "공개방" }] as const).map((option) => <button key={option.label} onClick={() => setIsPublic(option.value)} style={{ flex: 1, padding: 12, borderRadius: "var(--radius-button)", fontSize: 14, fontWeight: 600, background: isPublic === option.value ? "var(--accent-blue)" : "var(--bg-card)", color: isPublic === option.value ? "#fff" : "var(--text-secondary)", border: isPublic === option.value ? "none" : "1px solid var(--border-color)" }}>{option.label}</button>)}
+                {([{ value: false, label: "암호방" }, { value: true, label: "공개방" }] as const).map((option) => <button key={option.label} onClick={() => setIsPublic(option.value)} style={{ flex: 1, padding: 12, borderRadius: "var(--radius-button)", fontSize: 14, fontWeight: 600, background: isPublic === option.value ? "var(--accent-blue)" : "var(--bg-card)", color: isPublic === option.value ? "#fff" : "var(--text-secondary)", border: isPublic === option.value ? "none" : "1px solid var(--border-color)" }}>{option.label}</button>)}
               </div>
-              <div style={{ color: "var(--text-muted)", fontSize: 12, marginTop: 6 }}>공개방은 공개방 목록에 표시됩니다.</div>
+              {/* 암호방도 방 찾기 목록에 이름이 보인다. 참여만 초대 코드로 막힌다. */}
+              <div style={{ color: "var(--text-muted)", fontSize: 12, marginTop: 6, lineHeight: 1.5 }}>
+                둘 다 '방 찾기'에 보여요. 암호방은 초대 코드를 아는 사람만 들어올 수 있어요.
+              </div>
             </div>
 
             {/* 주말 출석 */}

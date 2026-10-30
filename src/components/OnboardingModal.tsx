@@ -13,9 +13,9 @@ const STEPS = [
   },
   {
     image: "/guide/guide-gps-private.png",
-    alt: "지도에 GPS 출석 반경이 표시되고 거북이가 비밀방 초대 코드를 들고 있어요",
+    alt: "지도에 GPS 출석 반경이 표시되고 거북이가 암호방 초대 코드를 들고 있어요",
     title: "이런 기능도 있어요!",
-    desc: "GPS 인증을 선택한 방은 정해진 반경 안에서만 출석할 수 있어요. 비밀방은 초대 코드로 입장할 수 있어요.",
+    desc: "GPS 인증을 선택한 방은 정해진 반경 안에서만 출석할 수 있어요. 암호방은 초대 코드로 입장할 수 있어요.",
   },
   {
     image: "/guide/guide-ranking.png",

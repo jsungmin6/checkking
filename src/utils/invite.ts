@@ -9,12 +9,12 @@ export type ShareInviteResult = "shared" | "copied" | "failed";
 export async function shareRoomInvite(roomName: string, inviteCode: string, classroomId: number): Promise<ShareInviteResult> {
   const text = `[${roomName}] 출석왕 방에 초대해요!\n초대 코드: ${inviteCode}`;
   const result = await doShare(text, inviteCode);
-  if (result === "shared" || result === "copied") {
-    void api("/notifications/room-invited", {
-      method: "POST",
-      body: JSON.stringify({ classroomId }),
-    }).catch(() => {});
-  }
+  // 토스 공유시트는 사용자가 취소했을 때 Promise를 reject하는지 문서에 정의돼 있지 않다.
+  // 결과를 그대로 서버에 보내, 실제로 취소가 failed로 잡히는지 알림으로 확인한다.
+  void api("/notifications/room-invited", {
+    method: "POST",
+    body: JSON.stringify({ classroomId, result }),
+  }).catch(() => {});
   return result;
 }
 

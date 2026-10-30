@@ -1,28 +1,28 @@
 import { useState } from "react";
 import GiftBox from "./GiftBox";
 import { api } from "../utils/api";
-import { GREETING_MISSION } from "../missions";
+import type { MissionState } from "../hooks/useMissions";
 
 interface MissionModalProps {
-  /** 미션을 수행했는지 (인사를 남겼는지) */
-  done: boolean;
+  missions: MissionState[];
   onClose: () => void;
   /** 선물상자를 열어 보상이 확정됐을 때 */
-  onRewarded: (amount: number) => void;
+  onRewarded: (missionId: string, amount: number) => void;
 }
 
-export default function MissionModal({ done, onClose, onRewarded }: MissionModalProps) {
+export default function MissionModal({ missions, onClose, onRewarded }: MissionModalProps) {
+  /** 보상 수령 중인 미션 — null이면 목록 화면. */
+  const [claiming, setClaiming] = useState<MissionState | null>(null);
   const [opened, setOpened] = useState(false);
-  const [claiming, setClaiming] = useState(false);
 
   const handleGiftOpened = () => {
+    if (!claiming) return;
     setOpened(true);
-    onRewarded(GREETING_MISSION.reward);
-    // 누가 미션을 끝냈는지 운영자가 알 수 있게 서버에 알린다.
-    // 보상은 이미 기기에 반영됐으므로, 전송이 실패해도 사용자에게는 영향이 없다.
+    onRewarded(claiming.id, claiming.reward);
+    // 누가 미션을 끝냈는지 운영자가 알 수 있게 알린다. 실패해도 보상에는 영향이 없다.
     void api("/notifications/mission-completed", {
       method: "POST",
-      body: JSON.stringify({ missionId: GREETING_MISSION.id }),
+      body: JSON.stringify({ missionId: claiming.id }),
     }).catch(() => {});
   };
 
@@ -35,7 +35,7 @@ export default function MissionModal({ done, onClose, onRewarded }: MissionModal
           {!opened ? (
             <>
               <h2 className="attendance-gift-title">미션 완료!</h2>
-              <div className="attendance-gift-rank">{GREETING_MISSION.title}</div>
+              <div className="attendance-gift-rank">{claiming.title}</div>
               <GiftBox onOpened={handleGiftOpened} label="미션 보상이 도착했어요" />
             </>
           ) : (
@@ -45,11 +45,11 @@ export default function MissionModal({ done, onClose, onRewarded }: MissionModal
               <div className="attendance-gift-points-list">
                 <div className="attendance-gift-point-row">
                   <span>미션 보상</span>
-                  <strong>+{GREETING_MISSION.reward.toLocaleString()}P</strong>
+                  <strong>+{claiming.reward.toLocaleString()}P</strong>
                 </div>
               </div>
               <div className="attendance-gift-total-label">총 지급 포인트</div>
-              <div className="attendance-gift-total">+{GREETING_MISSION.reward.toLocaleString()}P</div>
+              <div className="attendance-gift-total">+{claiming.reward.toLocaleString()}P</div>
               <button className="attendance-gift-confirm" onClick={onClose}>확인</button>
             </>
           )}
@@ -58,7 +58,7 @@ export default function MissionModal({ done, onClose, onRewarded }: MissionModal
     );
   }
 
-  // 미션 안내 단계
+  // 미션 목록
   return (
     <div
       onClick={onClose}
@@ -69,84 +69,99 @@ export default function MissionModal({ done, onClose, onRewarded }: MissionModal
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        style={{ width: "100%", maxWidth: 360, background: "var(--bg-card)", borderRadius: 20, padding: "24px 20px" }}
+        role="dialog"
+        aria-modal="true"
+        aria-label="이벤트 미션"
+        style={{
+          position: "relative", width: "100%", maxWidth: 360, maxHeight: "85vh", overflowY: "auto",
+          background: "var(--bg-card)", borderRadius: 20, padding: "24px 20px 20px",
+        }}
       >
+        <button
+          onClick={onClose}
+          aria-label="닫기"
+          style={{
+            position: "absolute", top: 10, right: 10, width: 32, height: 32, borderRadius: "50%",
+            border: "none", background: "transparent", color: "var(--text-muted)",
+            fontSize: 20, lineHeight: 1, cursor: "pointer", padding: 0,
+          }}
+        >
+          ×
+        </button>
+
         <div style={{
           display: "inline-block", fontSize: 11, fontWeight: 800, letterSpacing: 0.3,
           color: "var(--accent-orange, #FF9500)", background: "rgba(255,149,0,0.12)",
-          padding: "4px 9px", borderRadius: 7, marginBottom: 10,
+          padding: "4px 9px", borderRadius: 7, marginBottom: 14,
         }}>
           이벤트 미션
         </div>
 
-        <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 8 }}>{GREETING_MISSION.title}</div>
-        <div style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.6, marginBottom: 18 }}>
-          {GREETING_MISSION.description}
-        </div>
-
-        {/* 할 일 체크 */}
-        <div style={{
-          display: "flex", alignItems: "center", gap: 10,
-          padding: "14px 14px", borderRadius: "var(--radius-card)",
-          background: "var(--bg-secondary)", marginBottom: 14,
-        }}>
-          <span style={{
-            flexShrink: 0, width: 22, height: 22, borderRadius: "50%",
-            background: done ? "var(--accent-green, #34C759)" : "var(--border-color)",
-            color: "#fff", fontSize: 13, fontWeight: 800,
-            display: "flex", alignItems: "center", justifyContent: "center",
-          }}>
-            ✓
-          </span>
-          <span style={{
-            flex: 1, fontSize: 14, fontWeight: 600,
-            color: done ? "var(--text-muted)" : "var(--text-primary)",
-            textDecoration: done ? "line-through" : "none",
-          }}>
-            {GREETING_MISSION.todo}
-          </span>
-        </div>
-
-        {/* 보상 — 금액은 선물상자를 열 때 알게 한다 */}
-        <div style={{
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: "13px 14px", borderRadius: "var(--radius-card)",
-          border: "1px dashed var(--border-color)", marginBottom: 18,
-        }}>
-          <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>보상</span>
-          <span style={{ display: "flex", alignItems: "center", gap: 7 }}>
-            <img src="/rewards/gift-box-closed.png" alt="" style={{ width: 24, height: 24, objectFit: "contain" }} />
-            <strong style={{ fontSize: 15, color: "var(--text-primary)" }}>출석 선물상자</strong>
-          </span>
-        </div>
-
-        {done ? (
-          <button
-            onClick={() => setClaiming(true)}
+        {missions.map((mission, index) => (
+          <div
+            key={mission.id}
             style={{
-              width: "100%", padding: 14, borderRadius: "var(--radius-button)", border: "none",
-              background: "var(--accent-blue)", color: "#fff", fontSize: 15, fontWeight: 800, cursor: "pointer",
+              paddingTop: index === 0 ? 0 : 16, marginTop: index === 0 ? 0 : 16,
+              borderTop: index === 0 ? "none" : "1px solid var(--border-light)",
             }}
           >
-            보상받기
-          </button>
-        ) : (
-          <>
-            <div style={{ textAlign: "center", fontSize: 13, color: "var(--text-muted)", marginBottom: 10 }}>
-              아직 인사를 남기지 않았어요
+            <div style={{ fontSize: 17, fontWeight: 800, marginBottom: 6 }}>{mission.title}</div>
+            <div style={{ fontSize: 13.5, color: "var(--text-secondary)", lineHeight: 1.6, marginBottom: 14 }}>
+              {mission.description}
             </div>
-            <button
-              onClick={onClose}
-              style={{
-                width: "100%", padding: 14, borderRadius: "var(--radius-button)",
-                border: "1px solid var(--border-color)", background: "transparent",
-                color: "var(--text-secondary)", fontSize: 14, fontWeight: 600, cursor: "pointer",
-              }}
-            >
-              닫기
-            </button>
-          </>
-        )}
+
+            <div style={{
+              display: "flex", alignItems: "center", gap: 10,
+              padding: 13, borderRadius: "var(--radius-card)",
+              background: "var(--bg-secondary)", marginBottom: 12,
+            }}>
+              <span style={{
+                flexShrink: 0, width: 22, height: 22, borderRadius: "50%",
+                background: mission.done ? "var(--accent-green, #34C759)" : "var(--border-color)",
+                color: "#fff", fontSize: 13, fontWeight: 800,
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}>
+                ✓
+              </span>
+              <span style={{
+                flex: 1, fontSize: 14, fontWeight: 600,
+                color: mission.done ? "var(--text-muted)" : "var(--text-primary)",
+                textDecoration: mission.done ? "line-through" : "none",
+              }}>
+                {mission.todo}
+              </span>
+              {/* 보상 금액은 선물상자를 열 때 알게 한다 */}
+              <img src="/rewards/gift-box-closed.png" alt="" style={{ width: 22, height: 22, objectFit: "contain", flexShrink: 0 }} />
+            </div>
+
+            {mission.done ? (
+              <button
+                onClick={() => { setOpened(false); setClaiming(mission); }}
+                style={{
+                  width: "100%", padding: 13, borderRadius: "var(--radius-button)", border: "none",
+                  background: "var(--accent-blue)", color: "#fff", fontSize: 14, fontWeight: 800, cursor: "pointer",
+                }}
+              >
+                보상받기
+              </button>
+            ) : (
+              <div style={{ textAlign: "center", fontSize: 13, color: "var(--text-muted)", padding: "6px 0" }}>
+                아직 완료하지 않았어요
+              </div>
+            )}
+          </div>
+        ))}
+
+        <button
+          onClick={onClose}
+          style={{
+            width: "100%", padding: 13, marginTop: 16, borderRadius: "var(--radius-button)",
+            border: "1px solid var(--border-color)", background: "transparent",
+            color: "var(--text-secondary)", fontSize: 14, fontWeight: 600, cursor: "pointer",
+          }}
+        >
+          닫기
+        </button>
       </div>
     </div>
   );

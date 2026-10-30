@@ -14,9 +14,9 @@ import NewsModal from "../components/NewsModal";
 import FeedbackModal from "../components/FeedbackModal";
 import OnboardingModal from "../components/OnboardingModal";
 import { useToast } from "../hooks/useToast";
-import { useAttendancePoints, useFeedbackReward, useGreetingMission, POINTS_TO_WON_RATE } from "../hooks/useAttendancePoints";
+import { useAttendancePoints, useFeedbackReward, POINTS_TO_WON_RATE } from "../hooks/useAttendancePoints";
+import { useMissions } from "../hooks/useMissions";
 import { useNews } from "../hooks/useNews";
-import { GREETING_MISSION_ACTIVE } from "../missions";
 import { maybePromptPushConsentOnHome } from "../utils/pushConsent";
 import type { HomeTab } from "../components/HomeTabBar";
 import type { AccountType, ClassroomListItem } from "../types";
@@ -38,12 +38,12 @@ export default function HomeScreen({
   const roomLimit = accountType === "PREMIUM" ? 50 : 10;
   const { totalPoints, addPoints, requestConversion } = useAttendancePoints();
   const { alreadyRewarded: feedbackAlreadyRewarded, markRewarded: markFeedbackRewarded } = useFeedbackReward();
-  const { done: missionDone, alreadyRewarded: missionRewarded, hasUpdate: missionHasUpdate, markSeen: markMissionSeen, markRewarded: markMissionRewarded } = useGreetingMission();
+  const { missions, hasUpdate: missionHasUpdate, markSeen: markMissionSeen, claim: claimMission } = useMissions();
   const { news, hasUnread: newsHasUnread, markSeen: markNewsSeen } = useNews();
   const [showNewsModal, setShowNewsModal] = useState(false);
   const [showMissionModal, setShowMissionModal] = useState(false);
-  // 보상을 받고 나면 버튼이 영구히 사라진다. 이벤트를 내리면 GREETING_MISSION_ACTIVE=false.
-  const showMissionButton = GREETING_MISSION_ACTIVE && !missionRewarded;
+  // 남은 미션이 없으면(전부 보상받았거나 이벤트를 내렸으면) 버튼이 사라진다.
+  const showMissionButton = missions.length > 0;
   const [showConvertModal, setShowConvertModal] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(() => localStorage.getItem("att-onboarding-seen") !== "1");
@@ -181,9 +181,9 @@ export default function HomeScreen({
       {showNewsModal && <NewsModal news={news} onClose={() => setShowNewsModal(false)} />}
       {showMissionModal && (
         <MissionModal
-          done={missionDone}
+          missions={missions}
           onClose={() => setShowMissionModal(false)}
-          onRewarded={(amount) => { addPoints(amount); markMissionRewarded(); }}
+          onRewarded={(missionId, amount) => { addPoints(amount); claimMission(missionId); }}
         />
       )}
       {showOnboarding && (
