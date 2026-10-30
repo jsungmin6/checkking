@@ -73,6 +73,8 @@ export interface Classroom {
   includeWeekends: boolean;
   isPublic: boolean;
   memberCount: number;
+  /** 방장 계정 등급에 따라 정해지는 정원 — 서버가 응답마다 계산해서 내려준다. */
+  maxMembers: number;
   createdAt: string;
   announcement?: string | null;
 }
@@ -82,6 +84,9 @@ export interface RoomGreeting {
   userId: number;
   nickname: string;
   content: string;
+  imageAvailable?: boolean;
+  /** 로컬 미리보기에서만 사용해요. 운영 이미지는 인증된 이미지 API로 불러와요. */
+  imageDataUrl?: string;
   reportCount: number;
   hidden: boolean;
   mine: boolean;
@@ -122,6 +127,8 @@ export interface CheckInResponse {
   totalCheckedIn: number;
   totalMembers: number;
   status: AttendanceStatus;
+  /** 방을 가리지 않는 내 누적 출석 횟수 — 만족도를 물어볼 시점인지 판단하는 데 쓴다. */
+  myTotalCheckIns: number;
 }
 
 export interface TodayRanking {

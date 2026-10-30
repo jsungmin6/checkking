@@ -16,7 +16,7 @@ import Toast from "../components/Toast";
 import { useToast } from "../hooks/useToast";
 import SatisfactionModal from "../components/SatisfactionModal";
 import {
-  recordCheckInForReview, shouldAskSatisfaction, markSatisfactionAsked,
+  shouldAskSatisfaction, markSatisfactionAsked,
   reportSatisfaction, requestTossReview,
 } from "../utils/review";
 import { useAttendancePoints, useAttendanceGift, useDailyRewardLimit, rollDailyRankBonus } from "../hooks/useAttendancePoints";
@@ -42,6 +42,9 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
   const [rankOnlyModal, setRankOnlyModal] = useState<number | null>(null);
   const [celebrating, setCelebrating] = useState(false);
   const celebrationTimer = useRef<number | null>(null);
+  const satisfactionTimer = useRef<number | null>(null);
+  // 서버가 알려준 누적 출석 횟수 — 만족도를 물어볼 시점인지 판단하는 데만 쓴다.
+  const myTotalCheckIns = useRef(0);
   const [showSatisfaction, setShowSatisfaction] = useState(false);
   const { toastMessage, showToast } = useToast();
   const { addPoints } = useAttendancePoints();
@@ -60,14 +63,17 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
   const playCheckInCelebration = () => {
     if (celebrationTimer.current !== null) window.clearTimeout(celebrationTimer.current);
     setCelebrating(true);
-    celebrationTimer.current = window.setTimeout(() => {
-      setCelebrating(false);
-      // 색종이가 끝나는 바로 그 시점에 물어본다. 조건에 안 맞으면 아무 일도 일어나지 않는다.
-      if (shouldAskSatisfaction()) {
+    celebrationTimer.current = window.setTimeout(() => setCelebrating(false), 1500);
+
+    // 색종이(1.5초)가 끝나길 기다리면 그 전에 화면을 떠나는 사람이 많아서, 더 빨리 물어본다.
+    // 조건에 안 맞으면 아무 일도 일어나지 않는다.
+    if (satisfactionTimer.current !== null) window.clearTimeout(satisfactionTimer.current);
+    satisfactionTimer.current = window.setTimeout(() => {
+      if (shouldAskSatisfaction(myTotalCheckIns.current)) {
         markSatisfactionAsked();
         setShowSatisfaction(true);
       }
-    }, 1500);
+    }, 500);
   };
 
   const fetchData = useCallback(async () => {
@@ -90,6 +96,7 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
   // 화면을 떠난 뒤에 리뷰 창이 뜨면 뜬금없으므로 타이머를 정리한다.
   useEffect(() => () => {
     if (celebrationTimer.current !== null) window.clearTimeout(celebrationTimer.current);
+    if (satisfactionTimer.current !== null) window.clearTimeout(satisfactionTimer.current);
   }, []);
 
   const handleCheckIn = async () => {
@@ -103,7 +110,7 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
         body: JSON.stringify(locationData),
       });
       await fetchData();
-      recordCheckInForReview();
+      myTotalCheckIns.current = checkInResult.myTotalCheckIns;
       // 출석 성공 — 방을 넘나들어도 "보상을 받는 체크인"은 하루 최대 3번까지만.
       // 그 안에 들면 선물상자(+1~3등이면 보너스도 같이)를 보여주고, 넘으면 등수만 보여준다.
       if (rewardRemaining > 0) {

@@ -1,7 +1,6 @@
 import { isTossApp } from "./platform";
 import { api } from "./api";
 
-const CHECKIN_COUNT_KEY = "att-checkin-count";
 const REVIEW_ASKED_KEY = "att-review-asked";
 
 /**
@@ -10,19 +9,18 @@ const REVIEW_ASKED_KEY = "att-review-asked";
  */
 const MIN_CHECKINS_BEFORE_ASKING = 5;
 
-/** 출석에 성공할 때마다 호출 — 언제 물어볼지 판단하는 데만 쓴다. */
-export function recordCheckInForReview() {
-  const current = Number(localStorage.getItem(CHECKIN_COUNT_KEY) ?? "0");
-  localStorage.setItem(CHECKIN_COUNT_KEY, String(current + 1));
-}
-
-/** "출석왕 쓰기 어떠세요?"를 지금 띄워도 되는지. */
-export function shouldAskSatisfaction(): boolean {
+/**
+ * "출석왕 쓰기 어떠세요?"를 지금 띄워도 되는지.
+ *
+ * 횟수는 기기에 세지 않고 서버가 준 누적 출석을 쓴다. 기기에 세면 기능을 배포한 날부터
+ * 0에서 다시 시작해서, 정작 오래 써온 사람이 한참 뒤에야 대상이 된다.
+ */
+export function shouldAskSatisfaction(totalCheckIns: number): boolean {
   // 토스 앱에서만 뜨는 화면이라, 로컬에서는 ?satisfaction=1 로 디자인을 확인한다.
   if (import.meta.env.DEV && new URLSearchParams(window.location.search).get("satisfaction") === "1") return true;
   if (!isTossApp()) return false;
   if (localStorage.getItem(REVIEW_ASKED_KEY) === "1") return false;
-  return Number(localStorage.getItem(CHECKIN_COUNT_KEY) ?? "0") >= MIN_CHECKINS_BEFORE_ASKING;
+  return totalCheckIns >= MIN_CHECKINS_BEFORE_ASKING;
 }
 
 /** 한 번 물어봤으면 어떤 답을 했든 다시 묻지 않는다. */
