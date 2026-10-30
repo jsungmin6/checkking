@@ -6,6 +6,7 @@ import PostGreetingModal from "../components/PostGreetingModal";
 import GreetingActionSheet from "../components/GreetingActionSheet";
 import GreetingPhoto from "../components/GreetingPhoto";
 import MemberProfileModal from "../components/MemberProfileModal";
+import UserActionSheet, { isBlocked } from "../components/UserActionSheet";
 import { hideAdBanner } from "../utils/admob";
 import { api, ApiError } from "../utils/api";
 import { avatarEmojiSrc, getCustomEmojiSrc, parseGreetingContent } from "../utils/emoji";
@@ -38,6 +39,7 @@ export default function GreetingScreen({ classroomId, user, onBack, onTabChange 
   const [editingGreeting, setEditingGreeting] = useState<RoomGreeting | null>(null);
   const [actionSheetGreeting, setActionSheetGreeting] = useState<RoomGreeting | null>(null);
   const [profileOf, setProfileOf] = useState<RoomGreeting | null>(null);
+  const [actionSheetUser, setActionSheetUser] = useState<{ userId: number; nickname: string } | null>(null);
   const [reportingId, setReportingId] = useState<number | null>(null);
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const feedRef = useRef<HTMLDivElement>(null);
@@ -186,14 +188,15 @@ export default function GreetingScreen({ classroomId, user, onBack, onTabChange 
       </div>
 
       <div ref={feedRef} onScroll={handleFeedScroll} style={{ flex: 1, minHeight: 0, overflowY: "auto", overscrollBehavior: "contain", padding: "4px 16px" }}>
-        {greetings.length === 0 ? (
+        {/* 차단한 사람의 글은 이 기기에서만 숨긴다. */}
+        {greetings.filter((g) => !isBlocked(g.userId)).length === 0 ? (
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", color: "var(--text-secondary)", fontSize: 14 }}>
             아직 오늘 남긴 인사가 없어요
           </div>
         ) : (
           // 사진이 늦게 붙으면서 높이가 바뀌는 걸 감시하려면 내용 전체를 감싸는 요소가 필요하다.
           <div ref={feedContentRef} style={{ paddingBottom: 8 }}>
-          {greetings.map((g) => (
+          {greetings.filter((g) => !isBlocked(g.userId)).map((g) => (
             <div
               key={g.greetingId}
               onPointerDown={() => startLongPress(g)}
@@ -319,6 +322,17 @@ export default function GreetingScreen({ classroomId, user, onBack, onTabChange 
           isOwner={classroom.ownerId === profileOf.userId}
           isMe={profileOf.mine}
           onClose={() => setProfileOf(null)}
+          onReportOrBlock={() => {
+            setActionSheetUser({ userId: profileOf.userId, nickname: profileOf.nickname });
+            setProfileOf(null);
+          }}
+        />
+      )}
+      {actionSheetUser && (
+        <UserActionSheet
+          userId={actionSheetUser.userId}
+          nickname={actionSheetUser.nickname}
+          onClose={() => setActionSheetUser(null)}
         />
       )}
       {actionSheetGreeting && (
