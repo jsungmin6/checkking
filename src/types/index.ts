@@ -77,6 +77,8 @@ export interface Classroom {
   maxMembers: number;
   createdAt: string;
   announcement?: string | null;
+  /** 오늘의 마지막 인사 id — 내가 본 마지막 글과 비교해 인사 탭에 점을 띄울지 정한다. */
+  latestGreetingId?: number | null;
 }
 
 export interface RoomGreeting {
@@ -107,6 +109,10 @@ export interface ClassroomListItem {
   inviteCode: string;
   joined: boolean;
   isDemo?: boolean;
+  /** 방 카드에 "사진 인증" 같은 태그를 띄우는 데 쓴다. */
+  validationType?: ValidationType;
+  /** 오늘의 마지막 인사 id. 참여하지 않은 방은 인사를 볼 수 없어 null 이다. */
+  latestGreetingId?: number | null;
 }
 
 export interface ClassroomMember {

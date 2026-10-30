@@ -6,6 +6,7 @@ import { hideAdBanner } from "../utils/admob";
 import { api, ApiError } from "../utils/api";
 import type { TabName } from "../components/TabBar";
 import type { Classroom, ClassroomMember, User, ValidationType, ClassroomSettingsRequest, GpsConfig } from "../types";
+import { hasUnreadGreetingFromCache } from "../utils/unreadGreetings";
 
 interface SettingsScreenProps {
   classroomId: number;
@@ -256,7 +257,7 @@ export default function SettingsScreen({ classroomId, user, onTabChange, onBack,
         <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
           <span style={{ color: "var(--text-secondary)" }}>불러오는 중...</span>
         </div>
-        <TabBar active="settings" onSelect={onTabChange} />
+        <TabBar active="settings" onSelect={onTabChange} greetingUnread={hasUnreadGreetingFromCache(classroomId)} />
       </div>
     );
   }
@@ -268,7 +269,7 @@ export default function SettingsScreen({ classroomId, user, onTabChange, onBack,
           <span style={{ color: "var(--text-secondary)" }}>설정을 불러올 수 없습니다</span>
           <button onClick={() => window.location.reload()} style={{ padding: "8px 20px", borderRadius: "var(--radius-card)", background: "var(--accent-blue)", color: "#fff", fontSize: 13 }}>다시 시도</button>
         </div>
-        <TabBar active="settings" onSelect={onTabChange} />
+        <TabBar active="settings" onSelect={onTabChange} greetingUnread={hasUnreadGreetingFromCache(classroomId)} />
       </div>
     );
   }
@@ -504,7 +505,7 @@ export default function SettingsScreen({ classroomId, user, onTabChange, onBack,
           onClose={() => setActionTarget(null)}
         />
       )}
-      <TabBar active="settings" onSelect={onTabChange} />
+      <TabBar active="settings" onSelect={onTabChange} greetingUnread={hasUnreadGreetingFromCache(classroomId)} />
     </div>
   );
 }

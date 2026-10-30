@@ -25,6 +25,7 @@ import {
 import { useAttendancePoints, useAttendanceGift, useDailyRewardLimit, rollDailyRankBonus } from "../hooks/useAttendancePoints";
 import type { TabName } from "../components/TabBar";
 import type { Classroom, TodayAttendance, CheckInResponse, CheckInRequest, User } from "../types";
+import { hasUnreadGreeting, rememberLatestGreetingId } from "../utils/unreadGreetings";
 
 interface RoomScreenProps {
   classroomId: number;
@@ -164,6 +165,7 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
         api<TodayAttendance>(`/classrooms/${classroomId}/attendance/today`),
       ]);
       setClassroom(c);
+      rememberLatestGreetingId(classroomId, c.latestGreetingId);
       setToday(t);
     } catch {
       setFetchError(true);
@@ -367,7 +369,7 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
         <RankOnlyModal rank={rankOnlyModal} onClose={() => { setRankOnlyModal(null); playCheckInCelebration(); }} />
       )}
       <Toast message={toastMessage} />
-      <TabBar active="today" onSelect={onTabChange} />
+      <TabBar active="today" onSelect={onTabChange} greetingUnread={hasUnreadGreeting(classroomId, classroom?.latestGreetingId)} />
     </div>
   );
 }

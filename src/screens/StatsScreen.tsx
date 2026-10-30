@@ -7,6 +7,7 @@ import AttendanceCalendar from "../components/AttendanceCalendar";
 import { api } from "../utils/api";
 import type { TabName } from "../components/TabBar";
 import type { MonthlyAttendanceRecord } from "../types";
+import { hasUnreadGreetingFromCache } from "../utils/unreadGreetings";
 
 interface StatsScreenProps {
   classroomId: number;
@@ -94,7 +95,7 @@ export default function StatsScreen({ classroomId, onTabChange, onBack }: StatsS
         )}
       </div>
 
-      <TabBar active="stats" onSelect={onTabChange} />
+      <TabBar active="stats" onSelect={onTabChange} greetingUnread={hasUnreadGreetingFromCache(classroomId)} />
     </div>
   );
 }

@@ -6,6 +6,7 @@ import { api } from "../utils/api";
 import { getWeekOfMonth } from "../utils/time";
 import type { TabName } from "../components/TabBar";
 import type { MonthlyRanking, User } from "../types";
+import { hasUnreadGreetingFromCache } from "../utils/unreadGreetings";
 
 interface RankingScreenProps {
   classroomId: number;
@@ -172,7 +173,7 @@ export default function RankingScreen({ classroomId, user, onTabChange, onBack }
           </div>
         </>
       )}
-      <TabBar active="ranking" onSelect={onTabChange} />
+      <TabBar active="ranking" onSelect={onTabChange} greetingUnread={hasUnreadGreetingFromCache(classroomId)} />
     </div>
   );
 }

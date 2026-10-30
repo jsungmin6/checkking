@@ -6,6 +6,7 @@ import { useToast } from "../hooks/useToast";
 import type { HomeTab } from "../components/HomeTabBar";
 import { api, ApiError } from "../utils/api";
 import type { AccountType, ClassroomListItem } from "../types";
+import ValidationTag from "../components/ValidationTag";
 
 interface Props {
   accountType?: AccountType;
@@ -176,7 +177,11 @@ export default function PublicRoomsScreen({ accountType, onNavigateHome, onNavig
             <button disabled={joining !== null || room.joined || full || room.isDemo} onClick={() => void join(room)} style={{ flexShrink: 0, padding: "7px 13px", borderRadius: 8, background: full ? "var(--bg-secondary)" : "var(--accent-blue)", color: full ? "var(--text-secondary)" : "white", fontWeight: 600, fontSize: 13 }}>{joining === room.classroomId ? "참여 중..." : full ? "마감" : "참여"}</button>
           )}
         </div>
-        <div style={{ color: "var(--text-secondary)", fontSize: 12, marginTop: 5 }}>{room.ownerNickname} · {room.memberCount}/{room.maxMembers}</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 5 }}>
+          <div style={{ color: "var(--text-secondary)", fontSize: 12, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{room.ownerNickname} · {room.memberCount}/{room.maxMembers}</div>
+          {/* 들어가기 전에 사진·위치 인증을 쓰는 방인지 알려준다. */}
+          <ValidationTag validationType={room.validationType} />
+        </div>
       </div>})}
     </div>
     {/* 배너 광고는 홈에서만 띄운다 */}

@@ -8,6 +8,7 @@ import GreetingPhoto from "../components/GreetingPhoto";
 import { hideAdBanner } from "../utils/admob";
 import { api, ApiError } from "../utils/api";
 import { getCustomEmojiSrc, parseGreetingContent } from "../utils/emoji";
+import { markGreetingsSeen, rememberLatestGreetingId } from "../utils/unreadGreetings";
 import type { TabName } from "../components/TabBar";
 import type { Classroom, RoomGreeting, User } from "../types";
 
@@ -44,6 +45,8 @@ export default function GreetingScreen({ classroomId, user, onBack, onTabChange 
   const [reportingId, setReportingId] = useState<number | null>(null);
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const feedRef = useRef<HTMLDivElement>(null);
+  const feedContentRef = useRef<HTMLDivElement>(null);
+  const stickToBottom = useRef(true);
 
   const isOwner = classroom?.ownerId === user.userId;
 
@@ -56,6 +59,9 @@ export default function GreetingScreen({ classroomId, user, onBack, onTabChange 
       ]);
       setClassroom(c);
       setGreetings(g.greetings);
+      // 인사 탭을 열었으니 여기까지는 읽은 것으로 본다.
+      rememberLatestGreetingId(classroomId, c.latestGreetingId);
+      markGreetingsSeen(classroomId, c.latestGreetingId);
     } catch {
       setFetchError(true);
     } finally {
@@ -65,11 +71,31 @@ export default function GreetingScreen({ classroomId, user, onBack, onTabChange 
 
   useEffect(() => { hideAdBanner(); fetchData(); }, [fetchData]);
 
-  // 최신 인사가 아래쪽에 쌓이므로, 목록이 갱신되면 맨 아래로 내려 최신을 보여준다.
+  // 최신 인사가 아래쪽에 쌓이므로, 들어오면 맨 아래를 보여준다.
+  //
+  // 한 번 내려두는 것만으로는 부족하다. 사진은 목록을 받은 뒤에 따로 불러오느라 피드가
+  // 나중에 길어지고, 그만큼 맨 아래에서 밀려난다. 그래서 높이가 바뀔 때마다 다시 붙인다.
+  // 지난 인사를 읽으려고 위로 올린 사람을 끌어내리면 안 되니, 바닥 근처에 있을 때만 따라간다.
   useEffect(() => {
-    const el = feedRef.current;
-    if (el) el.scrollTop = el.scrollHeight;
+    const feed = feedRef.current;
+    const content = feedContentRef.current;
+    if (!feed || !content) return;
+
+    const stick = () => {
+      if (stickToBottom.current) feed.scrollTop = feed.scrollHeight;
+    };
+    stick();
+
+    const observer = new ResizeObserver(stick);
+    observer.observe(content);
+    return () => observer.disconnect();
   }, [greetings]);
+
+  const handleFeedScroll = () => {
+    const feed = feedRef.current;
+    if (!feed) return;
+    stickToBottom.current = feed.scrollHeight - feed.scrollTop - feed.clientHeight < 60;
+  };
 
   const handleReport = async (greetingId: number) => {
     if (reportingId !== null) return;
@@ -163,13 +189,15 @@ export default function GreetingScreen({ classroomId, user, onBack, onTabChange 
         </div>
       </div>
 
-      <div ref={feedRef} style={{ flex: 1, minHeight: 0, overflowY: "auto", overscrollBehavior: "contain", padding: "4px 16px" }}>
+      <div ref={feedRef} onScroll={handleFeedScroll} style={{ flex: 1, minHeight: 0, overflowY: "auto", overscrollBehavior: "contain", padding: "4px 16px" }}>
         {greetings.length === 0 ? (
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", color: "var(--text-secondary)", fontSize: 14 }}>
             아직 오늘 남긴 인사가 없어요
           </div>
         ) : (
-          greetings.map((g) => (
+          // 사진이 늦게 붙으면서 높이가 바뀌는 걸 감시하려면 내용 전체를 감싸는 요소가 필요하다.
+          <div ref={feedContentRef} style={{ paddingBottom: 8 }}>
+          {greetings.map((g) => (
             <div
               key={g.greetingId}
               onPointerDown={() => startLongPress(g)}
@@ -231,9 +259,9 @@ export default function GreetingScreen({ classroomId, user, onBack, onTabChange 
                 )}
               </div>
             </div>
-          ))
+          ))}
+          </div>
         )}
-        <div style={{ height: 80 }} />
       </div>
 
       <div style={{ flexShrink: 0, padding: "10px 16px" }}>
@@ -260,7 +288,12 @@ export default function GreetingScreen({ classroomId, user, onBack, onTabChange 
         <PostGreetingModal
           classroomId={classroomId}
           onClose={() => setShowPostModal(false)}
-          onPosted={(g) => setGreetings((prev) => [...(prev ?? []), g])}
+          onPosted={(g) => {
+            // 내가 쓴 글은 지난 인사를 읽던 중이었더라도 바로 보여줘야 한다.
+            stickToBottom.current = true;
+            markGreetingsSeen(classroomId, g.greetingId);
+            setGreetings((prev) => [...(prev ?? []), g]);
+          }}
         />
       )}
       {editingGreeting && (
