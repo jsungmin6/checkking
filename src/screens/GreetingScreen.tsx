@@ -5,6 +5,7 @@ import AnnouncementModal from "../components/AnnouncementModal";
 import PostGreetingModal from "../components/PostGreetingModal";
 import GreetingActionSheet from "../components/GreetingActionSheet";
 import GreetingPhoto from "../components/GreetingPhoto";
+import MemberProfileModal from "../components/MemberProfileModal";
 import { hideAdBanner } from "../utils/admob";
 import { api, ApiError } from "../utils/api";
 import { avatarEmojiSrc, getCustomEmojiSrc, parseGreetingContent } from "../utils/emoji";
@@ -36,6 +37,7 @@ export default function GreetingScreen({ classroomId, user, onBack, onTabChange 
   const [showPostModal, setShowPostModal] = useState(false);
   const [editingGreeting, setEditingGreeting] = useState<RoomGreeting | null>(null);
   const [actionSheetGreeting, setActionSheetGreeting] = useState<RoomGreeting | null>(null);
+  const [profileOf, setProfileOf] = useState<RoomGreeting | null>(null);
   const [reportingId, setReportingId] = useState<number | null>(null);
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const feedRef = useRef<HTMLDivElement>(null);
@@ -204,17 +206,27 @@ export default function GreetingScreen({ classroomId, user, onBack, onTabChange 
                 userSelect: "none", WebkitUserSelect: "none",
               }}
             >
-              <div style={{
-                flexShrink: 0, width: 36, height: 36, borderRadius: "50%",
-                // 그림이 네모 칸에 꽉 차 있어서, 여백 없이 동그랗게 자르면 손발이 잘린다.
-                background: "var(--bg-secondary)", overflow: "hidden", padding: 3, boxSizing: "border-box",
-                display: "flex", alignItems: "center", justifyContent: "center",
-              }}>
+              <div
+                role="button"
+                aria-label={`${g.nickname} 프로필 보기`}
+                // 글 영역의 길게 누르기(신고·수정)와 섞이지 않도록 여기서 끊는다.
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={() => setProfileOf(g)}
+                style={{
+                  flexShrink: 0, width: 36, height: 36, borderRadius: "50%", cursor: "pointer",
+                  // 그림이 네모 칸에 꽉 차 있어서, 여백 없이 동그랗게 자르면 손발이 잘린다.
+                  background: "var(--bg-secondary)", overflow: "hidden", padding: 3, boxSizing: "border-box",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}
+              >
                 <img src={avatarEmojiSrc(g.userId)} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 3 }}>
                   <span style={{ fontSize: 14, fontWeight: 700 }}>{g.mine ? `${g.nickname} (나)` : g.nickname}</span>
+                  {classroom.ownerId === g.userId && (
+                    <span style={{ fontSize: 12, color: "var(--text-muted)" }}>(방장)</span>
+                  )}
                   <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{formatGreetingTime(g.createdAt)}</span>
                 </div>
                 {g.hidden ? (
@@ -297,6 +309,16 @@ export default function GreetingScreen({ classroomId, user, onBack, onTabChange 
           editGreeting={editingGreeting}
           onClose={() => setEditingGreeting(null)}
           onPosted={(g) => setGreetings((prev) => prev?.map((x) => (x.greetingId === g.greetingId ? g : x)) ?? null)}
+        />
+      )}
+      {profileOf && (
+        <MemberProfileModal
+          classroomId={classroomId}
+          userId={profileOf.userId}
+          nickname={profileOf.nickname}
+          isOwner={classroom.ownerId === profileOf.userId}
+          isMe={profileOf.mine}
+          onClose={() => setProfileOf(null)}
         />
       )}
       {actionSheetGreeting && (

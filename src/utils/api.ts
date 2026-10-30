@@ -402,6 +402,18 @@ function devMock(path: string, method: string, body?: string): unknown | undefin
   if (sub === "/members") {
     return { members: DEV_MEMBERS.slice(0, 3).map((m) => ({ ...m, isOwner: m.userId === -1, joinedAt: "2026-10-01T00:00:00" })) };
   }
+  const memberStatsMatch = sub.match(/^\/statistics\/members\/(-?\d+)$/);
+  if (memberStatsMatch) {
+    // 프로필 모달 확인용 — 사람마다 다른 수치가 보이도록 userId 로 조금씩 흔든다.
+    const targetId = Number(memberStatsMatch[1]);
+    const spread = Math.abs(targetId) % 5;
+    return {
+      userId: targetId, nickname: "멤버", classroomId: id,
+      avgRank: Math.round((1.4 + spread * 0.6) * 10) / 10, avgCheckInTime: `0${6 + (spread % 3)}:${String(10 + spread * 7).padStart(2, "0")}:00`,
+      totalPresent: 24 - spread * 3, firstPlaceCount: 7 - spread, topThreeCount: 15 - spread * 2,
+      currentStreak: 9 - spread, earliestCheckIn: "05:12:00", latestCheckIn: "08:58:00",
+    };
+  }
   if (id === -1 && sub.startsWith("/statistics/ranking")) {
     return { period: "MONTHLY", year: 2026, month: 10, criteria: "AVG_RANK", rankings: ROOM1_MONTHLY_RANKING };
   }

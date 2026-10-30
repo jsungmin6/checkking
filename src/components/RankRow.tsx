@@ -5,6 +5,7 @@ interface RankRowProps {
   nickname: string;
   checkInTime: string;
   isMe: boolean;
+  isOwner?: boolean;
 }
 
 function getRankColor(rank: number): string {
@@ -14,7 +15,7 @@ function getRankColor(rank: number): string {
   return "var(--text-secondary)";
 }
 
-export default function RankRow({ rank, nickname, checkInTime, isMe }: RankRowProps) {
+export default function RankRow({ rank, nickname, checkInTime, isMe, isOwner = false }: RankRowProps) {
   return (
     <div style={{
       display: "flex", alignItems: "center", padding: 14,
@@ -24,7 +25,12 @@ export default function RankRow({ rank, nickname, checkInTime, isMe }: RankRowPr
       boxShadow: "var(--shadow-card)",
     }}>
       <span style={{ width: 28, fontWeight: 700, color: getRankColor(rank) }}>{rank}</span>
-      <span style={{ fontWeight: isMe ? 600 : 400 }}>{isMe ? `나 (${nickname})` : nickname}</span>
+      <span style={{ fontWeight: isMe ? 600 : 400, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+        {isMe ? `나 (${nickname})` : nickname}
+      </span>
+      {isOwner && (
+        <span style={{ flexShrink: 0, marginLeft: 5, color: "var(--text-muted)", fontSize: 12 }}>(방장)</span>
+      )}
       <span style={{ marginLeft: "auto", color: isMe ? "var(--accent-blue)" : "var(--text-secondary)", fontSize: 13 }}>
         {formatTime(checkInTime)}
       </span>

@@ -244,9 +244,20 @@ export default function SettingsScreen({ classroomId, user, onTabChange, onBack,
   };
 
   const handleDeleteRoom = async () => {
-    if (!confirm("정말 이 방을 삭제하시겠습니까? 모든 데이터가 삭제됩니다.")) return;
+    // 나 말고 남은 사람이 있으면 방은 그대로 두고 방장만 넘긴다. 묻는 말도 달라야 한다.
+    const othersLeft = members.filter((m) => m.userId !== user.userId).length > 0;
+    const question = othersLeft
+      ? "방에서 나갈까요? 방장은 가장 먼저 들어온 분께 넘어가고, 방은 그대로 남아요."
+      : "정말 이 방을 삭제하시겠습니까? 모든 데이터가 삭제됩니다.";
+    if (!confirm(question)) return;
     try {
-      await api(`/classrooms/${classroomId}`, { method: "DELETE" });
+      const result = await api<{ deleted: boolean; newOwnerNickname?: string }>(
+        `/classrooms/${classroomId}`,
+        { method: "DELETE" },
+      );
+      if (!result.deleted && result.newOwnerNickname) {
+        alert(`방장을 ${result.newOwnerNickname}님께 넘기고 나왔어요.`);
+      }
       onDelete();
     } catch (e) { alert(e instanceof ApiError ? e.message : "삭제 실패"); }
   };
@@ -493,7 +504,10 @@ export default function SettingsScreen({ classroomId, user, onTabChange, onBack,
               <button onClick={handleDeleteRoom} style={{
                 flex: 1, padding: 12, borderRadius: 8, border: "1px solid var(--accent-danger)",
                 background: "transparent", color: "var(--accent-danger)", fontSize: 14,
-              }}>방 삭제</button>
+              }}>
+                {/* 남은 사람이 있으면 방이 사라지지 않으므로 '삭제'라고 하면 안 된다. */}
+                {members.filter((m) => m.userId !== user.userId).length > 0 ? "방 나가기" : "방 삭제"}
+              </button>
             </div>
           )}
         </div>

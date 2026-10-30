@@ -307,7 +307,7 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
           </div>
           {today.rankings.filter((r) => !isBlocked(r.userId)).map((r) => (
             <div key={r.userId} onClick={() => r.userId !== user.userId && setActionTarget({ userId: r.userId, nickname: r.nickname })}>
-              <RankRow rank={r.rank} nickname={r.nickname} checkInTime={r.checkInTime} isMe={r.userId === user.userId} />
+              <RankRow rank={r.rank} nickname={r.nickname} checkInTime={r.checkInTime} isMe={r.userId === user.userId} isOwner={classroom?.ownerId === r.userId} />
             </div>
           ))}
           {today.rankings.length === 0 && (
