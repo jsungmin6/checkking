@@ -13,6 +13,8 @@ export interface MissionDef {
   todo: string;
   /** 완료 시 지급할 출석 포인트 */
   reward: number;
+  /** 어디를 눌러야 하는지 보여주는 화면 캡처. public/missions/ 에 둔다. */
+  guideImage?: string;
 }
 
 export const MISSIONS: MissionDef[] = [
@@ -22,6 +24,7 @@ export const MISSIONS: MissionDef[] = [
     description: "방에 들어가 '인사' 탭에서 출석 인사를 남겨보세요.",
     todo: "인사 탭에서 인사 남기기",
     reward: 2000,
+    guideImage: "/missions/greeting.png",
   },
   {
     id: "invite",
@@ -29,6 +32,7 @@ export const MISSIONS: MissionDef[] = [
     description: "방에 자리가 남아 있으면 '순위' 탭에서 친구를 초대할 수 있어요.",
     todo: "순위 탭에서 친구 초대하기",
     reward: 5000,
+    guideImage: "/missions/invite.png",
   },
   {
     id: "nickname",
@@ -36,6 +40,7 @@ export const MISSIONS: MissionDef[] = [
     description: "처음 이름은 아무렇게나 지어드려요. '내 정보'에서 마음에 드는 이름으로 바꿔보세요.",
     todo: "내 정보에서 닉네임 바꾸기",
     reward: 5000,
+    guideImage: "/missions/nickname.png",
   },
 ];
 

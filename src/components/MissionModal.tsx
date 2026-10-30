@@ -106,9 +106,17 @@ export default function MissionModal({ missions, onClose, onRewarded }: MissionM
             }}
           >
             <div style={{ fontSize: 17, fontWeight: 800, marginBottom: 6 }}>{mission.title}</div>
-            <div style={{ fontSize: 13.5, color: "var(--text-secondary)", lineHeight: 1.6, marginBottom: 14 }}>
+            <div style={{ fontSize: 13.5, color: "var(--text-secondary)", lineHeight: 1.6, marginBottom: mission.guideImage ? 10 : 14 }}>
               {mission.description}
             </div>
+
+            {mission.guideImage && (
+              <img
+                src={mission.guideImage}
+                alt="어디를 누르면 되는지 보여주는 화면"
+                style={{ width: "100%", borderRadius: 12, marginBottom: 14, display: "block" }}
+              />
+            )}
 
             <div style={{
               display: "flex", alignItems: "center", gap: 10,
