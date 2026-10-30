@@ -1,3 +1,14 @@
+/** 글 사이에 끼워 넣는 작은 캐릭터 이모지 — 기본 이모지 대신 직접 그린 것을 쓴다. */
+function InlineEmoji({ src }: { src: string }) {
+  return (
+    <img
+      src={src}
+      alt=""
+      style={{ width: 19, height: 19, objectFit: "contain", verticalAlign: "-4px", display: "inline-block" }}
+    />
+  );
+}
+
 interface SatisfactionModalProps {
   /** "좋아요" — 토스 리뷰 창으로 보낸다 */
   onGood: () => void;
@@ -43,11 +54,14 @@ export default function SatisfactionModal({ onGood, onClose }: SatisfactionModal
           alt=""
           style={{ width: 72, height: 72, objectFit: "contain", marginBottom: 10 }}
         />
-        <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 8 }}>
+        <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 10 }}>
           출석왕 쓰기 어떠세요?
         </div>
-        <div style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.6, marginBottom: 22 }}>
-          꾸준히 출석해주셔서 고마워요.<br />짧게 한마디만 들려주세요!
+        <div style={{ fontSize: 13.5, color: "var(--text-secondary)", lineHeight: 1.65, marginBottom: 22, textAlign: "left" }}>
+          안녕하세요, 출석왕 개발자입니다 <InlineEmoji src="/emojis/redrawn/hello-tortoise.png" />
+          {" "}꾸준히 출석해주셔서 진심으로 감사드려요.
+          혼자 만들고 운영하는 작은 앱이라, 남겨주시는 리뷰 한 줄이 저에게는 정말 큰 힘이 됩니다.
+          괜찮으시다면 짧게라도 남겨주시면 감사하겠습니다 <InlineEmoji src="/emojis/redrawn/cheer-tortoise.png" />
         </div>
 
         <div style={{ display: "flex", gap: 8 }}>
