@@ -19,7 +19,7 @@ export const MISSIONS: MissionDef[] = [
   {
     id: "greeting",
     title: "출석인사 미션",
-    description: "방에 들어가 '인사' 탭에서 오늘의 출석 인사를 한 번 남겨보세요.",
+    description: "방에 들어가 '인사' 탭에서 출석 인사를 남겨보세요.",
     todo: "인사 탭에서 인사 남기기",
     reward: 2000,
   },

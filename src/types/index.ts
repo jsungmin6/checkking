@@ -1,7 +1,7 @@
 // === Enums ===
 
 export type LoginType = "KAKAO" | "TOSS" | "APPLE";
-export type ValidationType = "NONE" | "GPS" | "WIFI" | "GPS_AND_WIFI";
+export type ValidationType = "NONE" | "GPS" | "WIFI" | "GPS_AND_WIFI" | "PHOTO";
 export type AttendanceStatus = "PRESENT" | "ABSENT" | "EXCUSED";
 
 // === API 공통 ===
@@ -230,6 +230,7 @@ export interface CheckInRequest {
   locationAccuracy?: number;
   wifiSsid?: string;
   wifiBssid?: string;
+  imageBase64?: string;
 }
 
 // === Settings Request ===

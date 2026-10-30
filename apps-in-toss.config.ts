@@ -7,7 +7,10 @@ export default defineConfig({
     primaryColor: "#1a5fb4"
   },
 
-  permissions: [],
+  permissions: [
+    { name: "camera", access: "access" },
+    { name: "photos", access: "read" },
+  ],
   webBundleDir: "dist",
   webView: {}
 });

@@ -8,6 +8,7 @@ import RankOnlyModal from "../components/RankOnlyModal";
 import { hideAdBanner } from "../utils/admob";
 import { api, ApiError } from "../utils/api";
 import { collectCheckInData } from "../utils/location";
+import { isTossApp } from "../utils/platform";
 import { formatTime } from "../utils/time";
 import { launchConfetti } from "../utils/confetti";
 import { shareRoomInvite } from "../utils/invite";
@@ -16,8 +17,9 @@ import { maybePromptPushConsentAfterCheckIn } from "../utils/pushConsent";
 import Toast from "../components/Toast";
 import { useToast } from "../hooks/useToast";
 import SatisfactionModal from "../components/SatisfactionModal";
+import PhotoAttendanceConfirmModal from "../components/PhotoAttendanceConfirmModal";
 import {
-  shouldAskSatisfaction, markSatisfactionAsked,
+  shouldAskSatisfaction, isTossReviewSupported, markSatisfactionAsked,
   reportSatisfaction, requestTossReview,
 } from "../utils/review";
 import { useAttendancePoints, useAttendanceGift, useDailyRewardLimit, rollDailyRankBonus } from "../hooks/useAttendancePoints";
@@ -47,6 +49,9 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
   // 서버가 알려준 누적 출석 횟수 — 만족도를 물어볼 시점인지 판단하는 데만 쓴다.
   const myTotalCheckIns = useRef(0);
   const [showSatisfaction, setShowSatisfaction] = useState(false);
+  const [photoToConfirm, setPhotoToConfirm] = useState<{ data: string; preview: string } | null>(null);
+  const [photoCaptureBusy, setPhotoCaptureBusy] = useState(false);
+  const photoInputRef = useRef<HTMLInputElement>(null);
   const { toastMessage, showToast } = useToast();
   const { addPoints } = useAttendancePoints();
   const { claim: claimGift } = useAttendanceGift(classroomId);
@@ -71,13 +76,84 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
     if (satisfactionTimer.current !== null) window.clearTimeout(satisfactionTimer.current);
     satisfactionTimer.current = window.setTimeout(() => {
       if (shouldAskSatisfaction(myTotalCheckIns.current)) {
-        markSatisfactionAsked();
-        setShowSatisfaction(true);
+        void isTossReviewSupported().then((supported) => {
+          if (supported) {
+            markSatisfactionAsked();
+            setShowSatisfaction(true);
+            return;
+          }
+          // 리뷰 요청을 지원하지 않으면 리뷰 안내 모달은 생략하고, 다른 출석 후 동의를 확인한다.
+          maybePromptPushConsentAfterCheckIn();
+        });
         return;
       }
       // 만족도를 묻는 날에는 알림 동의까지 겹쳐 띄우지 않는다.
       maybePromptPushConsentAfterCheckIn();
     }, 500);
+  };
+
+  const processAttendancePhoto = async (source: string) => {
+    const image = new Image();
+    image.src = source.startsWith("data:") ? source : `data:image/jpeg;base64,${source}`;
+    await new Promise<void>((resolve, reject) => {
+      image.onload = () => resolve();
+      image.onerror = () => reject(new Error("사진을 읽지 못했어요."));
+    });
+    const scale = Math.min(1, 1024 / Math.max(image.naturalWidth, image.naturalHeight));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+    canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+    const context = canvas.getContext("2d");
+    if (!context) throw new Error("사진을 처리하지 못했어요.");
+    context.fillStyle = "#fff";
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+    for (const quality of [0.78, 0.66, 0.54, 0.42]) {
+      const data = canvas.toDataURL("image/jpeg", quality).split(",")[1] ?? "";
+      if (data.length <= 1_333_334) {
+        setPhotoToConfirm({ data, preview: `data:image/jpeg;base64,${data}` });
+        setCheckInError(null);
+        return;
+      }
+    }
+    throw new Error("사진 용량이 커요. 다시 촬영해 주세요.");
+  };
+
+  const captureAttendancePhoto = async () => {
+    if (photoCaptureBusy || checkingIn) return;
+    setCheckInError(null);
+    if (!isTossApp()) {
+      photoInputRef.current?.click();
+      return;
+    }
+    setPhotoCaptureBusy(true);
+    try {
+      const { Device } = await import("@apps-in-toss/web-framework");
+      const image = await Device.openCamera({ base64: true, maxWidth: 1024 });
+      await processAttendancePhoto(image.dataUri);
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "";
+      if (!/cancel/i.test(message)) setCheckInError(message || "사진을 촬영하지 못했어요. 카메라 권한을 확인해 주세요.");
+    } finally {
+      setPhotoCaptureBusy(false);
+    }
+  };
+
+  const handlePhotoInput = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    try {
+      const source = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => typeof reader.result === "string" ? resolve(reader.result) : reject(new Error("사진을 읽지 못했어요."));
+        reader.onerror = () => reject(new Error("사진을 읽지 못했어요."));
+        reader.readAsDataURL(file);
+      });
+      await processAttendancePhoto(source);
+    } catch (e) {
+      setCheckInError(e instanceof Error ? e.message : "사진을 불러오지 못했어요.");
+    }
   };
 
   const fetchData = useCallback(async () => {
@@ -103,18 +179,20 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
     if (satisfactionTimer.current !== null) window.clearTimeout(satisfactionTimer.current);
   }, []);
 
-  const handleCheckIn = async () => {
-    if (!classroom) return;
+  const handleCheckIn = async (imageBase64?: string): Promise<boolean> => {
+    if (!classroom) return false;
     setCheckingIn(true);
     setCheckInError(null);
     try {
       const locationData: CheckInRequest = await collectCheckInData(classroom.validationType);
+      if (classroom.validationType === "PHOTO") locationData.imageBase64 = imageBase64;
       const checkInResult = await api<CheckInResponse>(`/classrooms/${classroomId}/attendance/check-in`, {
         method: "POST",
         body: JSON.stringify(locationData),
       });
       await fetchData();
       myTotalCheckIns.current = checkInResult.myTotalCheckIns;
+      if (classroom.validationType === "PHOTO") markMissionDone("greeting");
       // 출석 성공 — 방을 넘나들어도 "보상을 받는 체크인"은 하루 최대 3번까지만.
       // 그 안에 들면 선물상자(+1~3등이면 보너스도 같이)를 보여주고, 넘으면 등수만 보여준다.
       if (rewardRemaining > 0) {
@@ -133,9 +211,11 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
         if (msg.includes("위치")) setCheckInError("GPS 위치를 가져올 수 없습니다. 위치 권한을 확인해주세요");
         else setCheckInError(msg);
       }
+      return false;
     } finally {
       setCheckingIn(false);
     }
+    return true;
   };
 
 
@@ -176,16 +256,22 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
       } />
 
       <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+        <input ref={photoInputRef} type="file" accept="image/*" capture="environment" onChange={handlePhotoInput} style={{ display: "none" }} />
         <section className="attendance-hero" aria-label="오늘 출석">
           <div className={`attendance-jelly-stage${celebrating ? " is-celebrating" : ""}${isCheckedIn ? " is-done" : ""}`}>
             <div className="attendance-jelly-particles" aria-hidden="true"><i /><i />{celebrating && <><i /><i /><i /><i /></>}</div>
             <button
-              onClick={handleCheckIn}
-              disabled={isCheckedIn || checkingIn}
-              className={`attendance-jelly-button${checkingIn ? " is-loading" : ""}`}
-              aria-label={isCheckedIn ? "출석 완료" : "출석하기"}
+              onClick={() => classroom.validationType === "PHOTO" ? void captureAttendancePhoto() : void handleCheckIn()}
+              disabled={isCheckedIn || checkingIn || photoCaptureBusy}
+              className={`attendance-jelly-button${checkingIn || photoCaptureBusy ? " is-loading" : ""}`}
+              aria-label={isCheckedIn ? "출석 완료" : classroom.validationType === "PHOTO" ? "카메라로 사진 출석하기" : "출석하기"}
             >
-              {checkingIn ? <span className="attendance-spinner" /> : (
+              {checkingIn || photoCaptureBusy ? <span className="attendance-spinner" /> : classroom.validationType === "PHOTO" ? (
+                <svg viewBox="0 0 32 32" aria-hidden="true" style={{ width: 34, height: 34, fill: "none", stroke: "currentColor", strokeWidth: 2.2, strokeLinecap: "round", strokeLinejoin: "round" }}>
+                  <path d="M4.5 10.5h5l2-3h9l2 3h5a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-21a2 2 0 0 1-2-2v-12a2 2 0 0 1 2-2Z" />
+                  <circle cx="16" cy="17" r="5" />
+                </svg>
+              ) : (
                 <svg viewBox="0 0 32 32" aria-hidden="true"><path d="m6.5 16.5 6.2 6.2L25.5 9.8" /></svg>
               )}
             </button>
@@ -260,6 +346,20 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
           onClose={() => {
             reportSatisfaction("DISMISS");
             setShowSatisfaction(false);
+          }}
+        />
+      )}
+      {photoToConfirm && (
+        <PhotoAttendanceConfirmModal
+          imageDataUri={photoToConfirm.preview}
+          busy={checkingIn}
+          error={checkInError}
+          onCancel={() => { setPhotoToConfirm(null); setCheckInError(null); }}
+          onRetake={() => { setPhotoToConfirm(null); setCheckInError(null); void captureAttendancePhoto(); }}
+          onConfirm={() => {
+            void handleCheckIn(photoToConfirm.data).then((success) => {
+              if (success) setPhotoToConfirm(null);
+            });
           }}
         />
       )}

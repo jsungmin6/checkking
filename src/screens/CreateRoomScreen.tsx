@@ -62,8 +62,9 @@ function TimeSelect({ value, onChange }: { value: string; onChange: (v: string) 
 }
 
 const VALIDATION_OPTIONS: { type: ValidationType; label: string; desc: string; disabled?: boolean }[] = [
-  { type: "NONE", label: "검증 없음", desc: "누구나 어디서든 출석" },
+  { type: "NONE", label: "일반 출석", desc: "누구나 어디서든 출석" },
   { type: "GPS", label: "GPS 위치 확인", desc: "지정 위치 반경 내에서만" },
+  { type: "PHOTO", label: "사진 인증", desc: "사진을 찍어 출석하고 인사에 공유" },
   { type: "WIFI", label: "Wi-Fi 확인", desc: "지원 예정", disabled: true },
 ];
 
@@ -188,7 +189,7 @@ export default function CreateRoomScreen({ accountType, onBack, onCreated }: Cre
   };
 
   const canProceedStep2 = () => {
-    if (validationType === "NONE") return true;
+    if (validationType === "NONE" || validationType === "PHOTO") return true;
     if (validationType === "GPS") return gpsConfig !== null;
     if (validationType === "WIFI") return wifiSsid.trim() !== "" && wifiBssid.trim() !== "";
     return false;

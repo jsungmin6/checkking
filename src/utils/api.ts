@@ -152,7 +152,7 @@ const DEV_PUBLIC_ROOM_IDS = Array.from({ length: 15 }, (_, i) => -(100 + i));
 const devCheckInCount = new Map<number, number>(DEV_ROOM_IDS.map((id) => [id, 0]));
 const devDailyRank = new Map<number, number | null>(DEV_ROOM_IDS.map((id) => [id, null]));
 const devAnnouncement = new Map<number, string>();
-const devGreetings = new Map<number, Array<{ greetingId: number; userId: number; nickname: string; content: string; reportCount: number; hidden: boolean; mine: boolean; createdAt: string }>>();
+const devGreetings = new Map<number, Array<{ greetingId: number; userId: number; nickname: string; content: string; imageAvailable?: boolean; imageDataUrl?: string; reportCount: number; hidden: boolean; mine: boolean; createdAt: string }>>();
 let devGreetingSeq = 1000;
 
 function seedTime(minutesAgo: number): string {
@@ -250,6 +250,9 @@ function devMock(path: string, method: string, body?: string): unknown | undefin
   if (path === "/notifications/mission-completed" && method === "POST") {
     return { received: true };
   }
+  if (path === "/notifications/review-prompt" && method === "POST") {
+    return { received: true };
+  }
   if (path === "/diagnostics/app-entry" && method === "POST") {
     return { received: true };
   }
@@ -291,7 +294,8 @@ function devMock(path: string, method: string, body?: string): unknown | undefin
       return {
         classroomId: id, name: room.name, ownerId: id, ownerNickname: room.owner,
         isOwner: false, memberCount: room.memberCount, maxMembers: room.maxMembers, todayCheckedIn: false,
-        todayRank: null, isPublic: true, inviteCode: `PUBLIC${-id}`, joined: false, isDemo: false,
+        // 암호방 배지가 섞여 보이는지 확인할 수 있게 3개마다 하나는 비공개로 둔다.
+        todayRank: null, isPublic: i % 3 !== 1, inviteCode: `PUBLIC${-id}`, joined: false, isDemo: false,
       };
     }) };
   }
@@ -308,7 +312,7 @@ function devMock(path: string, method: string, body?: string): unknown | undefin
       classroomId: id, name: DEV_ROOM_NAMES.get(id), inviteCode: `PREVIEW${-id}`, ownerId: -1, ownerNickname: "민준",
       validationType: "NONE", gpsConfig: null, wifiConfig: null,
       checkInStartTime: null, checkInEndTime: null, includeWeekends: true, isPublic: false,
-      memberCount: id === -1 ? DEV_MEMBERS.length : 3, createdAt: "2026-10-01T00:00:00",
+      memberCount: id === -1 ? DEV_MEMBERS.length : 3, maxMembers: 100, createdAt: "2026-10-01T00:00:00",
       announcement: devAnnouncement.get(id) ?? null,
     };
   }
@@ -321,12 +325,15 @@ function devMock(path: string, method: string, body?: string): unknown | undefin
   if (sub === "/greetings" && method === "POST") {
     const list = devGreetings.get(id) ?? [];
     let content = "(새 인사)";
+    let parsed: { content?: string; imageBase64?: string } | null = null;
     try {
-      const parsed = body ? JSON.parse(body) : null;
+      parsed = body ? JSON.parse(body) : null;
       if (parsed?.content) content = parsed.content;
     } catch { /* ignore */ }
     const greeting = {
       greetingId: devGreetingSeq++, userId: -1, nickname: "민준", content,
+      imageAvailable: !!parsed?.imageBase64,
+      imageDataUrl: parsed?.imageBase64 ? `data:image/jpeg;base64,${parsed.imageBase64}` : undefined,
       reportCount: 0, hidden: false, mine: true, createdAt: new Date().toISOString(),
     };
     devGreetings.set(id, [...list, greeting]);
@@ -355,7 +362,16 @@ function devMock(path: string, method: string, body?: string): unknown | undefin
     const found = list.find((g) => g.greetingId === gid);
     try {
       const parsed = body ? JSON.parse(body) : null;
-      if (found && parsed?.content) found.content = parsed.content;
+      if (found && parsed) {
+        if (parsed.content) found.content = parsed.content;
+        if (parsed.imageBase64) {
+          found.imageAvailable = true;
+          found.imageDataUrl = `data:image/jpeg;base64,${parsed.imageBase64}`;
+        } else if (parsed.removeImage) {
+          found.imageAvailable = false;
+          found.imageDataUrl = undefined;
+        }
+      }
     } catch { /* ignore */ }
     return found;
   }
@@ -400,7 +416,7 @@ function devMock(path: string, method: string, body?: string): unknown | undefin
     devDailyRank.set(id, rank);
     return {
       attendanceId: nextCount, classroomId: id, checkInDate: "2026-10-20",
-      checkInTime: "09:00:00", dailyRank: rank, totalCheckedIn: 1, totalMembers: 3, status: "PRESENT",
+      checkInTime: "09:00:00", dailyRank: rank, totalCheckedIn: 1, totalMembers: 3, status: "PRESENT", myTotalCheckIns: 7,
     };
   }
   return undefined;
@@ -461,4 +477,30 @@ export async function api<T>(
 
   console.log(`[등교왕] API ${method} ${path} ${res.status} OK (${elapsed}ms)`);
   return json.data;
+}
+
+/** 인증이 필요한 이미지 같은 바이너리 응답을 받아요. */
+export async function apiBlob(path: string): Promise<Blob> {
+  const headers: Record<string, string> = {};
+  const token = getAccessToken();
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  let res = await fetchWithTimeout(`${API_BASE_URL}${path}`, { headers });
+  if (res.status === 401 && token) {
+    const refreshed = await tryRefreshToken();
+    if (refreshed) {
+      headers.Authorization = `Bearer ${getAccessToken()}`;
+      res = await fetchWithTimeout(`${API_BASE_URL}${path}`, { headers });
+    }
+  }
+
+  if (!res.ok) {
+    let message = "사진을 불러오지 못했어요";
+    try {
+      const json = await res.json() as ApiResponse<unknown>;
+      if (!json.success) message = json.error.message;
+    } catch { /* 바이너리 오류 응답이면 기본 문구를 사용해요. */ }
+    throw new ApiError("IMAGE_LOAD_FAILED", message, res.status);
+  }
+  return res.blob();
 }

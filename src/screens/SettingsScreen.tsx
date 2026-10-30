@@ -162,6 +162,7 @@ export default function SettingsScreen({ classroomId, user, onTabChange, onBack,
     if (!classroom) return;
     const timeInvalid = editStartTime && editEndTime && editStartTime >= editEndTime;
     if (timeInvalid) { alert("종료 시간이 시작 시간보다 빠릅니다"); return; }
+    if (editValidationType === "GPS" && !editGpsConfig) { alert("GPS 위치를 먼저 설정해 주세요."); return; }
     const parsedRadiusMeters = Number.parseInt(editRadiusMeters, 10);
     if ((editValidationType === "GPS" || editValidationType === "GPS_AND_WIFI") &&
       (!Number.isInteger(parsedRadiusMeters) || parsedRadiusMeters < 10 || parsedRadiusMeters > 1000)) {
@@ -322,7 +323,7 @@ export default function SettingsScreen({ classroomId, user, onTabChange, onBack,
         <div style={rowStyle()}>
           <span>출석 검증 방식</span>
           <span style={{ color: "var(--text-secondary)" }}>
-            {classroom.validationType === "NONE" ? "검증 없음" : classroom.validationType === "GPS" ? "GPS" : classroom.validationType}
+            {classroom.validationType === "NONE" ? "일반 출석" : classroom.validationType === "GPS" ? "GPS 출석" : classroom.validationType === "PHOTO" ? "사진 인증" : classroom.validationType}
           </span>
         </div>
         {classroom.gpsConfig && (
@@ -364,14 +365,14 @@ export default function SettingsScreen({ classroomId, user, onTabChange, onBack,
             </div>
             <div style={{ fontSize: 13, marginBottom: 12 }}>출석 검증 방식</div>
             <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-              {(["NONE", "GPS"] as ValidationType[]).map((t) => (
+              {(["NONE", "GPS", "PHOTO"] as ValidationType[]).map((t) => (
                 <button key={t} onClick={() => setEditValidationType(t)} style={{
                   flex: 1, padding: 10, borderRadius: 8, fontSize: 13, fontWeight: 600,
                   background: editValidationType === t ? "var(--accent-blue)" : "transparent",
                   color: editValidationType === t ? "#fff" : "var(--text-secondary)",
                   border: editValidationType === t ? "none" : "1px solid var(--border-light)",
                 }}>
-                  {t === "NONE" ? "검증 없음" : "GPS"}
+                  {t === "NONE" ? "일반" : t === "GPS" ? "GPS" : "사진 인증"}
                 </button>
               ))}
             </div>

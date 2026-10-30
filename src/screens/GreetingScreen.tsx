@@ -4,6 +4,7 @@ import TabBar from "../components/TabBar";
 import AnnouncementModal from "../components/AnnouncementModal";
 import PostGreetingModal from "../components/PostGreetingModal";
 import GreetingActionSheet from "../components/GreetingActionSheet";
+import GreetingPhoto from "../components/GreetingPhoto";
 import { hideAdBanner } from "../utils/admob";
 import { api, ApiError } from "../utils/api";
 import { getCustomEmojiSrc, parseGreetingContent } from "../utils/emoji";
@@ -45,7 +46,6 @@ export default function GreetingScreen({ classroomId, user, onBack, onTabChange 
   const feedRef = useRef<HTMLDivElement>(null);
 
   const isOwner = classroom?.ownerId === user.userId;
-  const alreadyPostedToday = greetings?.some((g) => g.mine) ?? false;
 
   const fetchData = useCallback(async () => {
     try {
@@ -217,6 +217,12 @@ export default function GreetingScreen({ classroomId, user, onBack, onTabChange 
                           {text}
                         </div>
                       )}
+                      <GreetingPhoto
+                        classroomId={classroomId}
+                        greetingId={g.greetingId}
+                        imageAvailable={g.imageAvailable}
+                        imageDataUrl={g.imageDataUrl}
+                      />
                     </>
                   );
                 })()}
@@ -231,18 +237,12 @@ export default function GreetingScreen({ classroomId, user, onBack, onTabChange 
       </div>
 
       <div style={{ flexShrink: 0, padding: "10px 16px" }}>
-        {alreadyPostedToday ? (
-          <div style={{ textAlign: "center", padding: 12, color: "var(--text-secondary)", fontSize: 13 }}>
-            오늘 인사를 남겼어요 ✅
-          </div>
-        ) : (
-          <button onClick={() => setShowPostModal(true)} style={{
-            width: "100%", padding: 13, borderRadius: "var(--radius-button)", border: "none",
-            background: "var(--accent-blue)", color: "#fff", fontSize: 14, fontWeight: 700,
-          }}>
-            오늘 인사 남기기
-          </button>
-        )}
+        <button onClick={() => setShowPostModal(true)} style={{
+          width: "100%", padding: 13, borderRadius: "var(--radius-button)", border: "none",
+          background: "var(--accent-blue)", color: "#fff", fontSize: 14, fontWeight: 700,
+        }}>
+          오늘 인사 남기기
+        </button>
       </div>
 
       <TabBar active="greeting" onSelect={onTabChange} />

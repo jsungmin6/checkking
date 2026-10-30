@@ -8,19 +8,28 @@ export interface GreetingEmoji {
   src: string;
 }
 
-export const GREETING_EMOJIS: GreetingEmoji[] = [
-  { id: "hello-rabbit", label: "안녕하세요 토끼", src: "/emojis/redrawn/hello-rabbit.png" },
+/** 글자가 들어간 스티커 — 한눈에 뜻이 보여서 위쪽에 둔다. */
+const STICKERS: GreetingEmoji[] = [
+  { id: "sticker-im-here", label: "나 왔어요", src: "/emojis/greeting-stickers/im-here.png" },
+  { id: "sticker-check-in-complete", label: "출첵 완료", src: "/emojis/greeting-stickers/check-in-complete.png" },
+  { id: "sticker-wake-up", label: "기상 완료", src: "/emojis/greeting-stickers/wake-up.png" },
+  { id: "sticker-first-place", label: "1등이에요", src: "/emojis/greeting-stickers/first-place.png" },
+  { id: "sticker-checkking-best", label: "출석왕 최고", src: "/emojis/greeting-stickers/checkking-best.png" },
+  { id: "sticker-lets-go", label: "오늘도 가보자", src: "/emojis/greeting-stickers/lets-go.png" },
+  { id: "sticker-cheer-up", label: "힘내자", src: "/emojis/greeting-stickers/cheer-up.png" },
+  { id: "sticker-nice-to-see-you", label: "반가워요", src: "/emojis/greeting-stickers/nice-to-see-you.png" },
+  { id: "sticker-sleepy", label: "졸려용", src: "/emojis/greeting-stickers/sleepy.png" },
+];
+
+/** 글자 없는 캐릭터 이모지 */
+const CHARACTERS: GreetingEmoji[] = [
   { id: "hello-tortoise", label: "안녕하세요 거북이", src: "/emojis/redrawn/hello-tortoise.png" },
-  { id: "hello-cloud", label: "안녕하세요 구름", src: "/emojis/redrawn/hello-cloud.png" },
   { id: "morning-chick", label: "좋은 아침 병아리", src: "/emojis/redrawn/morning-chick.png" },
   { id: "morning-hamster", label: "좋은 아침 햄스터", src: "/emojis/redrawn/morning-hamster.png" },
-  { id: "morning-cat", label: "좋은 아침 고양이", src: "/emojis/redrawn/morning-cat.png" },
   { id: "attendance-tortoise", label: "출석 거북이", src: "/emojis/redrawn/attendance-tortoise.png" },
   { id: "attendance-rabbit", label: "출석 토끼", src: "/emojis/redrawn/attendance-rabbit.png" },
-  { id: "attendance-penguin", label: "출석 펭귄", src: "/emojis/redrawn/attendance-penguin.png" },
   { id: "cheer-rabbit", label: "응원 토끼", src: "/emojis/redrawn/cheer-rabbit.png" },
   { id: "cheer-tortoise", label: "응원 거북이", src: "/emojis/redrawn/cheer-tortoise.png" },
-  { id: "cheer-puppy", label: "응원 강아지", src: "/emojis/redrawn/cheer-puppy.png" },
   { id: "wellwish-frog", label: "행복 개구리", src: "/emojis/redrawn/wellwish-frog.png" },
   { id: "wellwish-cloud", label: "행복 구름", src: "/emojis/redrawn/wellwish-cloud.png" },
   { id: "wellwish-chick", label: "행복 병아리", src: "/emojis/redrawn/wellwish-chick.png" },
@@ -29,6 +38,21 @@ export const GREETING_EMOJIS: GreetingEmoji[] = [
   { id: "together-hamster-chick", label: "함께 햄스터와 병아리", src: "/emojis/redrawn/together-hamster-chick.png" },
 ];
 
+/**
+ * 글자 스티커와 뜻이 겹쳐서 고르는 목록에서는 뺐지만, 지난 인사에 이미 쓰인 것들이다.
+ * 여기서 지우면 그 인사의 그림이 깨지므로 렌더용으로만 남겨둔다.
+ */
+const RETIRED_EMOJIS: GreetingEmoji[] = [
+  { id: "hello-rabbit", label: "안녕하세요 토끼", src: "/emojis/redrawn/hello-rabbit.png" },
+  { id: "hello-cloud", label: "안녕하세요 구름", src: "/emojis/redrawn/hello-cloud.png" },
+  { id: "morning-cat", label: "좋은 아침 고양이", src: "/emojis/redrawn/morning-cat.png" },
+  { id: "attendance-penguin", label: "출석 펭귄", src: "/emojis/redrawn/attendance-penguin.png" },
+  { id: "cheer-puppy", label: "응원 강아지", src: "/emojis/redrawn/cheer-puppy.png" },
+];
+
+/** 인사 작성 화면의 이모지 선택 목록 */
+export const GREETING_EMOJIS: GreetingEmoji[] = [...STICKERS, ...CHARACTERS];
+
 export function customEmojiMarker(id: string): string {
   return `:checkking:${id}:`;
 }
@@ -36,7 +60,10 @@ export function customEmojiMarker(id: string): string {
 export function getCustomEmojiSrc(marker: string): string | null {
   const match = marker.match(/^:checkking:([a-z0-9-]+):$/u);
   if (!match) return null;
-  return GREETING_EMOJIS.find((emoji) => emoji.id === match[1])?.src ?? null;
+  // 고르는 목록에서 빠진 것도 지난 인사에 남아 있으므로 함께 찾는다.
+  const found = GREETING_EMOJIS.find((emoji) => emoji.id === match[1])
+    ?? RETIRED_EMOJIS.find((emoji) => emoji.id === match[1]);
+  return found?.src ?? null;
 }
 
 export function isEmojiOnly(content: string): boolean {

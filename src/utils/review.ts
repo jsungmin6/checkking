@@ -36,6 +36,20 @@ export function reportSatisfaction(choice: "GOOD" | "DISMISS") {
   }).catch(() => {});
 }
 
+/** 리뷰 요청을 지원하는 환경인지 모달을 보여주기 전에 확인한다. */
+export async function isTossReviewSupported(): Promise<boolean> {
+  // 로컬 디자인 확인용 모달은 토스 SDK가 없는 브라우저에서도 열 수 있게 한다.
+  if (!isTossApp()) {
+    return import.meta.env.DEV && new URLSearchParams(window.location.search).get("satisfaction") === "1";
+  }
+  try {
+    const { Review } = await import("@apps-in-toss/web-framework");
+    return Review.request.isSupported();
+  } catch {
+    return false;
+  }
+}
+
 /**
  * 토스 리뷰 창을 띄운다.
  *
