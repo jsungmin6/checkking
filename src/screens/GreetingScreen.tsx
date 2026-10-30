@@ -7,7 +7,7 @@ import GreetingActionSheet from "../components/GreetingActionSheet";
 import GreetingPhoto from "../components/GreetingPhoto";
 import { hideAdBanner } from "../utils/admob";
 import { api, ApiError } from "../utils/api";
-import { getCustomEmojiSrc, parseGreetingContent } from "../utils/emoji";
+import { avatarEmojiSrc, getCustomEmojiSrc, parseGreetingContent } from "../utils/emoji";
 import { markGreetingsSeen, rememberLatestGreetingId } from "../utils/unreadGreetings";
 import type { TabName } from "../components/TabBar";
 import type { Classroom, RoomGreeting, User } from "../types";
@@ -17,12 +17,6 @@ interface GreetingScreenProps {
   user: User;
   onBack: () => void;
   onTabChange: (tab: TabName) => void;
-}
-
-const AVATAR_COLORS = ["#F2994A", "#56CCF2", "#BB6BD9", "#6FCF97", "#F2C94C", "#EB5757", "#2D9CDB", "#9B51E0"];
-
-function avatarColor(userId: number): string {
-  return AVATAR_COLORS[userId % AVATAR_COLORS.length]!;
 }
 
 function formatGreetingTime(iso: string): string {
@@ -212,10 +206,11 @@ export default function GreetingScreen({ classroomId, user, onBack, onTabChange 
             >
               <div style={{
                 flexShrink: 0, width: 36, height: 36, borderRadius: "50%",
-                background: avatarColor(g.userId), color: "#fff", fontSize: 14, fontWeight: 700,
+                // 그림이 네모 칸에 꽉 차 있어서, 여백 없이 동그랗게 자르면 손발이 잘린다.
+                background: "var(--bg-secondary)", overflow: "hidden", padding: 3, boxSizing: "border-box",
                 display: "flex", alignItems: "center", justifyContent: "center",
               }}>
-                {g.nickname.charAt(0)}
+                <img src={avatarEmojiSrc(g.userId)} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 3 }}>

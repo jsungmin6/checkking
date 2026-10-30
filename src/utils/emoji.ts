@@ -53,6 +53,26 @@ const RETIRED_EMOJIS: GreetingEmoji[] = [
 /** 인사 작성 화면의 이모지 선택 목록 */
 export const GREETING_EMOJIS: GreetingEmoji[] = [...STICKERS, ...CHARACTERS];
 
+/**
+ * 프로필 그림으로 쓰는 목록.
+ *
+ * 글자가 들어간 스티커는 36px로 줄이면 읽히지 않아 뺐다. 캐릭터가 둘인 together- 도
+ * 그 크기에서는 뭉개진다. 고르는 목록에서 빠진 이모지들은 뜻이 겹쳐 뺀 것일 뿐
+ * 그림 자체는 멀쩡하므로 여기서는 함께 쓴다.
+ */
+export const AVATAR_EMOJIS: GreetingEmoji[] = [
+  ...CHARACTERS.filter((emoji) => !emoji.id.startsWith("together-")),
+  ...RETIRED_EMOJIS,
+];
+
+/** 사람마다 늘 같은 그림이 나오도록 userId 로 고른다. */
+export function avatarEmojiSrc(userId: number): string {
+  const count = AVATAR_EMOJIS.length;
+  // userId 가 음수여도 안전하게 범위 안으로 넣는다.
+  const index = ((userId % count) + count) % count;
+  return AVATAR_EMOJIS[index]!.src;
+}
+
 export function customEmojiMarker(id: string): string {
   return `:checkking:${id}:`;
 }
