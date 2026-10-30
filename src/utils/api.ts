@@ -268,6 +268,9 @@ function devMock(path: string, method: string, body?: string): unknown | undefin
       isOwner: -id % 2 === 1, memberCount: 3, maxMembers: 100, todayCheckedIn: (devCheckInCount.get(id) ?? 0) > 0,
       todayRank: devDailyRank.get(id) ?? null, isPublic: false, inviteCode: `PREVIEW${-id}`,
       joined: true, isDemo: true,
+      // 인증 태그와 안 읽은 인사 점이 섞여 보이는지 확인할 수 있게 방마다 다르게 둔다.
+      validationType: -id % 3 === 1 ? "PHOTO" : -id % 3 === 2 ? "GPS" : "NONE",
+      latestGreetingId: id === -1 ? 12 : -id % 4 === 0 ? 5 : null,
     })) };
   }
 
@@ -296,6 +299,7 @@ function devMock(path: string, method: string, body?: string): unknown | undefin
         isOwner: false, memberCount: room.memberCount, maxMembers: room.maxMembers, todayCheckedIn: false,
         // 암호방 배지가 섞여 보이는지 확인할 수 있게 3개마다 하나는 비공개로 둔다.
         todayRank: null, isPublic: i % 3 !== 1, inviteCode: `PUBLIC${-id}`, joined: false, isDemo: false,
+        validationType: i % 4 === 0 ? "PHOTO" : i % 4 === 2 ? "GPS" : "NONE",
       };
     }) };
   }
@@ -314,6 +318,7 @@ function devMock(path: string, method: string, body?: string): unknown | undefin
       checkInStartTime: null, checkInEndTime: null, includeWeekends: true, isPublic: false,
       memberCount: id === -1 ? DEV_MEMBERS.length : 3, maxMembers: 100, createdAt: "2026-10-01T00:00:00",
       announcement: devAnnouncement.get(id) ?? null,
+      latestGreetingId: (devGreetings.get(id) ?? []).reduce((max, g) => Math.max(max, g.greetingId), 0) || null,
     };
   }
   if (sub === "/announcement" && method === "PUT") {
