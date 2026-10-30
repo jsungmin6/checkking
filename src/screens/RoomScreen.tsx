@@ -3,6 +3,7 @@ import BackHeader from "../components/BackHeader";
 import TabBar from "../components/TabBar";
 import RankRow from "../components/RankRow";
 import UserActionSheet, { isBlocked } from "../components/UserActionSheet";
+import MemberProfileModal from "../components/MemberProfileModal";
 import AttendanceGiftModal from "../components/AttendanceGiftModal";
 import RankOnlyModal from "../components/RankOnlyModal";
 import { hideAdBanner } from "../utils/admob";
@@ -42,6 +43,7 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
   const [checkingIn, setCheckingIn] = useState(false);
   const [checkInError, setCheckInError] = useState<string | null>(null);
   const [actionTarget, setActionTarget] = useState<{ userId: number; nickname: string } | null>(null);
+  const [profileTarget, setProfileTarget] = useState<{ userId: number; nickname: string } | null>(null);
   const [rewardModal, setRewardModal] = useState<{ rank: number; rankBonus: number | null } | null>(null);
   const [rankOnlyModal, setRankOnlyModal] = useState<number | null>(null);
   const [celebrating, setCelebrating] = useState(false);
@@ -306,7 +308,7 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
             )}
           </div>
           {today.rankings.filter((r) => !isBlocked(r.userId)).map((r) => (
-            <div key={r.userId} onClick={() => r.userId !== user.userId && setActionTarget({ userId: r.userId, nickname: r.nickname })}>
+            <div key={r.userId} onClick={() => r.userId !== user.userId && setProfileTarget({ userId: r.userId, nickname: r.nickname })}>
               <RankRow rank={r.rank} nickname={r.nickname} checkInTime={r.checkInTime} isMe={r.userId === user.userId} isOwner={classroom?.ownerId === r.userId} />
             </div>
           ))}
@@ -318,6 +320,20 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
         </div>
       </div>
 
+      {profileTarget && (
+        <MemberProfileModal
+          classroomId={classroomId}
+          userId={profileTarget.userId}
+          nickname={profileTarget.nickname}
+          isOwner={classroom?.ownerId === profileTarget.userId}
+          isMe={false}
+          onClose={() => setProfileTarget(null)}
+          onReportOrBlock={() => {
+            setActionTarget(profileTarget);
+            setProfileTarget(null);
+          }}
+        />
+      )}
       {actionTarget && (
         <UserActionSheet
           userId={actionTarget.userId}

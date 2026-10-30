@@ -11,6 +11,8 @@ interface Props {
   isOwner: boolean;
   isMe: boolean;
   onClose: () => void;
+  /** 내가 아닐 때만 "신고/차단" 링크를 보여준다. 없으면 링크 자체를 숨긴다. */
+  onReportOrBlock?: () => void;
 }
 
 function Stat({ label, value }: { label: string; value: string }) {
@@ -25,7 +27,7 @@ function Stat({ label, value }: { label: string; value: string }) {
   );
 }
 
-export default function MemberProfileModal({ classroomId, userId, nickname, isOwner, isMe, onClose }: Props) {
+export default function MemberProfileModal({ classroomId, userId, nickname, isOwner, isMe, onClose, onReportOrBlock }: Props) {
   const [stats, setStats] = useState<PersonalStats | null>(null);
   const [failed, setFailed] = useState(false);
 
@@ -116,6 +118,14 @@ export default function MemberProfileModal({ classroomId, userId, nickname, isOw
             </>
           )}
         </div>
+
+        {!isMe && onReportOrBlock && (
+          <div style={{ marginTop: 14, textAlign: "center" }}>
+            <span onClick={onReportOrBlock} style={{ color: "var(--text-muted)", fontSize: 12, cursor: "pointer" }}>
+              신고하기 · 차단하기
+            </span>
+          </div>
+        )}
       </section>
     </div>
   );
