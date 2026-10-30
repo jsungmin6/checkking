@@ -17,7 +17,6 @@ import { useToast } from "../hooks/useToast";
 import { useAttendancePoints, useFeedbackReward, POINTS_TO_WON_RATE } from "../hooks/useAttendancePoints";
 import { useMissions } from "../hooks/useMissions";
 import { useNews } from "../hooks/useNews";
-import { maybePromptPushConsentOnHome } from "../utils/pushConsent";
 import type { HomeTab } from "../components/HomeTabBar";
 import type { AccountType, ClassroomListItem } from "../types";
 
@@ -84,10 +83,7 @@ export default function HomeScreen({
 
   useEffect(() => {
     api<{ classrooms: ClassroomListItem[] }>("/classrooms/my")
-      .then((data) => {
-        setRooms(data.classrooms);
-        maybePromptPushConsentOnHome(data.classrooms.length > 0);
-      })
+      .then((data) => setRooms(data.classrooms))
       .catch(() => setRooms([]))
       .finally(() => setLoading(false));
   }, []);

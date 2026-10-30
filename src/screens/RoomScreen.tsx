@@ -12,6 +12,7 @@ import { formatTime } from "../utils/time";
 import { launchConfetti } from "../utils/confetti";
 import { shareRoomInvite } from "../utils/invite";
 import { markMissionDone } from "../hooks/useMissions";
+import { maybePromptPushConsentAfterCheckIn } from "../utils/pushConsent";
 import Toast from "../components/Toast";
 import { useToast } from "../hooks/useToast";
 import SatisfactionModal from "../components/SatisfactionModal";
@@ -72,7 +73,10 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
       if (shouldAskSatisfaction(myTotalCheckIns.current)) {
         markSatisfactionAsked();
         setShowSatisfaction(true);
+        return;
       }
+      // 만족도를 묻는 날에는 알림 동의까지 겹쳐 띄우지 않는다.
+      maybePromptPushConsentAfterCheckIn();
     }, 500);
   };
 

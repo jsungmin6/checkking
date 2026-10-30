@@ -44,13 +44,15 @@ export async function requestPushConsent(source: PushConsentSource): Promise<Pus
 }
 
 /**
- * 홈 화면 진입 시 자동으로 한 번 물어본다.
+ * 출석을 마친 뒤에 한 번 물어본다.
+ *
+ * 홈 진입 직후에 띄웠더니 "미니앱 접속 직후 바텀시트가 바로 노출된다"는 이유로 심사에서 반려됐다.
+ * 사용자가 아무것도 하지 않았는데 뜨는 것이 문제이므로, 출석이라는 행동을 마친 뒤로 옮겼다.
+ *
  * - 이미 동의했으면(로컬 캐시 기준) 아예 호출하지 않는다.
- * - 참여한 방이 하나도 없으면 묻지 않는다.
  * - 하루 1회만 — 거절했어도 다음 날 다시 물어볼 수 있다.
  */
-export function maybePromptPushConsentOnHome(hasAnyRoom: boolean) {
-  if (!hasAnyRoom) return;
+export function maybePromptPushConsentAfterCheckIn() {
   if (hasAgreedToPushConsent()) return;
 
   const today = todayKey();
