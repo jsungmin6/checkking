@@ -31,6 +31,9 @@ const ROOM_FILTERS: { key: RoomFilter; label: string }[] = [
   { key: "secret", label: "암호방" },
 ];
 
+// 미션 참여를 안내하는 공개 챌린지 방은 방 찾기 목록 상단에 모아 보여준다.
+const FEATURED_CHALLENGE_ROOM_IDS = new Set([3542, 3543, 3544, 3545, 3546, 3547]);
+
 export default function PublicRoomsScreen({ accountType, onNavigateHome, onNavigateProfile, onNavigateLab, onNavigateCreateRoom, onJoined }: Props) {
   const [rooms, setRooms] = useState<ClassroomListItem[]>([]);
   const [query, setQuery] = useState("");
@@ -60,6 +63,9 @@ export default function PublicRoomsScreen({ accountType, onNavigateHome, onNavig
       const aFull = a.memberCount >= a.maxMembers;
       const bFull = b.memberCount >= b.maxMembers;
       if (aFull !== bFull) return aFull ? 1 : -1;
+      const aFeatured = FEATURED_CHALLENGE_ROOM_IDS.has(a.classroomId);
+      const bFeatured = FEATURED_CHALLENGE_ROOM_IDS.has(b.classroomId);
+      if (aFeatured !== bFeatured) return aFeatured ? -1 : 1;
       return sort === "name" ? a.name.localeCompare(b.name, "ko") :
         sort === "newest" ? b.classroomId - a.classroomId : b.memberCount - a.memberCount || a.name.localeCompare(b.name, "ko");
     });
