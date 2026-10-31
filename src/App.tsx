@@ -16,13 +16,20 @@ import SettingsScreen from "./screens/SettingsScreen";
 import TermsAgreementScreen from "./screens/TermsAgreementScreen";
 import PublicRoomsScreen from "./screens/PublicRoomsScreen";
 import GreetingScreen from "./screens/GreetingScreen";
+import LabScreen from "./screens/LabScreen";
+import CloverFinderScreen from "./screens/CloverFinderScreen";
 import OnboardingModal from "./components/OnboardingModal";
 import type { ScreenName, User } from "./types";
 
 export default function App() {
   const { user: authUser, loading, authError, needsTermsAgreement, loginWithKakaoToken, loginWithApple, loginWithToss, acceptTerms, logout, updateNickname, updateAvatar } = useAuth();
+  const previewQuery = new URLSearchParams(window.location.search);
+  const cloverPreview = import.meta.env.DEV && previewQuery.get("cloverPreview") === "1";
+  const labPreview = import.meta.env.DEV && previewQuery.get("labPreview") === "1";
   // TEMP dev-only local preview bypass (no real login). Remove before shipping.
-  const [devPreviewUser, setDevPreviewUser] = useState<User | null>(null);
+  const [devPreviewUser, setDevPreviewUser] = useState<User | null>(() => cloverPreview || labPreview
+    ? { userId: -1, nickname: "민준", loginType: "KAKAO", accountType: "FREE" }
+    : null);
   const user = authUser ?? devPreviewUser;
   // updateNickname/updateAvatar는 실제 로그인 세션(authUser)만 바꾼다.
   // 로컬 미리보기는 별도 상태라 거기도 같이 바꿔야 화면에 바로 보인다.
@@ -34,7 +41,7 @@ export default function App() {
     updateAvatar(avatarIndex);
     setDevPreviewUser((prev) => (prev ? { ...prev, avatarIndex } : prev));
   }, [updateAvatar]);
-  const [screen, setScreen] = useState<ScreenName>("home");
+  const [screen, setScreen] = useState<ScreenName>(() => cloverPreview ? "labClover" : labPreview ? "lab" : "home");
   const [activeRoomId, setActiveRoomId] = useState<number | null>(null);
   const [pendingInviteCode, setPendingInviteCode] = useState<string | null>(null);
   // 방 만들기/참여코드 화면은 홈과 "방 찾기" 양쪽에서 들어올 수 있어, 뒤로가기를 들어온 곳으로 돌려보낸다.
@@ -108,7 +115,8 @@ export default function App() {
     if (!isTossApp()) return;
     return graniteEvent.addEventListener("backEvent", {
       onEvent: () => {
-        if (screen !== "home") setScreen("home");
+        if (screen === "labClover") setScreen("lab");
+        else if (screen !== "home") setScreen("home");
         else void closeView();
       },
     });
@@ -190,6 +198,7 @@ export default function App() {
         <HomeScreen
           accountType={user.accountType}
           onNavigateProfile={() => navigateTo("profile")}
+          onNavigateLab={() => navigateTo("lab")}
           onNavigateCreateRoom={() => { setRoomFormOrigin("home"); navigateTo("createRoom"); }}
           onNavigatePublicRooms={() => navigateTo("publicRooms")}
           onNavigateRoom={(id) => navigateTo("room", id)}
@@ -201,6 +210,7 @@ export default function App() {
           user={user}
           onNavigateHome={() => navigateTo("home")}
           onNavigatePublicRooms={() => navigateTo("publicRooms")}
+          onNavigateLab={() => navigateTo("lab")}
           onLogout={() => { logout(); setScreen("home"); }}
           onNicknameUpdate={handleNicknameUpdate}
           onAvatarUpdate={handleAvatarUpdate}
@@ -216,8 +226,28 @@ export default function App() {
           accountType={user.accountType}
           onNavigateHome={() => navigateTo("home")}
           onNavigateProfile={() => navigateTo("profile")}
+          onNavigateLab={() => navigateTo("lab")}
           onNavigateCreateRoom={() => { setRoomFormOrigin("publicRooms"); navigateTo("createRoom"); }}
           onJoined={(id) => navigateTo("room", id)}
+        />
+      );
+    case "lab":
+      return (
+        <LabScreen
+          onNavigateHome={() => navigateTo("home")}
+          onNavigatePublicRooms={() => navigateTo("publicRooms")}
+          onNavigateProfile={() => navigateTo("profile")}
+          onOpenCloverFinder={() => navigateTo("labClover")}
+        />
+      );
+    case "labClover":
+      return (
+        <CloverFinderScreen
+          onBack={() => navigateTo("lab")}
+          onNavigateHome={() => navigateTo("home")}
+          onNavigatePublicRooms={() => navigateTo("publicRooms")}
+          onNavigateProfile={() => navigateTo("profile")}
+          onNavigateLab={() => navigateTo("lab")}
         />
       );
     case "room":

@@ -210,6 +210,8 @@ export interface PersonalStats {
   earliestCheckIn: string;
   latestCheckIn: string;
   avatarIndex?: number | null;
+  cloverRank?: number | null;
+  cloverBestTimeMs?: number | null;
 }
 
 // === Profile ===
@@ -228,6 +230,8 @@ export interface Profile {
 export type ScreenName =
   | "login"
   | "home"
+  | "lab"
+  | "labClover"
   | "profile"
   | "createRoom"
   | "joinRoom"

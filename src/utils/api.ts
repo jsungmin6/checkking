@@ -129,8 +129,7 @@ function fetchWithTimeout(url: string, options: RequestInit, timeoutMs = 15000):
 }
 
 // TEMP dev-only mock data for the "로컬 미리보기" bypass. Remove before shipping.
-// 방을 넉넉히 두어 "하루 3회 상한", 홈/방 찾기 리스트가 길어질 때 하단 탭바 고정 여부 같은 걸 로컬에서 테스트할 수 있게 한다.
-const DEV_ROOM_COUNT = 20;
+const DEV_ROOM_COUNT = 5;
 const DEV_ROOM_IDS = Array.from({ length: DEV_ROOM_COUNT }, (_, i) => -(i + 1));
 const DEV_ROOM_NAMES = new Map<number, string>(DEV_ROOM_IDS.map((id) => [id, `로컬 미리보기 방 ${-id}`]));
 const SHOWCASE_MY_ROOM_NAMES: Record<number, string> = {
@@ -147,13 +146,86 @@ for (const [id, name] of Object.entries(SHOWCASE_MY_ROOM_NAMES)) {
   DEV_ROOM_NAMES.set(Number(id), name);
 }
 
-// 방 찾기 화면 스크롤 테스트용 가짜 공개방 목록
-const DEV_PUBLIC_ROOM_IDS = Array.from({ length: 15 }, (_, i) => -(100 + i));
+// 방 찾기 화면의 가짜 공개방 목록
+const DEV_PUBLIC_ROOM_IDS = Array.from({ length: 5 }, (_, i) => -(100 + i));
 const devCheckInCount = new Map<number, number>(DEV_ROOM_IDS.map((id) => [id, 0]));
 const devDailyRank = new Map<number, number | null>(DEV_ROOM_IDS.map((id) => [id, null]));
 const devAnnouncement = new Map<number, string>();
 const devGreetings = new Map<number, Array<{ greetingId: number; userId: number; nickname: string; content: string; imageAvailable?: boolean; imageDataUrl?: string; reportCount: number; hidden: boolean; mine: boolean; createdAt: string }>>();
 let devGreetingSeq = 1000;
+
+const DEV_CLOVER_KEY = "att-dev-clover-preview";
+type DevCloverAttempt = { attemptId: string; seed: number; startedAt: number; golden: boolean };
+type DevCloverCompletion = {
+  attemptId: string;
+  response: { elapsedMs: number; cloverBalance: number; totalFound: number; cloversAwarded: number; golden: boolean; fortuneIndex: number; attendanceBoxAwarded: boolean; pendingBoxes: number; personalBestMs: number; personalBest: boolean };
+};
+type DevCloverState = {
+  cloverBalance: number;
+  pendingBoxes: number;
+  totalFound: number;
+  bestTimeMs: number | null;
+  lastAttemptFailed: boolean;
+  lastFailedAt: number | null;
+  lastFailedAttemptId: string | null;
+  lastFortuneIndex: number;
+  activeAttempt: DevCloverAttempt | null;
+  lastCompletion: DevCloverCompletion | null;
+  lastBoxClaimId: string | null;
+  lastBoxClaimPoints: number;
+};
+const EMPTY_DEV_CLOVER: DevCloverState = {
+  cloverBalance: 0, pendingBoxes: 0, totalFound: 0, bestTimeMs: null, activeAttempt: null,
+  lastAttemptFailed: false, lastFailedAt: null, lastFailedAttemptId: null,
+  lastFortuneIndex: -1, lastCompletion: null, lastBoxClaimId: null, lastBoxClaimPoints: 0,
+};
+
+function readDevClover(): DevCloverState {
+  try {
+    const saved = localStorage.getItem(DEV_CLOVER_KEY);
+    return saved ? { ...EMPTY_DEV_CLOVER, ...JSON.parse(saved) as Partial<DevCloverState> } : { ...EMPTY_DEV_CLOVER };
+  } catch {
+    return { ...EMPTY_DEV_CLOVER };
+  }
+}
+
+function saveDevClover(state: DevCloverState) {
+  localStorage.setItem(DEV_CLOVER_KEY, JSON.stringify(state));
+}
+
+function devCloverRanking(state: DevCloverState) {
+  const entries = [
+    { nickname: "서연", bestTimeMs: 12_480, mine: false },
+    { nickname: "하준", bestTimeMs: 15_360, mine: false },
+    { nickname: "지우", bestTimeMs: 18_210, mine: false },
+    { nickname: "민재", bestTimeMs: 21_640, mine: false },
+    { nickname: "수민", bestTimeMs: 23_760, mine: false },
+    { nickname: "도윤", bestTimeMs: 27_120, mine: false },
+    { nickname: "유진", bestTimeMs: 30_840, mine: false },
+  ];
+  if (state.bestTimeMs !== null && !state.lastAttemptFailed) entries.push({ nickname: "민준", bestTimeMs: state.bestTimeMs, mine: true });
+  const sorted = entries.sort((a, b) => a.bestTimeMs - b.bestTimeMs);
+  const ranked = sorted.map((item, index) => ({ rank: index + 1, ...item, failed: false as const }));
+  const failedEntries = [
+    { nickname: "태희", mine: false },
+    { nickname: "준호", mine: false },
+  ];
+  if (state.lastAttemptFailed) failedEntries.push({ nickname: "민준", mine: true });
+  const failedRanks = failedEntries.map((item, index) => ({
+    rank: ranked.length + index + 1, ...item, bestTimeMs: 60_000, failed: true as const,
+  }));
+  const allRanked = [...ranked, ...failedRanks];
+  const myRank = (state.bestTimeMs !== null || state.lastAttemptFailed) ? allRanked.find((item) => item.mine)?.rank ?? null : null;
+  const visible = new Map<number, typeof allRanked[number]>();
+  allRanked.slice(0, 3).forEach((item) => visible.set(item.rank, item));
+  allRanked.slice(-3).forEach((item) => visible.set(item.rank, item));
+  if (myRank !== null) visible.set(myRank, allRanked[myRank - 1]!);
+  return {
+    myRank,
+    participantCount: allRanked.length,
+    ranking: [...visible.values()].sort((a, b) => a.rank - b.rank),
+  };
+}
 
 function seedTime(minutesAgo: number): string {
   return new Date(Date.now() - minutesAgo * 60_000).toISOString();
@@ -188,6 +260,8 @@ export function resetDevPreview() {
   localStorage.removeItem("att-points-reward-daily");
   localStorage.removeItem("att-points-streak-rewards-claimed");
   localStorage.removeItem("att-points-streak-reward-progress-v2");
+  localStorage.removeItem("att-clover-round-budget-v1");
+  localStorage.removeItem(DEV_CLOVER_KEY);
 }
 
 const DEV_MEMBERS = [
@@ -245,6 +319,114 @@ const ROOM1_MONTHLY_RANKS = [1, 2, 3, 1, 4, 2, 1, 3, 2, 1, 4, 2, 1, 3];
 
 function devMock(path: string, method: string, body?: string): unknown | undefined {
   if (!import.meta.env.DEV) return undefined;
+
+  if (path === "/labs/clover" && method === "GET") {
+    const state = readDevClover();
+    return {
+      cloverBalance: state.cloverBalance,
+      pendingBoxes: state.pendingBoxes,
+      totalFound: state.totalFound,
+      personalBestMs: state.bestTimeMs,
+      ...devCloverRanking(state),
+    };
+  }
+  if (path === "/labs/clover/attempts" && method === "POST") {
+    const state = readDevClover();
+    const now = Date.now();
+    const forceGoldenPreview = new URLSearchParams(window.location.search).get("cloverGolden") === "1";
+    const attemptExpired = !state.activeAttempt || now - state.activeAttempt.startedAt >= 60_000;
+    const replaceWithGoldenPreview = forceGoldenPreview && !state.activeAttempt?.golden;
+    if (attemptExpired || replaceWithGoldenPreview) {
+      if (state.activeAttempt && now - state.activeAttempt.startedAt >= 60_000) {
+        state.lastAttemptFailed = true;
+        state.lastFailedAt = now;
+        state.lastFailedAttemptId = state.activeAttempt.attemptId;
+      }
+      state.activeAttempt = {
+        attemptId: `preview-${crypto.randomUUID()}`,
+        seed: Math.floor(Math.random() * 2_000_000_000),
+        startedAt: now,
+        golden: forceGoldenPreview || Math.random() < 0.05,
+      };
+      saveDevClover(state);
+    }
+    return {
+      attemptId: state.activeAttempt.attemptId,
+      seed: state.activeAttempt.seed,
+      serverNowEpochMs: now,
+      expiresAtEpochMs: state.activeAttempt.startedAt + 60_000,
+    };
+  }
+  const devCloverFound = path.match(/^\/labs\/clover\/attempts\/([^/]+)\/found$/);
+  const devCloverFailed = path.match(/^\/labs\/clover\/attempts\/([^/]+)\/failed$/);
+  if (devCloverFailed && method === "POST") {
+    const state = readDevClover();
+    const attemptId = devCloverFailed[1]!;
+    if (state.lastFailedAttemptId === attemptId) return null;
+    if (state.activeAttempt?.attemptId !== attemptId) throw new Error("찾기에 실패한 도전을 확인하지 못했어요.");
+    if (Date.now() - state.activeAttempt.startedAt < 60_000) throw new Error("아직 찾기 시간이 남아 있어요.");
+    state.lastAttemptFailed = true;
+    state.lastFailedAt = Date.now();
+    state.lastFailedAttemptId = attemptId;
+    state.activeAttempt = null;
+    saveDevClover(state);
+    return null;
+  }
+  if (devCloverFound && method === "POST") {
+    const state = readDevClover();
+    const attemptId = devCloverFound[1]!;
+    if (state.lastCompletion?.attemptId === attemptId) return state.lastCompletion.response;
+    const attempt = state.activeAttempt;
+    const parsed = body ? (JSON.parse(body) as { penaltySeconds?: number }) : {};
+    const penaltySeconds = Math.max(0, Math.min(60, parsed.penaltySeconds ?? 0));
+    const elapsedMs = attempt ? Date.now() - attempt.startedAt + penaltySeconds * 1000 : 60_001;
+    if (!attempt || attempt.attemptId !== attemptId || elapsedMs > 60_000) {
+      throw new Error("찾기 시간이 끝났어요. 다시 시작해주세요.");
+    }
+    const effectiveElapsedMs = Math.max(1, elapsedMs);
+    const personalBest = state.bestTimeMs === null || effectiveElapsedMs < state.bestTimeMs;
+    if (personalBest) state.bestTimeMs = effectiveElapsedMs;
+    state.totalFound += 1;
+    state.lastAttemptFailed = false;
+    const golden = attempt.golden ?? false;
+    const cloversAwarded = golden ? 3 : 1;
+    const accumulatedClovers = state.cloverBalance + cloversAwarded;
+    const boxesAwarded = Math.floor(accumulatedClovers / 10);
+    state.cloverBalance = accumulatedClovers % 10;
+    state.pendingBoxes += boxesAwarded;
+    let fortuneIndex = state.lastFortuneIndex < 0 ? Math.floor(Math.random() * 10) : Math.floor(Math.random() * 9);
+    if (state.lastFortuneIndex >= 0 && fortuneIndex >= state.lastFortuneIndex) fortuneIndex += 1;
+    state.lastFortuneIndex = fortuneIndex;
+    const response = {
+      elapsedMs: effectiveElapsedMs,
+      cloverBalance: state.cloverBalance,
+      totalFound: state.totalFound,
+      cloversAwarded,
+      golden,
+      fortuneIndex,
+      attendanceBoxAwarded: boxesAwarded > 0,
+      pendingBoxes: state.pendingBoxes,
+      personalBestMs: state.bestTimeMs!,
+      personalBest,
+    };
+    state.lastCompletion = { attemptId, response };
+    state.activeAttempt = null;
+    saveDevClover(state);
+    return response;
+  }
+  if (path === "/labs/clover/boxes/claim" && method === "POST") {
+    const state = readDevClover();
+    const claimId = body ? (JSON.parse(body) as { claimId: string }).claimId : "";
+    if (claimId === state.lastBoxClaimId) {
+      return { pointsAwarded: state.lastBoxClaimPoints, pendingBoxes: state.pendingBoxes };
+    }
+    if (state.pendingBoxes <= 0) throw new Error("열 수 있는 출석박스가 없어요.");
+    state.pendingBoxes -= 1;
+    state.lastBoxClaimId = claimId;
+    state.lastBoxClaimPoints = 1000;
+    saveDevClover(state);
+    return { pointsAwarded: state.lastBoxClaimPoints, pendingBoxes: state.pendingBoxes };
+  }
 
   if (path === "/notifications/feedback" && method === "POST") {
     return { received: true };

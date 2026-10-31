@@ -39,7 +39,7 @@ export default function AvatarChangeModal({ userId, currentIndex, onClose, onCha
     setStep("watchingAd");
     let watched: boolean;
     try {
-      watched = await showTossRewardedAd(AVATAR_CHANGE_AD_GROUP_ID);
+      watched = await showTossRewardedAd(AVATAR_CHANGE_AD_GROUP_ID, "AVATAR_CHANGE");
     } catch (adError) {
       setStep("idle");
       reportAdLoadFailed(AVATAR_CHANGE_AD_GROUP_ID, adError instanceof Error ? adError.message : "unknown_error");

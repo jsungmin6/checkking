@@ -55,7 +55,10 @@ async function loadAdOnce(
 }
 
 /** Returns true only after the SDK reports that the user earned the reward. */
-export async function showTossRewardedAd(adGroupId: string): Promise<boolean> {
+export async function showTossRewardedAd(
+  adGroupId: string,
+  placement?: "AVATAR_CHANGE" | "CLOVER_CONTINUE" | "POINTS_CONVERSION",
+): Promise<boolean> {
   if (!isTossApp()) return true;
 
   const { loadFullScreenAd, showFullScreenAd } = await import("@apps-in-toss/web-framework");
@@ -93,10 +96,10 @@ export async function showTossRewardedAd(adGroupId: string): Promise<boolean> {
         if (event.type === "userEarnedReward") earnedReward = true;
         if (event.type === "dismissed") {
           window.clearTimeout(timeout);
-          if (earnedReward) {
+          if (earnedReward && placement !== "POINTS_CONVERSION") {
             void api("/notifications/ad-rewarded", {
               method: "POST",
-              body: JSON.stringify({ adGroupId }),
+              body: JSON.stringify({ adGroupId, placement }),
             }).catch(() => {});
           }
           finish(earnedReward);

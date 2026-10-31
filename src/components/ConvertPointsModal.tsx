@@ -2,6 +2,7 @@ import { useState } from "react";
 import { grantTossPromotionReward, POINTS_PROMOTION_CODE_REAL, PROMOTION_DAILY_CAP_WON } from "../utils/tossPromotion";
 import { showTossRewardedAd, reportAdLoadFailed } from "../utils/tossRewardedAd";
 import { POINTS_TO_WON_RATE } from "../hooks/useAttendancePoints";
+import { api } from "../utils/api";
 
 // 기존 "출석왕_랭킹보기_리워드" 광고 그룹 재사용 — 이 광고를 끝까지 봐야 포인트교환 프로모션 지급을 요청한다.
 // 타임아웃은 showTossRewardedAd 내부에서 로딩/재생 단계별로 각각 처리한다(로딩 30초, 재생 180초).
@@ -36,7 +37,7 @@ export default function ConvertPointsModal({ totalPoints, onClose, onConverted }
     setStep("watchingAd");
     let watched: boolean;
     try {
-      watched = await showTossRewardedAd(CONVERT_POINTS_AD_GROUP_ID);
+      watched = await showTossRewardedAd(CONVERT_POINTS_AD_GROUP_ID, "POINTS_CONVERSION");
     } catch (adError) {
       setStep("idle");
       reportAdLoadFailed(CONVERT_POINTS_AD_GROUP_ID, adError instanceof Error ? adError.message : "unknown_error");
@@ -54,6 +55,10 @@ export default function ConvertPointsModal({ totalPoints, onClose, onConverted }
     const result = await grantTossPromotionReward(POINTS_PROMOTION_CODE_REAL, convertibleWon);
     setStep("idle");
     if (result.ok) {
+      void api("/notifications/points-converted", {
+        method: "POST",
+        body: JSON.stringify({ attendancePoints: convertibleCoins, tossPoints: convertibleWon }),
+      }).catch(() => {});
       onConverted(convertibleCoins);
     } else {
       setError(ERROR_MESSAGES[result.code] ?? `전환에 실패했어요 (${result.code})`);

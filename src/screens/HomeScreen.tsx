@@ -28,10 +28,11 @@ interface HomeScreenProps {
   onNavigatePublicRooms: () => void;
   onNavigateRoom: (classroomId: number) => void;
   onNavigateProfile: () => void;
+  onNavigateLab: () => void;
 }
 
 export default function HomeScreen({
-  accountType, onNavigateCreateRoom, onNavigatePublicRooms, onNavigateRoom, onNavigateProfile,
+  accountType, onNavigateCreateRoom, onNavigatePublicRooms, onNavigateRoom, onNavigateProfile, onNavigateLab,
 }: HomeScreenProps) {
   const [rooms, setRooms] = useState<ClassroomListItem[]>([]);
   const [appCurrentStreak, setAppCurrentStreak] = useState<number | null>(null);
@@ -106,6 +107,7 @@ export default function HomeScreen({
     if (tab === "profile") {
       onNavigateProfile();
     } else if (tab === "publicRooms") onNavigatePublicRooms();
+    else if (tab === "lab") onNavigateLab();
   };
 
   return (

@@ -96,24 +96,32 @@ export default function MemberProfileModal({ classroomId, userId, nickname, isOw
             <div style={{ textAlign: "center", color: "var(--text-secondary)", fontSize: 13, padding: "16px 0" }}>
               불러오는 중...
             </div>
-          ) : stats.totalPresent === 0 ? (
-            <div style={{ textAlign: "center", color: "var(--text-secondary)", fontSize: 13, padding: "16px 0" }}>
-              아직 이 방에서 출석한 기록이 없어요
-            </div>
           ) : (
             <>
-              <div style={{ display: "flex", gap: 8 }}>
-                <Stat label="출석" value={`${stats.totalPresent}일`} />
-                <Stat label="연속 출석" value={`${stats.currentStreak}일`} />
-                <Stat label="1등" value={`${stats.firstPlaceCount}번`} />
-              </div>
-              <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-                {/* 서버가 나눗셈 결과를 그대로 주면 3.19999... 처럼 찍힌다. */}
-                <Stat label="평균 등수" value={`${stats.avgRank.toFixed(1)}등`} />
-                <Stat label="보통 오는 시각" value={formatTime(stats.avgCheckInTime)} />
-              </div>
-              <div style={{ marginTop: 12, fontSize: 12, color: "var(--text-secondary)", textAlign: "center" }}>
-                가장 빨랐던 날 {formatTime(stats.earliestCheckIn)}
+              {stats.totalPresent === 0 ? (
+                <div style={{ textAlign: "center", color: "var(--text-secondary)", fontSize: 13, padding: "16px 0" }}>
+                  아직 이 방에서 출석한 기록이 없어요
+                </div>
+              ) : (
+                <>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <Stat label="출석" value={`${stats.totalPresent}일`} />
+                    <Stat label="연속 출석" value={`${stats.currentStreak}일`} />
+                    <Stat label="1등" value={`${stats.firstPlaceCount}번`} />
+                  </div>
+                  <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                    {/* 서버가 나눗셈 결과를 그대로 주면 3.19999... 처럼 찍힌다. */}
+                    <Stat label="평균 등수" value={`${stats.avgRank.toFixed(1)}등`} />
+                    <Stat label="보통 오는 시각" value={formatTime(stats.avgCheckInTime)} />
+                  </div>
+                  <div style={{ marginTop: 12, fontSize: 12, color: "var(--text-secondary)", textAlign: "center" }}>
+                    가장 빨랐던 날 {formatTime(stats.earliestCheckIn)}
+                  </div>
+                </>
+              )}
+              <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+                <Stat label="클로버 등수" value={stats.cloverRank != null ? `${stats.cloverRank}위` : "-"} />
+                <Stat label="클로버 최고 기록" value={stats.cloverBestTimeMs != null ? `${(stats.cloverBestTimeMs / 1000).toFixed(2)}초` : "기록 없음"} />
               </div>
             </>
           )}

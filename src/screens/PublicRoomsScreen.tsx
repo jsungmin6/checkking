@@ -12,6 +12,7 @@ interface Props {
   accountType?: AccountType;
   onNavigateHome: () => void;
   onNavigateProfile: () => void;
+  onNavigateLab: () => void;
   onNavigateCreateRoom: () => void;
   onJoined: (id: number) => void;
 }
@@ -30,7 +31,7 @@ const ROOM_FILTERS: { key: RoomFilter; label: string }[] = [
   { key: "secret", label: "암호방" },
 ];
 
-export default function PublicRoomsScreen({ accountType, onNavigateHome, onNavigateProfile, onNavigateCreateRoom, onJoined }: Props) {
+export default function PublicRoomsScreen({ accountType, onNavigateHome, onNavigateProfile, onNavigateLab, onNavigateCreateRoom, onJoined }: Props) {
   const [rooms, setRooms] = useState<ClassroomListItem[]>([]);
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<Sort>("popular");
@@ -93,6 +94,7 @@ export default function PublicRoomsScreen({ accountType, onNavigateHome, onNavig
   const handleTabChange = (tab: HomeTab) => {
     if (tab === "home") onNavigateHome();
     else if (tab === "profile") onNavigateProfile();
+    else if (tab === "lab") onNavigateLab();
   };
   return <div className="page" style={{ display: "flex", flexDirection: "column", height: "100dvh", minHeight: 0, overflow: "hidden" }}>
     <div style={{ padding: "20px 20px 12px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexShrink: 0 }}>

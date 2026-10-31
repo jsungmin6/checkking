@@ -1,25 +1,26 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import HomeTabBar from "../components/HomeTabBar";
 import TermsViewer from "../components/TermsViewer";
 import { api } from "../utils/api";
 import { validateNickname } from "../utils/profanity";
 import { hasAgreedToPushConsent, requestPushConsent } from "../utils/pushConsent";
-import DevRequestModal from "../components/DevRequestModal";
 import type { User } from "../types";
 import { markMissionDone } from "../hooks/useMissions";
 import { avatarEmojiSrc } from "../utils/emoji";
 import AvatarChangeModal from "../components/AvatarChangeModal";
+import { useAttendancePoints } from "../hooks/useAttendancePoints";
 
 interface ProfileScreenProps {
   user: User;
   onNavigateHome: () => void;
   onNavigatePublicRooms: () => void;
+  onNavigateLab: () => void;
   onLogout: () => void;
   onNicknameUpdate: (nickname: string) => void;
   onAvatarUpdate: (avatarIndex: number) => void;
 }
 
-export default function ProfileScreen({ user, onNavigateHome, onNavigatePublicRooms, onLogout, onNicknameUpdate, onAvatarUpdate }: ProfileScreenProps) {
+export default function ProfileScreen({ user, onNavigateHome, onNavigatePublicRooms, onNavigateLab, onLogout, onNicknameUpdate, onAvatarUpdate }: ProfileScreenProps) {
   const [changingAvatar, setChangingAvatar] = useState(false);
   const [editing, setEditing] = useState(false);
   const [viewingTerms, setViewingTerms] = useState<{ url: string; title: string } | null>(null);
@@ -29,7 +30,20 @@ export default function ProfileScreen({ user, onNavigateHome, onNavigatePublicRo
   const [error, setError] = useState<string | null>(null);
   const [pushAgreed, setPushAgreed] = useState(hasAgreedToPushConsent());
   const [pushRequesting, setPushRequesting] = useState(false);
-  const [showDevRequestModal, setShowDevRequestModal] = useState(false);
+  const [appBestStreak, setAppBestStreak] = useState<number | null>(null);
+  const [cloverSummary, setCloverSummary] = useState<{ personalBestMs: number | null; myRank: number | null } | null>(null);
+  const { totalPoints } = useAttendancePoints();
+
+  useEffect(() => {
+    let cancelled = false;
+    void api<{ appBestStreak?: number }>("/classrooms/my")
+      .then((overview) => { if (!cancelled) setAppBestStreak(overview.appBestStreak ?? 0); })
+      .catch(() => {});
+    void api<{ personalBestMs: number | null; myRank: number | null }>("/labs/clover")
+      .then((overview) => { if (!cancelled) setCloverSummary(overview); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
 
   const handleTogglePushConsent = async () => {
     setPushRequesting(true);
@@ -97,7 +111,7 @@ export default function ProfileScreen({ user, onNavigateHome, onNavigatePublicRo
       <div style={{ flex: 1, minHeight: 0, overflowY: "auto", overscrollBehavior: "contain" }}>
         <div style={{ padding: "24px 16px 0" }}>
           <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 8 }}>프로필</div>
-          <div style={{ display: "flex", justifyContent: "center", marginBottom: 14 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
             <button
               onClick={() => setChangingAvatar(true)}
               aria-label="프로필 캐릭터 바꾸기"
@@ -109,20 +123,34 @@ export default function ProfileScreen({ user, onNavigateHome, onNavigatePublicRo
             >
               <img src={avatarEmojiSrc(user.userId, user.avatarIndex)} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
             </button>
-          </div>
-          <div style={{ background: "var(--bg-card)", borderRadius: "var(--radius-card)", overflow: "hidden", boxShadow: "var(--shadow-card)" }}>
-            <div style={{ padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 15 }}>
-              <span>닉네임</span>
-              {editing ? (
-                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                  <input value={nickname} onChange={(e) => setNickname(e.target.value)} style={{ width: 120, padding: "8px 10px", borderRadius: "var(--radius-input)", border: "1px solid var(--border-color)", background: "var(--bg-secondary)", color: "var(--text-primary)", fontSize: 14 }} />
-                  <span onClick={handleSaveNickname} style={{ color: "var(--accent-blue)", cursor: "pointer", fontSize: 14, fontWeight: 600, opacity: saving ? 0.5 : 1 }}>{saving ? "..." : "저장"}</span>
-                  <span onClick={() => { setEditing(false); setNickname(user.nickname); setError(null); }} style={{ color: "var(--text-secondary)", cursor: "pointer", fontSize: 14 }}>취소</span>
-                </div>
-              ) : (
-                <span onClick={() => setEditing(true)} style={{ color: "var(--accent-blue)", cursor: "pointer", fontWeight: 500 }}>{user.nickname} ✏️</span>
-              )}
+            <div style={{ flex: 1, minWidth: 0, background: "var(--bg-card)", borderRadius: "var(--radius-card)", overflow: "hidden", boxShadow: "var(--shadow-card)" }}>
+              <div style={{ padding: "16px 14px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, fontSize: 15 }}>
+                <span>닉네임</span>
+                {editing ? (
+                  <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                    <input value={nickname} onChange={(e) => setNickname(e.target.value)} style={{ width: 80, minWidth: 0, padding: "8px 6px", borderRadius: "var(--radius-input)", border: "1px solid var(--border-color)", background: "var(--bg-secondary)", color: "var(--text-primary)", fontSize: 14 }} />
+                    <span onClick={handleSaveNickname} style={{ color: "var(--accent-blue)", cursor: "pointer", fontSize: 14, fontWeight: 600, opacity: saving ? 0.5 : 1 }}>{saving ? "..." : "저장"}</span>
+                    <span onClick={() => { setEditing(false); setNickname(user.nickname); setError(null); }} style={{ color: "var(--text-secondary)", cursor: "pointer", fontSize: 14 }}>취소</span>
+                  </div>
+                ) : (
+                  <span onClick={() => setEditing(true)} style={{ color: "var(--accent-blue)", cursor: "pointer", fontWeight: 500 }}>{user.nickname} ✏️</span>
+                )}
+              </div>
             </div>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 8, marginBottom: 14 }}>
+            {[
+              { label: "최대 연속 출석", value: appBestStreak === null ? "-" : `${appBestStreak}일` },
+              { label: "누적 포인트", value: `${totalPoints.toLocaleString()}P` },
+              { label: "클로버 기록", value: cloverSummary?.personalBestMs != null
+                ? `${cloverSummary.myRank != null ? `${cloverSummary.myRank}위 · ` : ""}${(cloverSummary.personalBestMs / 1000).toFixed(2)}초`
+                : "기록 없음" },
+            ].map((item) => (
+              <div key={item.label} style={{ minWidth: 0, padding: "12px 6px", borderRadius: 12, background: "var(--bg-card)", boxShadow: "var(--shadow-card)", textAlign: "center" }}>
+                <div style={{ overflow: "hidden", color: "var(--text-primary)", fontSize: 13, fontWeight: 750, textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.value}</div>
+                <div style={{ marginTop: 4, color: "var(--text-secondary)", fontSize: 10 }}>{item.label}</div>
+              </div>
+            ))}
           </div>
           {error && <div style={{ color: "var(--accent-red)", fontSize: 13, marginTop: 8 }}>{error}</div>}
 
@@ -192,28 +220,15 @@ export default function ProfileScreen({ user, onNavigateHome, onNavigatePublicRo
           </div>
         </div>
 
-        <div style={{ padding: "24px 16px 0" }}>
-          <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 8 }}>기타</div>
-          <div style={{ background: "var(--bg-card)", borderRadius: "var(--radius-card)", overflow: "hidden", boxShadow: "var(--shadow-card)" }}>
-            <div onClick={() => setShowDevRequestModal(true)} style={{
-              display: "flex", justifyContent: "space-between", alignItems: "center",
-              padding: "14px 20px", fontSize: 15, color: "var(--text-primary)", cursor: "pointer",
-            }}>
-              <span>개발 요구하기</span>
-              <span style={{ color: "var(--text-secondary)", fontSize: 13 }}>{">"}</span>
-            </div>
-          </div>
-        </div>
-
         <div style={{ height: 32 }} />
       </div>
-      {showDevRequestModal && <DevRequestModal onClose={() => setShowDevRequestModal(false)} />}
 
       {/* 배너 광고는 홈에서만 띄운다 */}
       <div style={{ flexShrink: 0 }}>
         <HomeTabBar active="profile" onSelect={(tab) => {
           if (tab === "home") onNavigateHome();
           else if (tab === "publicRooms") onNavigatePublicRooms();
+          else if (tab === "lab") onNavigateLab();
         }} />
       </div>
     </div>

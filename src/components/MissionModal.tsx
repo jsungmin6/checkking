@@ -1,6 +1,6 @@
 import { useState } from "react";
 import GiftBox from "./GiftBox";
-import { api } from "../utils/api";
+import { reportMissionCompleted } from "../hooks/useMissions";
 import type { MissionState } from "../hooks/useMissions";
 
 interface MissionModalProps {
@@ -19,11 +19,8 @@ export default function MissionModal({ missions, onClose, onRewarded }: MissionM
     if (!claiming) return;
     setOpened(true);
     onRewarded(claiming.id, claiming.reward);
-    // 누가 미션을 끝냈는지 운영자가 알 수 있게 알린다. 실패해도 보상에는 영향이 없다.
-    void api("/notifications/mission-completed", {
-      method: "POST",
-      body: JSON.stringify({ missionId: claiming.id }),
-    }).catch(() => {});
+    // 이전 버전에서 이미 완료해 둔 미션이나 완료 시 알림 전송에 실패한 경우를 보완한다.
+    reportMissionCompleted(claiming.id);
   };
 
   // 보상 수령 단계 — 출석 선물(AttendanceGiftModal)과 동일한 연출을 재사용한다.
@@ -105,10 +102,24 @@ export default function MissionModal({ missions, onClose, onRewarded }: MissionM
               borderTop: index === 0 ? "none" : "1px solid var(--border-light)",
             }}
           >
-            <div style={{ fontSize: 17, fontWeight: 800, marginBottom: 6 }}>{mission.title}</div>
-            <div style={{ fontSize: 13.5, color: "var(--text-secondary)", lineHeight: 1.6, marginBottom: mission.guideImage ? 10 : 14 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 17, fontWeight: 800, marginBottom: 6 }}>
+              {mission.titleImage && <img src={mission.titleImage} alt="" style={{ width: 25, height: 25, objectFit: "contain" }} />}
+              <span>{mission.title}</span>
+            </div>
+            <div style={{ fontSize: 13.5, color: "var(--text-secondary)", lineHeight: 1.6, marginBottom: mission.guideImage || mission.guideSteps?.length ? 10 : 14 }}>
               {mission.description}
             </div>
+
+            {mission.guideSteps?.map((step) => (
+              <div key={step.image} style={{ marginBottom: 12 }}>
+                <img
+                  src={step.image}
+                  alt={step.caption}
+                  style={{ width: "100%", borderRadius: 12, display: "block" }}
+                />
+                <div style={{ marginTop: 5, color: "var(--text-secondary)", fontSize: 12 }}>{step.caption}</div>
+              </div>
+            ))}
 
             {mission.guideImage && (
               <img
@@ -138,6 +149,11 @@ export default function MissionModal({ missions, onClose, onRewarded }: MissionM
               }}>
                 {mission.todo}
               </span>
+              {mission.targetCount !== undefined && (
+                <span style={{ flexShrink: 0, color: mission.done ? "var(--accent-green, #34C759)" : "var(--text-secondary)", fontSize: 13, fontWeight: 750 }}>
+                  {mission.progress}/{mission.targetCount}
+                </span>
+              )}
               {/* 보상 금액은 선물상자를 열 때 알게 한다 */}
               <img src="/rewards/gift-box-closed.png" alt="" style={{ width: 22, height: 22, objectFit: "contain", flexShrink: 0 }} />
             </div>

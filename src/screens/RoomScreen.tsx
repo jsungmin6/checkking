@@ -13,7 +13,7 @@ import { isTossApp } from "../utils/platform";
 import { formatTime } from "../utils/time";
 import { launchConfetti } from "../utils/confetti";
 import { shareRoomInvite } from "../utils/invite";
-import { markMissionDone } from "../hooks/useMissions";
+import { incrementMissionProgress, markMissionDone } from "../hooks/useMissions";
 import { maybePromptPushConsentAfterCheckIn } from "../utils/pushConsent";
 import Toast from "../components/Toast";
 import { useToast } from "../hooks/useToast";
@@ -196,7 +196,10 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
       });
       await fetchData();
       myTotalCheckIns.current = checkInResult.myTotalCheckIns;
-      if (classroom.validationType === "PHOTO") markMissionDone("greeting");
+      if (classroom.validationType === "PHOTO") {
+        markMissionDone("greeting");
+        incrementMissionProgress("photo-attendance", checkInResult.attendanceId);
+      }
       // 출석 성공 — 방을 넘나들어도 "보상을 받는 체크인"은 하루 최대 3번까지만.
       // 그 안에 들면 선물상자(+1~3등이면 보너스도 같이)를 보여주고, 넘으면 등수만 보여준다.
       if (rewardRemaining > 0) {
