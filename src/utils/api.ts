@@ -334,22 +334,18 @@ function devMock(path: string, method: string, body?: string): unknown | undefin
     const state = readDevClover();
     const now = Date.now();
     const forceGoldenPreview = new URLSearchParams(window.location.search).get("cloverGolden") === "1";
-    const attemptExpired = !state.activeAttempt || now - state.activeAttempt.startedAt >= 60_000;
-    const replaceWithGoldenPreview = forceGoldenPreview && !state.activeAttempt?.golden;
-    if (attemptExpired || replaceWithGoldenPreview) {
-      if (state.activeAttempt && now - state.activeAttempt.startedAt >= 60_000) {
-        state.lastAttemptFailed = true;
-        state.lastFailedAt = now;
-        state.lastFailedAttemptId = state.activeAttempt.attemptId;
-      }
-      state.activeAttempt = {
-        attemptId: `preview-${crypto.randomUUID()}`,
-        seed: Math.floor(Math.random() * 2_000_000_000),
-        startedAt: now,
-        golden: forceGoldenPreview || Math.random() < 0.05,
-      };
-      saveDevClover(state);
+    if (state.activeAttempt && now - state.activeAttempt.startedAt >= 60_000) {
+      state.lastAttemptFailed = true;
+      state.lastFailedAt = now;
+      state.lastFailedAttemptId = state.activeAttempt.attemptId;
     }
+    state.activeAttempt = {
+      attemptId: `preview-${crypto.randomUUID()}`,
+      seed: Math.floor(Math.random() * 2_000_000_000),
+      startedAt: now,
+      golden: forceGoldenPreview || Math.random() < 0.05,
+    };
+    saveDevClover(state);
     return {
       attemptId: state.activeAttempt.attemptId,
       seed: state.activeAttempt.seed,
