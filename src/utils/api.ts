@@ -180,6 +180,13 @@ const EMPTY_DEV_CLOVER: DevCloverState = {
   lastFortuneIndex: -1, lastCompletion: null, lastBoxClaimId: null, lastBoxClaimPoints: 0,
 };
 
+function randomDevCloverBoxPoints(): number {
+  const tier = Math.floor(Math.random() * 100);
+  if (tier < 90) return 1_000 + Math.floor(Math.random() * 501);
+  if (tier < 95) return 1_501 + Math.floor(Math.random() * 1_000);
+  return 2_501 + Math.floor(Math.random() * 500);
+}
+
 function readDevClover(): DevCloverState {
   try {
     const saved = localStorage.getItem(DEV_CLOVER_KEY);
@@ -419,7 +426,7 @@ function devMock(path: string, method: string, body?: string): unknown | undefin
     if (state.pendingBoxes <= 0) throw new Error("열 수 있는 출석박스가 없어요.");
     state.pendingBoxes -= 1;
     state.lastBoxClaimId = claimId;
-    state.lastBoxClaimPoints = 1000;
+    state.lastBoxClaimPoints = randomDevCloverBoxPoints();
     saveDevClover(state);
     return { pointsAwarded: state.lastBoxClaimPoints, pendingBoxes: state.pendingBoxes };
   }

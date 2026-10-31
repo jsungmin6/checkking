@@ -14,6 +14,15 @@ export interface NewsItem {
  */
 export const NEWS: NewsItem[] = [
   {
+    id: "2026-10-31-playground",
+    date: "2026-10-31",
+    title: "놀이터가 열렸어요",
+    body: [
+      "놀이터에서 네잎 클로버 빨리 찾기에 도전해보세요.",
+      "모은 클로버로 랜덤 출석 포인트 박스를 받을 수 있어요.",
+    ],
+  },
+  {
     id: "2026-10-31-streak-rewards",
     date: "2026-10-31",
     title: "연속 출석 보상이 생겼어요",

@@ -314,7 +314,7 @@ export default function CloverFinderScreen({
             </button>}
           </div>
           <div className="clover-progress-track"><span style={{ width: `${cloverProgressPercent}%` }} /></div>
-          <p>클로버를 모으면 출석박스를 드려요.</p>
+          <p>랜덤 출석 포인트 박스를 드려요.</p>
         </section>
 
         <section className="lab-meadow-stage" aria-label="네잎클로버 찾기">

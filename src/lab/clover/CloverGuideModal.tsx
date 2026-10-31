@@ -19,7 +19,7 @@ const STEPS = [
   },
   {
     title: "출석박스를 받아보세요",
-    description: "네잎클로버를 모으면 출석박스가 도착해요.",
+    description: "네잎클로버를 모으면 랜덤 출석 포인트 박스가 도착해요.",
     scene: "reward" as const,
   },
 ];
