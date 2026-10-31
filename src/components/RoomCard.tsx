@@ -14,16 +14,15 @@ export default function RoomCard({ room, onClick }: RoomCardProps) {
     : "24시간";
 
   return (
-    <div onClick={onClick} style={{ background: "var(--bg-card)", borderRadius: "var(--radius-card)", padding: 14, cursor: "pointer", boxShadow: "var(--shadow-card)" }}>
+    <div onClick={onClick} style={{ position: "relative", background: "var(--bg-card)", borderRadius: "var(--radius-card)", padding: 14, cursor: "pointer", boxShadow: "var(--shadow-card)" }}>
+      {unread && (
+        <span
+          aria-label="안 읽은 인사"
+          style={{ position: "absolute", top: 8, left: 6, width: 7, height: 7, borderRadius: "50%", background: "var(--accent-red)" }}
+        />
+      )}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
-          {/* 새 인사가 올라왔다는 표시 */}
-          {unread && (
-            <span
-              aria-label="안 읽은 인사"
-              style={{ flexShrink: 0, width: 7, height: 7, borderRadius: "50%", background: "var(--accent-red)" }}
-            />
-          )}
           {room.todayCheckedIn && <span role="img" aria-label="오늘 출석 완료" style={{ flexShrink: 0, fontSize: 13 }}>✅</span>}
           <div style={{ fontWeight: 600, fontSize: 15, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{room.name}</div>
         </div>
