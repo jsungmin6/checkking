@@ -13,8 +13,9 @@ import NewsButton from "../components/NewsButton";
 import NewsModal from "../components/NewsModal";
 import FeedbackModal from "../components/FeedbackModal";
 import OnboardingModal from "../components/OnboardingModal";
+import StreakRewardModal from "../components/StreakRewardModal";
 import { useToast } from "../hooks/useToast";
-import { useAttendancePoints, useFeedbackReward, POINTS_TO_WON_RATE } from "../hooks/useAttendancePoints";
+import { useAttendancePoints, useFeedbackReward, useStreakMilestoneRewards, POINTS_TO_WON_RATE } from "../hooks/useAttendancePoints";
 import { useMissions } from "../hooks/useMissions";
 import { useNews } from "../hooks/useNews";
 import { maybePromptMissionPushConsent } from "../utils/pushConsent";
@@ -33,10 +34,13 @@ export default function HomeScreen({
   accountType, onNavigateCreateRoom, onNavigatePublicRooms, onNavigateRoom, onNavigateProfile,
 }: HomeScreenProps) {
   const [rooms, setRooms] = useState<ClassroomListItem[]>([]);
+  const [appCurrentStreak, setAppCurrentStreak] = useState<number | null>(null);
+  const [appBestStreak, setAppBestStreak] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const { toastMessage, showToast } = useToast();
   const roomLimit = accountType === "PREMIUM" ? 50 : 10;
   const { totalPoints, addPoints, requestConversion } = useAttendancePoints();
+  const streakRewards = useStreakMilestoneRewards(appBestStreak ?? 0);
   const { alreadyRewarded: feedbackAlreadyRewarded, markRewarded: markFeedbackRewarded } = useFeedbackReward();
   const { missions, hasUpdate: missionHasUpdate, markSeen: markMissionSeen, claim: claimMission } = useMissions();
   const { news, hasUnread: newsHasUnread, markSeen: markNewsSeen } = useNews();
@@ -48,6 +52,7 @@ export default function HomeScreen({
   const showMissionButton = missions.length > 0;
   const [showConvertModal, setShowConvertModal] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [showStreakRewardModal, setShowStreakRewardModal] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(() => localStorage.getItem("att-onboarding-seen") !== "1");
 
   const handleConvertPoints = () => {
@@ -69,9 +74,11 @@ export default function HomeScreen({
     let currentRooms = rooms;
     if (loading) {
       try {
-        const data = await api<{ classrooms: ClassroomListItem[] }>("/classrooms/my");
+        const data = await api<{ classrooms: ClassroomListItem[]; appCurrentStreak?: number; appBestStreak?: number }>("/classrooms/my");
         currentRooms = data.classrooms;
         setRooms(currentRooms);
+        setAppCurrentStreak(data.appCurrentStreak ?? 0);
+        setAppBestStreak(data.appBestStreak ?? data.appCurrentStreak ?? 0);
       } catch {
         onNavigateCreateRoom();
         return;
@@ -85,9 +92,17 @@ export default function HomeScreen({
   };
 
   useEffect(() => {
-    api<{ classrooms: ClassroomListItem[] }>("/classrooms/my")
-      .then((data) => setRooms(data.classrooms))
-      .catch(() => setRooms([]))
+    api<{ classrooms: ClassroomListItem[]; appCurrentStreak?: number; appBestStreak?: number }>("/classrooms/my")
+      .then((data) => {
+        setRooms(data.classrooms);
+        setAppCurrentStreak(data.appCurrentStreak ?? 0);
+        setAppBestStreak(data.appBestStreak ?? data.appCurrentStreak ?? 0);
+      })
+      .catch(() => {
+        setRooms([]);
+        setAppCurrentStreak(0);
+        setAppBestStreak(0);
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -100,7 +115,23 @@ export default function HomeScreen({
   return (
     <div className="page" style={{ display: "flex", flexDirection: "column", height: "100dvh", minHeight: 0, overflow: "hidden" }}>
       <div style={{ padding: "20px 20px 12px", display: "flex", justifyContent: "space-between", alignItems: "center", flexShrink: 0 }}>
-        <div style={{ fontSize: 22, fontWeight: 700 }}>내 방</div>
+        <div style={{ display: "flex", alignItems: "center", minWidth: 0 }}>
+          <div style={{ fontSize: 22, fontWeight: 700 }}>내 방</div>
+          {appCurrentStreak !== null && (appCurrentStreak > 0 || streakRewards.claimableRewards.length > 0) && (
+            <button
+              type="button"
+              className="app-streak-reward-badge"
+              onClick={() => setShowStreakRewardModal(true)}
+              aria-label={streakRewards.claimableRewards.length > 0
+                ? "연속 출석 보상 확인"
+                : `출석 ${appCurrentStreak}일째`}
+            >
+              <img className="app-streak-reward-icon" src="/rewards/gift-box-closed.png" alt="" aria-hidden="true" />
+              <span>{appCurrentStreak > 0 ? <>출석 <strong>{appCurrentStreak}일째!</strong></> : "출석 보상!"}</span>
+              {streakRewards.claimableRewards.length > 0 && <span className="streak-reward-dot" aria-label="받을 보상이 있어요" />}
+            </button>
+          )}
+        </div>
         {/* 방 만들기/참여는 "방 찾기" 탭에 모아두어, 홈 헤더에는 소식만 남긴다. */}
         <NewsButton hasUnread={newsHasUnread} onClick={() => { markNewsSeen(); setShowNewsModal(true); }} />
       </div>
@@ -168,6 +199,16 @@ export default function HomeScreen({
           totalPoints={totalPoints}
           onClose={() => setShowConvertModal(false)}
           onConverted={handleConverted}
+        />
+      )}
+      {showStreakRewardModal && (
+        <StreakRewardModal
+          currentStreak={appCurrentStreak ?? 0}
+          bestStreak={appBestStreak ?? 0}
+          claimedDays={streakRewards.claimedDays}
+          onClaim={streakRewards.claim}
+          onRewarded={addPoints}
+          onClose={() => setShowStreakRewardModal(false)}
         />
       )}
       {showFeedbackModal && (

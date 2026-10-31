@@ -186,6 +186,7 @@ export function resetDevPreview() {
   // 방 구분 없이 하루 전체 상한(최대 3번)을 추적하는 키 — 이것도 같이 안 지우면
   // 한 번 다 써버린 뒤로는 새로고침해도 계속 선물상자가 안 뜬다.
   localStorage.removeItem("att-points-reward-daily");
+  localStorage.removeItem("att-points-streak-rewards-claimed");
 }
 
 const DEV_MEMBERS = [
@@ -264,14 +265,17 @@ function devMock(path: string, method: string, body?: string): unknown | undefin
   if (path === "/classrooms/my") {
     // ?emptyRooms=1 로 열면 "참여한 방이 없는" 첫 화면을 로컬에서 확인할 수 있다.
     if (new URLSearchParams(window.location.search).get("emptyRooms") === "1") {
-      return { classrooms: [] };
+      return { classrooms: [], appCurrentStreak: 0, appBestStreak: 0 };
     }
-    return { classrooms: DEV_ROOM_IDS.map((id) => ({
+    return { appCurrentStreak: 8, appBestStreak: 8, classrooms: DEV_ROOM_IDS.map((id) => ({
       classroomId: id, name: DEV_ROOM_NAMES.get(id), ownerId: -1, ownerNickname: "민준",
       // 방장/참여자 표시를 둘 다 확인할 수 있게 홀수 방만 방장으로 둔다.
       isOwner: -id % 2 === 1, memberCount: 3, maxMembers: 100, todayCheckedIn: (devCheckInCount.get(id) ?? 0) > 0,
       todayRank: devDailyRank.get(id) ?? null, isPublic: false, inviteCode: `PREVIEW${-id}`,
       joined: true, isDemo: true,
+      currentStreak: id === -1 ? 8 : Math.max(1, 8 - (Math.abs(id) % 5)),
+      checkInStartTime: id % 3 === 0 ? "06:00" : null,
+      checkInEndTime: id % 3 === 0 ? "09:00" : null,
       // 인증 태그와 안 읽은 인사 점이 섞여 보이는지 확인할 수 있게 방마다 다르게 둔다.
       validationType: -id % 3 === 1 ? "PHOTO" : -id % 3 === 2 ? "GPS" : "NONE",
       latestGreetingId: id === -1 ? 12 : -id % 4 === 0 ? 5 : null,
@@ -280,27 +284,28 @@ function devMock(path: string, method: string, body?: string): unknown | undefin
 
   if (path === "/classrooms/public") {
     const SHOWCASE_ROOMS = [
-      { name: "광교숲도서관 출석", owner: "유재원", memberCount: 17, maxMembers: 30 },
-      { name: "50대 파이어~!", owner: "김민정", memberCount: 8, maxMembers: 30 },
-      { name: "산책", owner: "이경민", memberCount: 8, maxMembers: 30 },
-      { name: "미라클모닝 6시반", owner: "박서준", memberCount: 24, maxMembers: 30 },
-      { name: "스터디카페 출첵방", owner: "정윤우", memberCount: 12, maxMembers: 20 },
-      { name: "헬스 루틴 인증", owner: "최하은", memberCount: 19, maxMembers: 30 },
-      { name: "직장인 아침독서", owner: "강지호", memberCount: 6, maxMembers: 15 },
-      { name: "매일 영어 한마디", owner: "윤서아", memberCount: 15, maxMembers: 30 },
-      { name: "달리기 모임 새벽반", owner: "임도윤", memberCount: 9, maxMembers: 20 },
-      { name: "출석왕 도전방", owner: "한소율", memberCount: 22, maxMembers: 30 },
-      { name: "다이어트 같이해요", owner: "오은우", memberCount: 11, maxMembers: 25 },
-      { name: "자격증 공부방", owner: "신예린", memberCount: 7, maxMembers: 15 },
-      { name: "요가 조식 인증", owner: "배수민", memberCount: 13, maxMembers: 20 },
-      { name: "코딩테스트 매일풀이", owner: "조민재", memberCount: 18, maxMembers: 30 },
-      { name: "등산 동호회 주말반", owner: "홍지유", memberCount: 10, maxMembers: 25 },
+      { name: "광교숲도서관 출석", owner: "유재원", memberCount: 17, maxMembers: 30, checkInStartTime: "07:00", checkInEndTime: "09:00" },
+      { name: "50대 파이어~!", owner: "김민정", memberCount: 8, maxMembers: 30, checkInStartTime: null, checkInEndTime: null },
+      { name: "산책", owner: "이경민", memberCount: 8, maxMembers: 30, checkInStartTime: "06:00", checkInEndTime: "08:00" },
+      { name: "미라클모닝 6시반", owner: "박서준", memberCount: 24, maxMembers: 30, checkInStartTime: "06:00", checkInEndTime: "07:30" },
+      { name: "스터디카페 출첵방", owner: "정윤우", memberCount: 12, maxMembers: 20, checkInStartTime: "08:00", checkInEndTime: "22:00" },
+      { name: "헬스 루틴 인증", owner: "최하은", memberCount: 19, maxMembers: 30, checkInStartTime: null, checkInEndTime: null },
+      { name: "직장인 아침독서", owner: "강지호", memberCount: 6, maxMembers: 15, checkInStartTime: "07:00", checkInEndTime: "09:00" },
+      { name: "매일 영어 한마디", owner: "윤서아", memberCount: 15, maxMembers: 30, checkInStartTime: "00:00", checkInEndTime: "23:59" },
+      { name: "달리기 모임 새벽반", owner: "임도윤", memberCount: 9, maxMembers: 20, checkInStartTime: "05:30", checkInEndTime: "07:00" },
+      { name: "출석왕 도전방", owner: "한소율", memberCount: 22, maxMembers: 30, checkInStartTime: null, checkInEndTime: null },
+      { name: "다이어트 같이해요", owner: "오은우", memberCount: 11, maxMembers: 25, checkInStartTime: "06:00", checkInEndTime: "10:00" },
+      { name: "자격증 공부방", owner: "신예린", memberCount: 7, maxMembers: 15, checkInStartTime: "19:00", checkInEndTime: "23:00" },
+      { name: "요가 조식 인증", owner: "배수민", memberCount: 13, maxMembers: 20, checkInStartTime: "06:00", checkInEndTime: "08:30" },
+      { name: "코딩테스트 매일풀이", owner: "조민재", memberCount: 18, maxMembers: 30, checkInStartTime: "20:00", checkInEndTime: "23:59" },
+      { name: "등산 동호회 주말반", owner: "홍지유", memberCount: 10, maxMembers: 25, checkInStartTime: "06:00", checkInEndTime: "12:00" },
     ];
     return { classrooms: DEV_PUBLIC_ROOM_IDS.map((id, i) => {
       const room = SHOWCASE_ROOMS[i % SHOWCASE_ROOMS.length]!;
       return {
         classroomId: id, name: room.name, ownerId: id, ownerNickname: room.owner,
         isOwner: false, memberCount: room.memberCount, maxMembers: room.maxMembers, todayCheckedIn: false,
+        checkInStartTime: room.checkInStartTime, checkInEndTime: room.checkInEndTime,
         // 암호방 배지가 섞여 보이는지 확인할 수 있게 3개마다 하나는 비공개로 둔다.
         todayRank: null, isPublic: i % 3 !== 1, inviteCode: `PUBLIC${-id}`, joined: false, isDemo: false,
         validationType: i % 4 === 0 ? "PHOTO" : i % 4 === 2 ? "GPS" : "NONE",

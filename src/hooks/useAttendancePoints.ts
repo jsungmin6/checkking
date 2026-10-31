@@ -10,6 +10,45 @@ const TOTAL_POINTS_KEY = "att-points-total";
 const WELCOME_BONUS_GRANTED_KEY = "att-points-welcome-granted";
 const WELCOME_BONUS_AMOUNT = 1000;
 
+const BASE_STREAK_MILESTONE_REWARDS = [
+  { days: 1, amount: 100 },
+  { days: 3, amount: 300 },
+  { days: 5, amount: 500 },
+  { days: 7, amount: 700 },
+  { days: 14, amount: 2000 },
+  { days: 21, amount: 2000 },
+] as const;
+const STREAK_REWARDS_CLAIMED_KEY = "att-points-streak-rewards-claimed";
+type StreakMilestoneReward = { days: number; amount: number };
+
+/** 21일 이후에는 매주 2,000P를 받을 수 있도록 다음 주차까지 보상 단계를 만든다. */
+export function getStreakMilestoneRewards(bestStreak: number) {
+  const rewards: StreakMilestoneReward[] = [...BASE_STREAK_MILESTONE_REWARDS];
+  const lastWeeklyMilestone = Math.max(28, Math.ceil((Math.max(bestStreak, 21) + 1) / 7) * 7);
+  for (let days = 28; days <= lastWeeklyMilestone; days += 7) {
+    rewards.push({ days, amount: 2000 });
+  }
+  return rewards;
+}
+
+/** 최고 연속 출석 기록에 도달한 마일스톤은 현재 연속 기록이 끊겨도 받을 수 있다. */
+export function useStreakMilestoneRewards(bestStreak: number) {
+  const [claimedDays, setClaimedDays] = useLocalStorage<number[]>(STREAK_REWARDS_CLAIMED_KEY, []);
+  const rewards = getStreakMilestoneRewards(bestStreak);
+  const claimableRewards = rewards.filter(
+    ({ days }) => bestStreak >= days && !claimedDays.includes(days),
+  );
+
+  const claim = (days: number): number | null => {
+    const reward = rewards.find((item) => item.days === days);
+    if (!reward || bestStreak < days || claimedDays.includes(days)) return null;
+    setClaimedDays([...claimedDays, days]);
+    return reward.amount;
+  };
+
+  return { claimedDays, rewards, claimableRewards, claim };
+}
+
 /**
  * 완전 신규 가입 시 1회만 1000P를 지급한다. 로컬스토리지 플래그로만 중복 방지하므로
  * 앱 재설치/기기 변경 시 다시 받을 수 있지만, 서버 포인트가 아니라 영향이 작아 허용한다.

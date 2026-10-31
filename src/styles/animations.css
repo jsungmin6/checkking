@@ -99,6 +99,21 @@
 .attendance-gift-total-label { margin-bottom: 3px; color: var(--text-secondary); font-size: 14px; }
 .attendance-gift-total { margin-bottom: 17px; color: var(--accent-blue); font-size: 36px; font-weight: 800; line-height: 1.2; }
 .attendance-gift-confirm { width: 100%; min-height: 54px; padding: 13px 16px; border: 0; border-radius: var(--radius-button, 14px); background: var(--accent-blue); color: #fff; font-size: 16px; font-weight: 700; cursor: pointer; }
+.streak-reward-dialog { gap: 0; }
+.streak-reward-list { display: flex; width: 100%; flex-direction: column; gap: 7px; margin-top: 13px; }
+.streak-reward-row { display: flex; min-height: 51px; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 12px; border-radius: 14px; background: var(--bg-secondary, #f6f7f9); text-align: left; }
+.streak-reward-row.is-claimable { background: #fff5e8; }
+.streak-reward-description { display: flex; flex-direction: column; gap: 2px; }
+.streak-reward-description strong { color: var(--text-primary); font-size: 14px; }
+.streak-reward-description span { color: var(--text-secondary); font-size: 12px; }
+.streak-reward-state { flex: 0 0 auto; color: var(--text-muted, #9aa4b2); font-size: 12px; }
+.streak-reward-state.is-claimed { color: #4a9b68; }
+.streak-reward-claim { min-width: 54px; padding: 7px 11px; border: 0; border-radius: 10px; background: #f59a23; color: white; font-size: 12px; font-weight: 700; cursor: pointer; }
+.streak-reward-dot { position: absolute; top: -3px; right: -3px; width: 9px; height: 9px; border: 1.5px solid #fff; border-radius: 50%; background: #f04452; }
+.app-streak-reward-badge { position: relative; display: inline-flex; align-items: center; gap: 5px; flex: 0 0 auto; min-height: 32px; margin-left: 10px; padding: 0 10px; border: 0; border-radius: 12px; background: linear-gradient(135deg, #236BE0, #4B91F5); box-shadow: 0 3px 9px rgba(42, 111, 220, .2); color: #fff; font-size: 11px; font-weight: 600; white-space: nowrap; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.app-streak-reward-badge:active { transform: scale(.97); }
+.app-streak-reward-badge strong { font-size: 12px; font-weight: 800; }
+.app-streak-reward-icon { width: 22px; height: 22px; flex: 0 0 auto; object-fit: contain; filter: drop-shadow(0 1px 2px rgba(10, 45, 100, .22)); }
 @media (max-height: 720px) {
   .attendance-gift-dialog { padding-top: 18px; padding-bottom: 16px; }
   .attendance-gift-image-frame { width: min(100%, 226px); }

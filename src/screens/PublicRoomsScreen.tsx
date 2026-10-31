@@ -156,6 +156,9 @@ export default function PublicRoomsScreen({ accountType, onNavigateHome, onNavig
     <div style={{ flex: 1, minHeight: 0, overflowY: "auto", overscrollBehavior: "contain", padding: "0 16px 20px" }}>
       {loading ? <div style={{ textAlign: "center", padding: 32 }}>불러오는 중...</div> : visible.length === 0 ? <div style={{ textAlign: "center", padding: 32, color: "var(--text-secondary)" }}>검색 결과가 없습니다.</div> : visible.map((room) => {
         const full = room.memberCount >= room.maxMembers;
+        const checkInTime = room.checkInStartTime && room.checkInEndTime
+          ? `${room.checkInStartTime} ~ ${room.checkInEndTime}`
+          : "24시간";
         return <div key={room.classroomId} style={{ padding: "12px 14px", marginBottom: 8, background: "var(--bg-card)", borderRadius: "var(--radius-card)", boxShadow: "var(--shadow-card)" }}>
         <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center" }}>
           <div style={{ minWidth: 0, display: "flex", alignItems: "center", gap: 6 }}>
@@ -181,6 +184,13 @@ export default function PublicRoomsScreen({ accountType, onNavigateHome, onNavig
           <div style={{ color: "var(--text-secondary)", fontSize: 12, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{room.ownerNickname} · {room.memberCount}/{room.maxMembers}</div>
           {/* 들어가기 전에 사진·위치 인증을 쓰는 방인지 알려준다. */}
           <ValidationTag validationType={room.validationType} />
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 7, color: "var(--text-secondary)", fontSize: 12 }}>
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.4" />
+            <path d="M8 4.5V8l2.2 1.4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          출석 가능 시간 · {checkInTime}
         </div>
       </div>})}
     </div>

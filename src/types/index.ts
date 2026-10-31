@@ -114,6 +114,11 @@ export interface ClassroomListItem {
   isDemo?: boolean;
   /** 방 카드에 "사진 인증" 같은 태그를 띄우는 데 쓴다. */
   validationType?: ValidationType;
+  /** 이 방의 주말 포함 설정을 반영한 내 현재 연속 출석일. */
+  currentStreak?: number;
+  /** 출석 가능 시간. 둘 다 null이면 24시간 출석 가능. */
+  checkInStartTime?: string | null;
+  checkInEndTime?: string | null;
   /** 오늘의 마지막 인사 id. 참여하지 않은 방은 인사를 볼 수 없어 null 이다. */
   latestGreetingId?: number | null;
 }
