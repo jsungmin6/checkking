@@ -187,6 +187,7 @@ export function resetDevPreview() {
   // 한 번 다 써버린 뒤로는 새로고침해도 계속 선물상자가 안 뜬다.
   localStorage.removeItem("att-points-reward-daily");
   localStorage.removeItem("att-points-streak-rewards-claimed");
+  localStorage.removeItem("att-points-streak-reward-progress-v2");
 }
 
 const DEV_MEMBERS = [

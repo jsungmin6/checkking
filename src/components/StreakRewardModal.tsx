@@ -4,7 +4,6 @@ import { getStreakMilestoneRewards } from "../hooks/useAttendancePoints";
 
 interface StreakRewardModalProps {
   currentStreak: number;
-  bestStreak: number;
   claimedDays: number[];
   onClaim: (days: number) => number | null;
   onRewarded: (amount: number) => void;
@@ -12,17 +11,17 @@ interface StreakRewardModalProps {
 }
 
 export default function StreakRewardModal({
-  currentStreak, bestStreak, claimedDays, onClaim, onRewarded, onClose,
+  currentStreak, claimedDays, onClaim, onRewarded, onClose,
 }: StreakRewardModalProps) {
-  const rewards = getStreakMilestoneRewards(bestStreak);
+  const rewards = getStreakMilestoneRewards(currentStreak);
   const [selectedDays, setSelectedDays] = useState<number | null>(null);
   const [openRequest, setOpenRequest] = useState(0);
   const [result, setResult] = useState<{ days: number; amount: number } | null>(null);
   const selectedReward = rewards.find(({ days }) => days === selectedDays);
-  const claimableRewards = rewards.filter(({ days }) => bestStreak >= days && !claimedDays.includes(days));
-  const nextReward = rewards.find(({ days }) => days > bestStreak);
+  const claimableRewards = rewards.filter(({ days }) => currentStreak >= days && !claimedDays.includes(days));
+  const nextReward = rewards.find(({ days }) => days > currentStreak);
   const hasMoreClaimable = claimableRewards.some(
-    ({ days }) => bestStreak >= days && !claimedDays.includes(days),
+    ({ days }) => currentStreak >= days && !claimedDays.includes(days),
   );
 
   const handleOpened = () => {
@@ -59,7 +58,7 @@ export default function StreakRewardModal({
         <button className="attendance-gift-close" onClick={onClose} aria-label="닫기">×</button>
         <h2 className="attendance-gift-title">연속 출석 보상</h2>
         <div className="attendance-gift-rank">
-          현재 {currentStreak}일 · 최고 {bestStreak}일 연속 출석
+          현재 {currentStreak}일 연속 출석
         </div>
 
         {result ? (
@@ -92,7 +91,7 @@ export default function StreakRewardModal({
 
             <div className="streak-reward-list">
               {[...claimableRewards, ...(nextReward ? [nextReward] : [])].map(({ days, amount }) => {
-                const canClaim = bestStreak >= days && !claimedDays.includes(days);
+                const canClaim = currentStreak >= days && !claimedDays.includes(days);
                 return (
                   <div className={`streak-reward-row${canClaim ? " is-claimable" : ""}`} key={days}>
                     <div className="streak-reward-description">

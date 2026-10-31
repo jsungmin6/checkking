@@ -35,12 +35,11 @@ export default function HomeScreen({
 }: HomeScreenProps) {
   const [rooms, setRooms] = useState<ClassroomListItem[]>([]);
   const [appCurrentStreak, setAppCurrentStreak] = useState<number | null>(null);
-  const [appBestStreak, setAppBestStreak] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const { toastMessage, showToast } = useToast();
   const roomLimit = accountType === "PREMIUM" ? 50 : 10;
   const { totalPoints, addPoints, requestConversion } = useAttendancePoints();
-  const streakRewards = useStreakMilestoneRewards(appBestStreak ?? 0);
+  const streakRewards = useStreakMilestoneRewards(appCurrentStreak);
   const { alreadyRewarded: feedbackAlreadyRewarded, markRewarded: markFeedbackRewarded } = useFeedbackReward();
   const { missions, hasUpdate: missionHasUpdate, markSeen: markMissionSeen, claim: claimMission } = useMissions();
   const { news, hasUnread: newsHasUnread, markSeen: markNewsSeen } = useNews();
@@ -74,11 +73,10 @@ export default function HomeScreen({
     let currentRooms = rooms;
     if (loading) {
       try {
-        const data = await api<{ classrooms: ClassroomListItem[]; appCurrentStreak?: number; appBestStreak?: number }>("/classrooms/my");
+        const data = await api<{ classrooms: ClassroomListItem[]; appCurrentStreak?: number }>("/classrooms/my");
         currentRooms = data.classrooms;
         setRooms(currentRooms);
         setAppCurrentStreak(data.appCurrentStreak ?? 0);
-        setAppBestStreak(data.appBestStreak ?? data.appCurrentStreak ?? 0);
       } catch {
         onNavigateCreateRoom();
         return;
@@ -92,16 +90,14 @@ export default function HomeScreen({
   };
 
   useEffect(() => {
-    api<{ classrooms: ClassroomListItem[]; appCurrentStreak?: number; appBestStreak?: number }>("/classrooms/my")
+    api<{ classrooms: ClassroomListItem[]; appCurrentStreak?: number }>("/classrooms/my")
       .then((data) => {
         setRooms(data.classrooms);
         setAppCurrentStreak(data.appCurrentStreak ?? 0);
-        setAppBestStreak(data.appBestStreak ?? data.appCurrentStreak ?? 0);
       })
       .catch(() => {
         setRooms([]);
-        setAppCurrentStreak(0);
-        setAppBestStreak(0);
+        setAppCurrentStreak(null);
       })
       .finally(() => setLoading(false));
   }, []);
@@ -204,7 +200,6 @@ export default function HomeScreen({
       {showStreakRewardModal && (
         <StreakRewardModal
           currentStreak={appCurrentStreak ?? 0}
-          bestStreak={appBestStreak ?? 0}
           claimedDays={streakRewards.claimedDays}
           onClaim={streakRewards.claim}
           onRewarded={addPoints}

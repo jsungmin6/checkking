@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useLocalStorage } from "./useLocalStorage";
 
 export const POINTS_TO_WON_RATE = 1000; // 1000P = 1원
@@ -18,31 +19,55 @@ const BASE_STREAK_MILESTONE_REWARDS = [
   { days: 14, amount: 2000 },
   { days: 21, amount: 2000 },
 ] as const;
-const STREAK_REWARDS_CLAIMED_KEY = "att-points-streak-rewards-claimed";
+const STREAK_REWARD_PROGRESS_KEY = "att-points-streak-reward-progress-v2";
 type StreakMilestoneReward = { days: number; amount: number };
+type StreakRewardProgress = { lastObservedStreak: number; claimedDays: number[] };
 
-/** 21일 이후에는 매주 2,000P를 받을 수 있도록 다음 주차까지 보상 단계를 만든다. */
-export function getStreakMilestoneRewards(bestStreak: number) {
+/** 21일 이후에는 매주 2,000P를 받을 수 있도록 현재 연속일 다음 주차까지 단계를 만든다. */
+export function getStreakMilestoneRewards(currentStreak: number) {
   const rewards: StreakMilestoneReward[] = [...BASE_STREAK_MILESTONE_REWARDS];
-  const lastWeeklyMilestone = Math.max(28, Math.ceil((Math.max(bestStreak, 21) + 1) / 7) * 7);
+  const lastWeeklyMilestone = Math.max(28, Math.ceil((Math.max(currentStreak, 21) + 1) / 7) * 7);
   for (let days = 28; days <= lastWeeklyMilestone; days += 7) {
     rewards.push({ days, amount: 2000 });
   }
   return rewards;
 }
 
-/** 최고 연속 출석 기록에 도달한 마일스톤은 현재 연속 기록이 끊겨도 받을 수 있다. */
-export function useStreakMilestoneRewards(bestStreak: number) {
-  const [claimedDays, setClaimedDays] = useLocalStorage<number[]>(STREAK_REWARDS_CLAIMED_KEY, []);
-  const rewards = getStreakMilestoneRewards(bestStreak);
-  const claimableRewards = rewards.filter(
-    ({ days }) => bestStreak >= days && !claimedDays.includes(days),
+/** 보상은 최근 이어지는 연속 출석 구간마다 받을 수 있고, 구간이 끊기면 수령 기록도 초기화한다. */
+export function useStreakMilestoneRewards(currentStreak: number | null) {
+  const [progress, setProgress] = useLocalStorage<StreakRewardProgress>(
+    STREAK_REWARD_PROGRESS_KEY,
+    { lastObservedStreak: 0, claimedDays: [] },
   );
+  const streak = currentStreak ?? 0;
+  const streakReset = currentStreak !== null && streak < progress.lastObservedStreak;
+  const claimedDays = streakReset ? [] : progress.claimedDays;
+  const rewards = getStreakMilestoneRewards(streak);
+  const claimableRewards = rewards.filter(
+    ({ days }) => streak >= days && !claimedDays.includes(days),
+  );
+
+  useEffect(() => {
+    if (currentStreak === null) return;
+    if (!streakReset && progress.lastObservedStreak === currentStreak) return;
+    setProgress({
+      lastObservedStreak: currentStreak,
+      claimedDays: streakReset ? [] : progress.claimedDays,
+    });
+  }, [currentStreak, progress, setProgress, streakReset]);
 
   const claim = (days: number): number | null => {
     const reward = rewards.find((item) => item.days === days);
-    if (!reward || bestStreak < days || claimedDays.includes(days)) return null;
-    setClaimedDays([...claimedDays, days]);
+    if (currentStreak === null || !reward || streak < days || claimedDays.includes(days)) return null;
+    setProgress((previous) => {
+      const reset = streak < previous.lastObservedStreak;
+      const currentClaims = reset ? [] : previous.claimedDays;
+      if (currentClaims.includes(days)) return previous;
+      return {
+        lastObservedStreak: streak,
+        claimedDays: [...currentClaims, days],
+      };
+    });
     return reward.amount;
   };
 
