@@ -68,13 +68,14 @@ export default function ProfileScreen({ user, onNavigateHome, onNavigatePublicRo
     setSaving(true);
     setError(null);
     try {
-      await api<{ userId: number; nickname: string }>("/users/me", {
+      const updated = await api<{ userId: number; nickname: string }>("/users/me", {
         method: "PUT",
         body: JSON.stringify({ nickname }),
       });
       // 저장만 눌러도 완료되면 미션이 아니다 — 쓰던 이름과 달라졌을 때만 쳐준다.
       if (nickname !== user.nickname) markMissionDone("nickname");
-      onNicknameUpdate(nickname);
+      setNickname(updated.nickname);
+      onNicknameUpdate(updated.nickname);
       setEditing(false);
     } catch (e) {
       setError(e instanceof Error ? e.message : "저장 실패");
