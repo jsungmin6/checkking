@@ -9,7 +9,8 @@
 .lab-received-points strong { color: var(--text-primary); font-size: 14px; font-weight: 750; }
 .lab-received-points-chevron { margin-left: 1px; color: #a8b1bd; font-size: 20px; line-height: 1; }
 .lab-content { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 8px 16px 24px; }
-.lab-activity-intro { margin: 2px 4px 10px; color: var(--text-secondary); font-size: 13px; font-weight: 600; }
+/* 아래 카드들을 묶는 안내. 본문이 아니라 소제목처럼 읽혀야 해서 크고 진하게 둔다. */
+.lab-activity-intro { margin: 10px 4px 12px; color: var(--text-primary); font-size: 17px; font-weight: 800; line-height: 1.4; }
 .lab-clover-card { position: relative; display: grid; width: 100%; grid-template-columns: 68px minmax(0,1fr) auto; gap: 12px; align-items: center; padding: 16px; border: 0; border-radius: var(--radius-card); background: var(--bg-card); box-shadow: var(--shadow-card); color: var(--text-primary); text-align: left; cursor: pointer; }
 .lab-clover-card-icon { display: flex; width: 64px; height: 64px; align-items: center; justify-content: center; overflow: hidden; border-radius: 20px; background: #eff8ec; }
 .lab-clover-card-icon img { width: 64px; height: 64px; object-fit: contain; }

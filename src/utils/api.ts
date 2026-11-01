@@ -129,22 +129,27 @@ function fetchWithTimeout(url: string, options: RequestInit, timeoutMs = 15000):
 }
 
 // TEMP dev-only mock data for the "로컬 미리보기" bypass. Remove before shipping.
-const DEV_ROOM_COUNT = 5;
+/**
+ * 로컬 미리보기에 띄울 내 방들. **가이드·스토어 이미지를 캡처하는 데 쓴다.**
+ *
+ * 예전에는 "로컬 미리보기 방 1~5"였는데, 그대로 캡처하면 앱이 뭘 하는 건지 전혀
+ * 안 보인다. 실제로 많이 만들어지는 챌린지 성격으로 채운다.
+ */
+const DEV_ROOMS = [
+  { name: "🏃 아침 운동 챌린지!", members: 24, streak: 18 },
+  { name: "🍳 아침 먹기 루틴 지키기", members: 12, streak: 9 },
+  { name: "💪 아침 운동 인증하기", members: 31, streak: 6 },
+  { name: "📔 매일 일기쓰기", members: 8, streak: 3 },
+  { name: "📖 자기 전 30분 독서", members: 17, streak: 12 },
+] as const;
+
+const DEV_ROOM_COUNT = DEV_ROOMS.length;
 const DEV_ROOM_IDS = Array.from({ length: DEV_ROOM_COUNT }, (_, i) => -(i + 1));
-const DEV_ROOM_NAMES = new Map<number, string>(DEV_ROOM_IDS.map((id) => [id, `로컬 미리보기 방 ${-id}`]));
-const SHOWCASE_MY_ROOM_NAMES: Record<number, string> = {
-  [-1]: "아침 기상 챌린지",
-  [-2]: "스터디카페 출첵방",
-  [-3]: "헬스 루틴 인증",
-  [-4]: "매일 영어 한마디",
-  [-5]: "미라클모닝 6시반",
-  [-6]: "달리기 모임 새벽반",
-  [-7]: "다이어트 같이해요",
-  [-8]: "자격증 공부방",
-};
-for (const [id, name] of Object.entries(SHOWCASE_MY_ROOM_NAMES)) {
-  DEV_ROOM_NAMES.set(Number(id), name);
-}
+const DEV_ROOM_NAMES = new Map<number, string>(
+  DEV_ROOM_IDS.map((id, i) => [id, DEV_ROOMS[i]!.name]),
+);
+/** id(-1…-5)로 미리보기 방 정보를 찾는다. */
+const devRoom = (id: number) => DEV_ROOMS[Math.abs(id) - 1] ?? DEV_ROOMS[0]!;
 
 // 방 찾기 화면의 가짜 공개방 목록
 const DEV_PUBLIC_ROOM_IDS = Array.from({ length: 5 }, (_, i) => -(100 + i));
@@ -447,10 +452,11 @@ function devMock(path: string, method: string, body?: string): unknown | undefin
     return { appCurrentStreak: 3, appBestStreak: 8, appLastCheckInDate: new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Seoul" }), classrooms: DEV_ROOM_IDS.map((id) => ({
       classroomId: id, name: DEV_ROOM_NAMES.get(id), ownerId: -1, ownerNickname: "민준",
       // 방장/참여자 표시를 둘 다 확인할 수 있게 홀수 방만 방장으로 둔다.
-      isOwner: -id % 2 === 1, memberCount: 3, maxMembers: 100, todayCheckedIn: (devCheckInCount.get(id) ?? 0) > 0,
+      isOwner: -id % 2 === 1, memberCount: devRoom(id).members, maxMembers: 100,
+      todayCheckedIn: (devCheckInCount.get(id) ?? 0) > 0,
       todayRank: devDailyRank.get(id) ?? null, isPublic: false, inviteCode: `PREVIEW${-id}`,
       joined: true, isDemo: true,
-      currentStreak: id === -1 ? 8 : Math.max(1, 8 - (Math.abs(id) % 5)),
+      currentStreak: devRoom(id).streak,
       checkInStartTime: id % 3 === 0 ? "06:00" : null,
       checkInEndTime: id % 3 === 0 ? "09:00" : null,
       // 인증 태그와 안 읽은 인사 점이 섞여 보이는지 확인할 수 있게 방마다 다르게 둔다.
@@ -502,7 +508,7 @@ function devMock(path: string, method: string, body?: string): unknown | undefin
       classroomId: id, name: DEV_ROOM_NAMES.get(id), inviteCode: `PREVIEW${-id}`, ownerId: -1, ownerNickname: "민준",
       validationType: "NONE", gpsConfig: null, wifiConfig: null,
       checkInStartTime: null, checkInEndTime: null, includeWeekends: true, isPublic: false,
-      memberCount: id === -1 ? DEV_MEMBERS.length : 3, maxMembers: 100, createdAt: "2026-10-01T00:00:00",
+      memberCount: id === -1 ? DEV_MEMBERS.length : devRoom(id).members, maxMembers: 100, createdAt: "2026-10-01T00:00:00",
       announcement: devAnnouncement.get(id) ?? null,
       latestGreetingId: (devGreetings.get(id) ?? []).reduce((max, g) => Math.max(max, g.greetingId), 0) || null,
     };

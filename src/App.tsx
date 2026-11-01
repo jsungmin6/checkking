@@ -20,6 +20,19 @@ import CloverFinderScreen from "./screens/CloverFinderScreen";
 import OnboardingModal from "./components/OnboardingModal";
 import type { ScreenName, User } from "./types";
 
+/**
+ * 딥링크로 바로 열 수 있는 화면. `intoss://checkking?tab=points` 형태로 쓴다.
+ *
+ * 프로모션 링크를 홈이 아니라 포인트 탭으로 보내기 위한 것이다. 아는 값만 받는다 —
+ * 임의의 화면 이름을 외부에서 넣게 하면 안 된다.
+ */
+const ENTRY_TABS: Record<string, ScreenName | undefined> = {
+  points: "lab",
+  lab: "lab",
+  rooms: "publicRooms",
+  profile: "profile",
+};
+
 export default function App() {
   const { user: authUser, loading, authError, needsTermsAgreement, loginWithKakaoToken, loginWithApple, loginWithToss, acceptTerms, logout, updateNickname, updateAvatar } = useAuth();
   const previewQuery = new URLSearchParams(window.location.search);
@@ -56,11 +69,17 @@ export default function App() {
   useEffect(() => {
     if (inviteLinkHandledRef.current || loading || !user || needsTermsAgreement) return;
 
-    const fromLocation = new URLSearchParams(window.location.search).get("inviteCode");
+    const params = new URLSearchParams(window.location.search);
+    const fromLocation = params.get("inviteCode");
     if (fromLocation) {
       inviteLinkHandledRef.current = true;
       setPendingInviteCode(fromLocation);
       setScreen("joinRoom");
+      return;
+    }
+    if (ENTRY_TABS[params.get("tab") ?? ""]) {
+      inviteLinkHandledRef.current = true;
+      setScreen(ENTRY_TABS[params.get("tab")!]!);
       return;
     }
 
@@ -68,11 +87,20 @@ export default function App() {
     (async () => {
       try {
         const { Environment } = await import("@apps-in-toss/web-framework");
-        const code = new URL(Environment.initialURL).searchParams.get("inviteCode");
-        if (code && !inviteLinkHandledRef.current) {
+        const initial = new URL(Environment.initialURL).searchParams;
+        if (inviteLinkHandledRef.current) return;
+
+        const code = initial.get("inviteCode");
+        if (code) {
           inviteLinkHandledRef.current = true;
           setPendingInviteCode(code);
           setScreen("joinRoom");
+          return;
+        }
+        const tab = ENTRY_TABS[initial.get("tab") ?? ""];
+        if (tab) {
+          inviteLinkHandledRef.current = true;
+          setScreen(tab);
         }
       } catch {
         // initialURL이 없거나 파싱 불가 — 무시

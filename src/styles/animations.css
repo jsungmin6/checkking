@@ -442,3 +442,5 @@
 .streak-reward-card.is-toss-reward .streak-reward-stamp .streak-reward-toss-coin { width: 34px; height: 34px; color: #3182f6; }
 .streak-reward-card.is-toss-reward .streak-reward-toss { font-size: 12px; }
 .streak-reward-card.is-toss-reward .streak-reward-toss .streak-reward-toss-coin { width: 13px; height: 13px; }
+/* 실제 화면을 찍은 가로 이미지. 캐릭터 그림과 달리 넓게 깔고 카드처럼 보이게 둔다. */
+.onboarding-character.onboarding-shot { width: min(100%, 330px); height: auto; max-height: 245px; margin: 6px auto 10px; border-radius: 14px; }

@@ -77,6 +77,8 @@ function StreakStampPreview() {
 interface Step {
   image?: string;
   alt?: string;
+  /** 실제 화면을 찍은 이미지처럼 비율이 다른 그림에 붙일 클래스. */
+  imageClassName?: string;
   /** 이미지 대신 그릴 내용. 있으면 image보다 우선한다. */
   visual?: ReactNode;
   title: string;
@@ -85,8 +87,9 @@ interface Step {
 
 const STEPS: Step[] = [
   {
-    image: "/guide/guide-challenge.png",
-    alt: "토끼와 거북이가 함께 챌린지 출석 달력을 만들어요",
+    image: "/guide/guide-challenge-rooms.png",
+    alt: "아침 운동·일기쓰기 같은 챌린지 방 목록과 연속 출석일이 보여요",
+    imageClassName: "onboarding-shot",
     title: "다양한 챌린지를 함께하고 토스포인트를 받아가요",
     desc: "모임이나 챌린지 방을 만들어 함께 출석하고, 쌓인 기록으로 토스포인트까지 받아요.",
   },
@@ -107,6 +110,18 @@ const STEPS: Step[] = [
       <>
         출석점수 {LOTTERY_TICKET_PRICE.toLocaleString()}점을 모으면 복권 한 장을 긁을 수 있어요.{" "}
         <strong className="onboarding-accent">최대 {LOTTERY_MAX_PRIZE_WON.toLocaleString()}원</strong>이 바로 들어와요.
+      </>
+    ),
+  },
+  {
+    image: "/guide/guide-activities.png",
+    alt: "연속 출석 보상과 네잎 클로버 찾기 같은 활동 목록이 보여요",
+    imageClassName: "onboarding-shot",
+    title: "재밌는 활동으로 출석점수를 모아요",
+    desc: (
+      <>
+        연속 출석 보상, 네잎 클로버 찾기처럼 다양한 활동으로 출석점수를 모을 수 있어요.{" "}
+        <strong className="onboarding-accent">{LOTTERY_TICKET_PRICE.toLocaleString()}점</strong>이면 복권 한 장이에요.
       </>
     ),
   },
@@ -140,7 +155,12 @@ export default function OnboardingModal({ onClose }: OnboardingModalProps) {
       <section className="onboarding-dialog" role="dialog" aria-modal="true" aria-label="출석왕 사용 안내">
         {current.visual
           ? <div className="onboarding-character onboarding-visual">{current.visual}</div>
-          : <img className="onboarding-character" src={current.image} alt={current.alt} key={current.image} />}
+          : <img
+              className={`onboarding-character${current.imageClassName ? ` ${current.imageClassName}` : ""}`}
+              src={current.image}
+              alt={current.alt}
+              key={current.image}
+            />}
         <div className="onboarding-speech">
           <span className="onboarding-speaker">출석왕</span>
           <h2>{current.title}</h2>
