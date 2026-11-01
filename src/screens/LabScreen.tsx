@@ -8,7 +8,8 @@ import AttendanceLotteryModal from "../components/AttendanceLotteryModal";
 import TossPointsReceivedModal from "../components/TossPointsReceivedModal";
 import { useAttendancePoints, useStreakMilestoneRewards } from "../hooks/useAttendancePoints";
 import StreakRewardModal from "../components/StreakRewardModal";
-import {  syncTossPointLedger, TOSS_POINTS_RECEIVED_EVENT, TOSS_POINTS_RECEIVED_KEY } from "../utils/tossPromotion";
+import { STREAK_REWARD_WON, syncTossPointLedger, TOSS_POINTS_RECEIVED_EVENT, TOSS_POINTS_RECEIVED_KEY } from "../utils/tossPromotion";
+import { nextTossRewardDay } from "../utils/attendancePoints";
 import "../styles/lab.css";
 
 interface Props {
@@ -40,6 +41,9 @@ export default function LabScreen({
   });
   const { totalPoints, refresh: refreshPoints } = useAttendancePoints();
   const streakRewards = useStreakMilestoneRewards();
+  // 다음 토스포인트까지 며칠 남았는지. 지급일이 더 없으면(97일차 이후) 숨긴다.
+  const nextRewardDay = nextTossRewardDay(streakRewards.currentStreak);
+  const tossRewardCountdown = nextRewardDay === null ? null : nextRewardDay - streakRewards.currentStreak;
 
   /**
    * 복권 결과 뒤 화면을 맞춘다.
@@ -143,12 +147,21 @@ export default function LabScreen({
             <span>연속 {streakRewards.currentStreak}일</span>
           </span>
           <span className="lab-clover-card-arrow" aria-hidden="true">›</span>
-          {streakRewards.claimableRewards.length > 0 && (
-            <span className="lab-clover-card-progress">
-              <span className="lab-streak-card-ready">받을 보상이 있어요</span>
-              <span className="lab-clover-card-dot" aria-hidden="true" />
-            </span>
-          )}
+          <span className="lab-clover-card-progress">
+            {streakRewards.claimableRewards.length > 0 ? (
+              <>
+                <span className="lab-streak-card-ready">받을 보상이 있어요</span>
+                <span className="lab-clover-card-dot" aria-hidden="true" />
+              </>
+            ) : tossRewardCountdown !== null ? (
+              <span>
+                <strong className="lab-streak-card-ready">{tossRewardCountdown}일</strong>만 더 출석하면 토스포인트{" "}
+                <strong className="lab-streak-card-ready">{STREAK_REWARD_WON}원</strong>
+              </span>
+            ) : (
+              <span>도장을 모아 출석점수를 받아요</span>
+            )}
+          </span>
         </button>
         <button className="lab-clover-card" onClick={onOpenCloverFinder}>
           <span className="lab-clover-card-icon" aria-hidden="true">

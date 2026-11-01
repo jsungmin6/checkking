@@ -60,6 +60,19 @@ export function isTossRewardDay(day: number): boolean {
 }
 
 /**
+ * `streak`보다 뒤에 오는 가장 가까운 토스포인트 지급일. 더 없으면 null.
+ *
+ * "며칠만 더 출석하면 받는다"를 안내하는 데 쓴다. 지금 일차가 지급일이어도 그날은
+ * 세지 않는다 — 아직 안 받았다면 "받을 수 있다"고 따로 알려야 할 상태다.
+ */
+export function nextTossRewardDay(streak: number): number | null {
+  if (streak < FIRST_TOSS_REWARD_DAY) return FIRST_TOSS_REWARD_DAY;
+  const elapsed = streak - FIRST_TOSS_REWARD_DAY;
+  const next = FIRST_TOSS_REWARD_DAY + (Math.floor(elapsed / TOSS_REWARD_INTERVAL) + 1) * TOSS_REWARD_INTERVAL;
+  return next > MAX_STREAK_DAY ? null : next;
+}
+
+/**
  * 그 일차에 받는 출석점수.
  *
  * **토스포인트를 받는 날에는 출석점수를 주지 않는다.** 둘 다 주면 보상이 겹쳐

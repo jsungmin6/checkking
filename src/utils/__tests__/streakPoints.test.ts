@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { streakPoints, isTossRewardDay, MAX_STREAK_DAY } from "../attendancePoints";
+import { streakPoints, isTossRewardDay, nextTossRewardDay, MAX_STREAK_DAY } from "../attendancePoints";
 
 /**
  * 연속 출석 보상표를 고정한다.
@@ -44,5 +44,21 @@ describe("streakPoints", () => {
     let count = 0;
     for (let day = 1; day <= MAX_STREAK_DAY; day += 1) if (isTossRewardDay(day)) count += 1;
     expect(count).toBe(19);
+  });
+
+  it("다음 지급일까지 남은 일수를 센다", () => {
+    expect(nextTossRewardDay(0)).toBe(7);    // 7일 남음
+    expect(nextTossRewardDay(5)).toBe(7);    // 2일 남음
+    expect(nextTossRewardDay(6)).toBe(7);    // 1일 남음
+    // 오늘이 지급일이면 그날은 세지 않는다 — 아직 안 받았다면 따로 "받을 수 있다"고 알린다.
+    expect(nextTossRewardDay(7)).toBe(12);
+    expect(nextTossRewardDay(8)).toBe(12);
+    expect(nextTossRewardDay(12)).toBe(17);
+  });
+
+  it("마지막 지급일(97)을 지나면 더 없다", () => {
+    expect(nextTossRewardDay(92)).toBe(97);
+    expect(nextTossRewardDay(97)).toBeNull();
+    expect(nextTossRewardDay(100)).toBeNull();
   });
 });
