@@ -176,12 +176,12 @@ export default function AttendanceLotteryModal({ totalPoints, onPointsChanged, o
             <h2 className="attendance-gift-title">출석복권</h2>
             <div className="attendance-gift-rank attendance-lottery-description">
               출석점수 10,000점으로 복권 1장을 살 수 있어요.<br />
-              당첨되면 <strong>토스포인트 1,000P</strong>를 바로 드려요. (1P = 현금 1원)
+              <strong>꽝 없이</strong> 토스포인트를 바로 드려요. (1P = 현금 1원)
             </div>
             <div className="attendance-lottery-ticket attendance-lottery-prize-range">
-              <span>당첨 금액</span>
+              <span>최대 당첨 금액</span>
               <strong>1,000원</strong>
-              <span>1,000 토스포인트</span>
+              <span>꽝 없이 최소 1원</span>
             </div>
             <div className="attendance-lottery-balance">보유 출석점수 {totalPoints.toLocaleString()}점</div>
             {error && <div className="attendance-lottery-error">{error}</div>}
@@ -213,17 +213,11 @@ export default function AttendanceLotteryModal({ totalPoints, onPointsChanged, o
                 </div>
                 <div className="attendance-lottery-scratch-area">
                   <div className="attendance-lottery-prize-underlay">
-                    {step === "result" && prize > 0 ? (
+                    {step === "result" ? (
                       <>
                         <span>당첨!</span>
                         <strong>{prize.toLocaleString()}P</strong>
                         <small>현금 가치 {prize.toLocaleString()}원</small>
-                      </>
-                    ) : step === "result" ? (
-                      <>
-                        <span>아쉬워요</span>
-                        <strong>꽝</strong>
-                        <small>다음 기회에!</small>
                       </>
                     ) : step === "granting" ? (
                       <>
