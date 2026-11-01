@@ -89,7 +89,9 @@ export default function TossBannerAd({
     <div
       ref={containerRef}
       className={className}
-      style={{ width: "100%", flexShrink: 0, margin: 0, ...(height != null ? { height } : {}) }}
+      // margin을 인라인으로 주지 않는다. 인라인 스타일은 className보다 우선해서,
+      // 배치하는 쪽에서 여백을 주려 해도 묻힌다(실제로 그래서 배너가 카드에 붙었다).
+      style={{ width: "100%", flexShrink: 0, ...(height != null ? { height } : {}) }}
     />
   );
 }
