@@ -176,6 +176,6 @@
 
 /* 본문 안에 들어가는 배너. 하단 고정형과 달리 카드 사이 간격을 맞춘다. */
 /* 클로버 카드와 거리를 둔다. 높이는 광고가 정한다 — 고정하면 이미지 강조형이 잘린다. */
-.lab-inline-ad { margin: 22px 0 6px; border-radius: 14px; overflow: hidden; }
+.lab-inline-ad { margin: 40px 0 6px; border-radius: 14px; overflow: hidden; }
 .clover-inline-ad { margin: 18px 0 4px; border-radius: 14px; overflow: hidden; }
 .attendance-lottery-ad { margin: 12px 0 0; border-radius: 12px; overflow: hidden; }
