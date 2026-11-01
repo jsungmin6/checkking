@@ -126,17 +126,19 @@ export const LOTTERY_MAX_PRIZE_WON = 1_000;
  * 당첨 금액을 뽑는다. **꽝은 없다** — 긁으면 반드시 1원 이상 받는다.
  *
  * <pre>
- *     1원  25%        2원  20%        3원  43.9009%
+ *     1원  25%        2원  43.9009%   3원  20%
  *     5원  10%       10원   1%       50원   0.08%
  *   100원   0.015%  1000원   0.0041%
  * </pre>
  *
- * 장당 기대값은 약 2.663원이고, 한 장 값은 5,000점 + 광고 1회다.
+ * 가중치 합은 정확히 1,000,000이어야 한다. 한 구간을 고치면 다른 구간이 따라 움직인다.
+ *
+ * 장당 기대값은 약 2.424원이고, 한 장 값은 5,000점 + 광고 1회다.
  */
 export function rollLotteryPrize(): number {
   const roll = Math.floor(Math.random() * 1_000_000);
   if (roll < 250_000) return 1;
-  if (roll < 450_000) return 2;
+  if (roll < 689_009) return 2;
   if (roll < 889_009) return 3;
   if (roll < 989_009) return 5;
   if (roll < 999_009) return 10;
