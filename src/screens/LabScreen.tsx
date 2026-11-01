@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import HomeTabBar from "../components/HomeTabBar";
 import TossBannerAd from "../components/TossBannerAd";
 import AdMobBanner from "../components/AdMobBanner";
@@ -37,6 +37,16 @@ export default function LabScreen({
     return Number.isFinite(stored) && stored > 0 ? stored : 0;
   });
   const { totalPoints, refresh: refreshPoints } = useAttendancePoints();
+
+  /**
+   * 복권 결과 뒤 화면을 맞춘다.
+   *
+   * 출석점수(차감)와 받은 토스포인트(당첨 지급)가 **둘 다** 바뀌므로 함께 다시 읽는다.
+   * 예전에는 출석점수만 갱신해서, 당첨돼도 "받은 토스포인트"가 그대로였다.
+   */
+  const refreshLotteryState = useCallback(async () => {
+    await Promise.allSettled([refreshPoints(), syncTossPointLedger()]);
+  }, [refreshPoints]);
 
   useEffect(() => {
     void syncTossPointLedger();
@@ -139,8 +149,8 @@ export default function LabScreen({
       {showLotteryModal && (
         <AttendanceLotteryModal
           totalPoints={totalPoints ?? 0}
-          onClose={() => { setShowLotteryModal(false); void refreshPoints(); }}
-          onPointsChanged={() => { void refreshPoints(); }}
+          onClose={() => { setShowLotteryModal(false); void refreshLotteryState(); }}
+          onPointsChanged={() => { void refreshLotteryState(); }}
         />
       )}
       {showTossPointsDetail && (
