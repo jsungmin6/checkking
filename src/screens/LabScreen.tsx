@@ -6,7 +6,8 @@ import type { HomeTab } from "../components/HomeTabBar";
 import { api } from "../utils/api";
 import AttendanceLotteryModal from "../components/AttendanceLotteryModal";
 import TossPointsReceivedModal from "../components/TossPointsReceivedModal";
-import { useAttendancePoints } from "../hooks/useAttendancePoints";
+import { useAttendancePoints, useStreakMilestoneRewards } from "../hooks/useAttendancePoints";
+import StreakRewardModal from "../components/StreakRewardModal";
 import {  syncTossPointLedger, TOSS_POINTS_RECEIVED_EVENT, TOSS_POINTS_RECEIVED_KEY } from "../utils/tossPromotion";
 import "../styles/lab.css";
 
@@ -32,11 +33,13 @@ export default function LabScreen({
   const [participantCount, setParticipantCount] = useState<number | null>(null);
   const [showLotteryModal, setShowLotteryModal] = useState(false);
   const [showTossPointsDetail, setShowTossPointsDetail] = useState(false);
+  const [showStreakRewardModal, setShowStreakRewardModal] = useState(false);
   const [tossPointsReceived, setTossPointsReceived] = useState(() => {
     const stored = Number(localStorage.getItem(TOSS_POINTS_RECEIVED_KEY) ?? "0");
     return Number.isFinite(stored) && stored > 0 ? stored : 0;
   });
   const { totalPoints, refresh: refreshPoints } = useAttendancePoints();
+  const streakRewards = useStreakMilestoneRewards();
 
   /**
    * 복권 결과 뒤 화면을 맞춘다.
@@ -121,7 +124,21 @@ export default function LabScreen({
             출석복권 구매
           </button>
         </div>
-        <p className="lab-activity-intro">다양한 활동을 통해 빠르게 출석 점수를 모아 봐요!</p>
+        {/* 홈과 같은 배지. 출석 도장은 점수를 모으는 가장 큰 경로라 여기서도 바로 열 수 있어야 한다. */}
+        <div className="lab-activity-head">
+          <p className="lab-activity-intro">다양한 활동을 통해 빠르게 출석 점수를 모아 봐요!</p>
+          <button
+            type="button"
+            className="app-streak-reward-badge"
+            onClick={() => setShowStreakRewardModal(true)}
+            aria-label={streakRewards.claimableRewards.length > 0
+              ? "연속 출석 보상받기 — 받을 보상이 있어요"
+              : "연속 출석 보상받기"}
+          >
+            <span>출석 보상 확인</span>
+            {streakRewards.claimableRewards.length > 0 && <span className="streak-reward-dot" aria-label="받을 보상이 있어요" />}
+          </button>
+        </div>
         <button className="lab-clover-card" onClick={onOpenCloverFinder}>
           <span className="lab-clover-card-icon" aria-hidden="true">
             <img src="/emojis/redrawn/wellwish-chick.png" alt="" />
@@ -160,6 +177,15 @@ export default function LabScreen({
           totalPoints={totalPoints ?? 0}
           onClose={() => { setShowLotteryModal(false); void refreshLotteryState(); }}
           onPointsChanged={() => { void refreshLotteryState(); }}
+        />
+      )}
+      {showStreakRewardModal && (
+        <StreakRewardModal
+          currentStreak={streakRewards.currentStreak}
+          claimedDays={streakRewards.claimedDays}
+          grantFailure={streakRewards.grantFailure}
+          onClaim={streakRewards.claim}
+          onClose={() => { setShowStreakRewardModal(false); void refreshPoints(); }}
         />
       )}
       {showTossPointsDetail && (
