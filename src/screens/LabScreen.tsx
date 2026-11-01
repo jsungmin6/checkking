@@ -134,14 +134,14 @@ export default function LabScreen({
           className="lab-clover-card lab-streak-card"
           onClick={() => setShowStreakRewardModal(true)}
           aria-label={streakRewards.claimableRewards.length > 0
-            ? "출석 보상 확인 — 받을 보상이 있어요"
-            : "출석 보상 확인"}
+            ? "연속 출석 보상 확인 — 받을 보상이 있어요"
+            : "연속 출석 보상 확인"}
         >
           <span className="lab-clover-card-icon" aria-hidden="true">
             <img src="/출석왕_로고_배경제거.png" alt="" />
           </span>
           <span className="lab-clover-card-copy">
-            <strong>출석 보상 확인</strong>
+            <strong>연속 출석 보상 확인</strong>
           </span>
           <span className="lab-clover-card-meta">
             <span>연속 {streakRewards.currentStreak}일</span>
