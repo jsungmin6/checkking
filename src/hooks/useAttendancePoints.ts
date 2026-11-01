@@ -17,7 +17,7 @@ import {
   getStreakProgress,
   hasTossRewardPaid,
   isTossRewardDay,
-  syncStreakOnce,
+  syncStreakFromServer,
   type StreakProgress,
 } from "../utils/localStreak";
 import { grantStreakReward } from "../utils/tossPromotion";
@@ -39,17 +39,17 @@ export function getStreakMilestoneRewards(_currentStreak?: number) {
 }
 
 /**
- * 출석 도장 상태. 연속일과 수령 내역을 **기기에서** 읽는다.
+ * 출석 도장 상태. **수령 내역은 기기가, 연속일은 서버가 기준이다.**
  *
- * 서버에서 받아오던 구조였는데, 화면을 열 때마다 서버를 보고 수령 내역을 원장
- * 멱등 키로 역추적해야 했다. 지금은 최초 1회만 서버 값을 당겨와 심는다.
+ * 출석은 언제나 서버를 거치므로 연속일은 서버 쪽이 맞다 — 기기 값이 뒤처져 있으면
+ * 끌어올린다. 반면 "어느 일차를 받았는지"는 이제 기기에만 쌓이므로 서버가 덮지 않는다.
  */
 export function useStreakMilestoneRewards() {
   const [progress, setProgress] = useState<StreakProgress>(getStreakProgress);
   const rewards = getStreakMilestoneRewards();
 
   const refresh = useCallback(async () => {
-    const next = await syncStreakOnce();
+    const next = await syncStreakFromServer();
     setProgress(next);
     // 도장은 받았는데 토스포인트 지급만 실패한 일차를 메운다. 지급 한도를 넘겨
     // 실패했으면(4110) 다음 날 여기서 다시 받는다.

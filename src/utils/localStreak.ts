@@ -93,27 +93,40 @@ export function recordAttendance(): StreakProgress {
 }
 
 /**
- * 서버가 계산해 둔 연속일과 수령 내역을 **한 번만** 당겨온다.
+ * 서버가 계산해 둔 연속일을 당겨와 **기기 값이 뒤처져 있으면 끌어올린다.**
  *
- * 서버 기준으로 관리하던 시절의 사용자가 0일차로 떨어지지 않게 하는 장치다. 이미
- * 기기 값이 더 크면 서버를 무시한다 — 기기가 진실이기 때문이다.
+ * 한 번만 당겨오게 했다가 되돌렸다. 연속일은 출석 기록에서 나오고 출석은 언제나
+ * 서버를 거치므로, 서버 값이 더 크면 그쪽이 맞다. 1회로 묶어 두면 기기가 한 번
+ * 뒤처졌을 때 고칠 방법이 없다(기기 저장소를 직접 편집할 수 없다).
+ *
+ * **기기 값이 더 크면 서버를 무시한다.** 그리고 수령 내역은 서버 값으로 덮지 않고
+ * 합친다 — 도장 수령은 이제 기기에만 기록되므로, 덮으면 받은 일차를 다시 받게 된다.
+ * 같은 이유로 cycleStart도 유지한다. 주기가 바뀐 것으로 보이면 수령·지급 기록이
+ * 통째로 초기화되어 중복 지급이 난다.
  */
-export async function syncStreakOnce(): Promise<StreakProgress> {
+export async function syncStreakFromServer(): Promise<StreakProgress> {
   const current = getStreakProgress();
-  if (current.synced) return current;
   try {
     const status = await api<{ currentStreak: number; claimedDays: number[] }>("/points/streak-rewards");
-    const serverStreak = Number(status.currentStreak) || 0;
+    const serverStreak = Math.min(MAX_STREAK_DAY, Number(status.currentStreak) || 0);
+    const serverClaimed = Array.isArray(status.claimedDays)
+      ? status.claimedDays.map(Number).filter(Number.isInteger)
+      : [];
+    // 서버 수령 내역은 기기로 넘어오기 전의 기록이다. 첫 싱크에서만 합친다.
+    const claimedDays = current.synced
+      ? current.claimedDays
+      : [...new Set([...current.claimedDays, ...serverClaimed])].sort((a, b) => a - b);
+
     if (serverStreak <= current.streak) {
-      save({ ...current, synced: true });
+      save({ ...current, claimedDays, synced: true });
       return getStreakProgress();
     }
     const today = dateKey(new Date());
     const next: StreakProgress = {
-      streak: Math.min(MAX_STREAK_DAY, serverStreak),
-      cycleStart: shiftDays(today, -(serverStreak - 1)),
-      lastAttended: today,
-      claimedDays: Array.isArray(status.claimedDays) ? status.claimedDays.map(Number).filter(Number.isInteger) : [],
+      streak: serverStreak,
+      cycleStart: current.cycleStart || shiftDays(today, -(serverStreak - 1)),
+      lastAttended: current.lastAttended || today,
+      claimedDays,
       synced: true,
     };
     save(next);
