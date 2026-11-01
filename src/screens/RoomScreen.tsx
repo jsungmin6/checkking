@@ -23,7 +23,8 @@ import {
   shouldAskSatisfaction, isTossReviewSupported, markSatisfactionAsked,
   reportSatisfaction, requestTossReview,
 } from "../utils/review";
-import { useAttendancePoints, useAttendanceGift, useDailyRewardLimit, rollDailyRankBonus } from "../hooks/useAttendancePoints";
+import { useAttendancePoints } from "../hooks/useAttendancePoints";
+import { claimAttendanceGift } from "../utils/attendancePoints";
 import type { TabName } from "../components/TabBar";
 import type { Classroom, TodayAttendance, CheckInResponse, CheckInRequest, User } from "../types";
 import { hasUnreadGreeting, rememberLatestGreetingId } from "../utils/unreadGreetings";
@@ -56,9 +57,7 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
   const [photoCaptureBusy, setPhotoCaptureBusy] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const { toastMessage, showToast } = useToast();
-  const { addPoints } = useAttendancePoints();
-  const { claim: claimGift } = useAttendanceGift(classroomId);
-  const { remaining: rewardRemaining, increment: incrementReward } = useDailyRewardLimit();
+  const { refresh: refreshPoints } = useAttendancePoints();
 
   const handleInvite = async () => {
     if (!classroom) return;
@@ -200,16 +199,11 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
         markMissionDone("greeting");
         incrementMissionProgress("photo-attendance", checkInResult.attendanceId);
       }
-      // 출석 성공 — 방을 넘나들어도 "보상을 받는 체크인"은 하루 최대 3번까지만.
-      // 그 안에 들면 선물상자(+1~3등이면 보너스도 같이)를 보여주고, 넘으면 등수만 보여준다.
-      if (rewardRemaining > 0) {
-        incrementReward();
-        const rankBonus = rollDailyRankBonus(checkInResult.dailyRank);
-        setTimeout(() => launchConfetti(rankBonus !== null), 300);
-        setRewardModal({ rank: checkInResult.dailyRank, rankBonus });
-      } else {
-        setRankOnlyModal(checkInResult.dailyRank);
-      }
+      // 하루 보상 상한(방을 넘나들어도 3번)과 등수 보너스는 모두 서버가 판단한다.
+      // 선물은 열어볼 때 서버에 요청하고, 상한을 넘겼으면 모달이 "모두 받았어요"를 보여준다.
+      const rankBonus = checkInResult.rankBonusPoints ?? null;
+      setTimeout(() => launchConfetti(rankBonus !== null), 300);
+      setRewardModal({ rank: checkInResult.dailyRank, rankBonus });
     } catch (e) {
       if (e instanceof ApiError) {
         setCheckInError(e.message);
@@ -348,9 +342,17 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
         <AttendanceGiftModal
           rank={rewardModal.rank}
           rankBonus={rewardModal.rankBonus}
-          onClaimGift={claimGift}
-          onClose={(total) => {
-            addPoints(total);
+          onClaimGift={async () => {
+            try {
+              const gift = await claimAttendanceGift(classroomId);
+              return gift.amount;
+            } catch {
+              return null;   // 이미 받았거나 하루 상한 초과 — 모달이 안내 문구를 보여준다
+            }
+          }}
+          onClose={() => {
+            // 적립은 서버가 이미 했다. 화면 잔액만 다시 읽는다.
+            void refreshPoints();
             setRewardModal(null);
             playCheckInCelebration();
           }}

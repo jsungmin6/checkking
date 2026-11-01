@@ -1,124 +1,91 @@
-import { useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useLocalStorage } from "./useLocalStorage";
+import {
+  ATTENDANCE_POINTS_EVENT,
+  claimReward,
+  fetchStreakRewardStatus,
+  getAttendancePoints,
+  syncAttendancePoints,
+  type ClaimRewardResult,
+  type RewardKind,
+} from "../utils/attendancePoints";
 
-export const POINTS_TO_WON_RATE = 1000; // 1000P = 1원
+export const POINTS_TO_WON_RATE = 1000; // 출석점수 1,000점 = 토스포인트 1P (현금 1원)
 
-// 클라이언트에만 저장되는 값이라, 조작되더라도 손해가 토스 하루 전환 한도(100P≈100원) 수준을
-// 넘지 않도록 누적 상한을 둔다.
-const MAX_LOCAL_POINTS = 100_000;
+export interface StreakMilestoneReward {
+  days: number;
+  points: number | null;
+}
 
-const TOTAL_POINTS_KEY = "att-points-total";
-const WELCOME_BONUS_GRANTED_KEY = "att-points-welcome-granted";
-const WELCOME_BONUS_AMOUNT = 1000;
+/**
+ * 보상표. **서버 PointRewardService.streakPoints()와 값이 같아야 한다** —
+ * 화면에 보이는 금액과 실제 지급액이 달라지면 안 된다. 서버에 같은 표를 대조하는
+ * 테스트가 있다(PointRewardServiceTest).
+ */
+const FIRST_WEEK_STREAK_REWARDS: StreakMilestoneReward[] = [
+  { days: 1, points: 2_000 },
+  { days: 2, points: 5_000 },
+  { days: 3, points: 2_000 },
+  { days: 4, points: 5_000 },
+  { days: 5, points: 2_000 },
+  { days: 6, points: 5_000 },
+  { days: 7, points: 10_000 },
+];
 
-const BASE_STREAK_MILESTONE_REWARDS = [
-  { days: 1, amount: 100 },
-  { days: 3, amount: 300 },
-  { days: 5, amount: 500 },
-  { days: 7, amount: 700 },
-  { days: 14, amount: 2000 },
-  { days: 21, amount: 2000 },
-] as const;
-const STREAK_REWARD_PROGRESS_KEY = "att-points-streak-reward-progress-v2";
-type StreakMilestoneReward = { days: number; amount: number };
-type StreakRewardProgress = { lastObservedStreak: number; claimedDays: number[] };
-
-/** 21일 이후에는 매주 2,000P를 받을 수 있도록 현재 연속일 다음 주차까지 단계를 만든다. */
-export function getStreakMilestoneRewards(currentStreak: number) {
-  const rewards: StreakMilestoneReward[] = [...BASE_STREAK_MILESTONE_REWARDS];
-  const lastWeeklyMilestone = Math.max(28, Math.ceil((Math.max(currentStreak, 21) + 1) / 7) * 7);
-  for (let days = 28; days <= lastWeeklyMilestone; days += 7) {
-    rewards.push({ days, amount: 2000 });
+/** 1~7일차는 위 표, 8~100일차는 10의 배수 30,000 / 100일차 100,000 / 나머지 10,000. */
+export function getStreakMilestoneRewards(_currentStreak?: number) {
+  const rewards: StreakMilestoneReward[] = [...FIRST_WEEK_STREAK_REWARDS];
+  for (let days = 8; days <= 100; days += 1) {
+    const points = days === 100 ? 100_000 : days % 10 === 0 ? 30_000 : 10_000;
+    rewards.push({ days, points });
   }
   return rewards;
 }
 
-/** 보상은 최근 이어지는 연속 출석 구간마다 받을 수 있고, 구간이 끊기면 수령 기록도 초기화한다. */
-export function useStreakMilestoneRewards(currentStreak: number | null) {
-  const [progress, setProgress] = useLocalStorage<StreakRewardProgress>(
-    STREAK_REWARD_PROGRESS_KEY,
-    { lastObservedStreak: 0, claimedDays: [] },
-  );
-  const streak = currentStreak ?? 0;
-  const streakReset = currentStreak !== null && streak < progress.lastObservedStreak;
-  const claimedDays = streakReset ? [] : progress.claimedDays;
-  const rewards = getStreakMilestoneRewards(streak);
-  const claimableRewards = rewards.filter(
-    ({ days }) => streak >= days && !claimedDays.includes(days),
-  );
+/**
+ * 출석 도장 상태. 연속일과 "이번 주기에 받은 일차"를 **서버에서** 받는다.
+ *
+ * 예전에는 localStorage에 수령 기록을 두어 기기를 바꾸면 연속 출석과 수령 내역이
+ * 전부 날아갔다. 지금은 서버가 출석 기록으로 연속일을 계산하고, 수령 내역도
+ * 원장의 멱등 키(streak:<일차>:<주기시작일>)로 관리한다.
+ */
+export function useStreakMilestoneRewards() {
+  const [currentStreak, setCurrentStreak] = useState<number | null>(null);
+  const [claimedDays, setClaimedDays] = useState<number[]>([]);
+  const rewards = getStreakMilestoneRewards();
+
+  const refresh = useCallback(async () => {
+    const status = await fetchStreakRewardStatus();
+    setCurrentStreak(status.currentStreak);
+    setClaimedDays(status.claimedDays);
+  }, []);
 
   useEffect(() => {
-    if (currentStreak === null) return;
-    if (!streakReset && progress.lastObservedStreak === currentStreak) return;
-    setProgress({
-      lastObservedStreak: currentStreak,
-      claimedDays: streakReset ? [] : progress.claimedDays,
-    });
-  }, [currentStreak, progress, setProgress, streakReset]);
+    void refresh().catch(() => { /* 네트워크 실패 시 마지막 값 유지 */ });
+  }, [refresh]);
 
-  const claim = (days: number): number | null => {
-    const reward = rewards.find((item) => item.days === days);
-    if (currentStreak === null || !reward || streak < days || claimedDays.includes(days)) return null;
-    setProgress((previous) => {
-      const reset = streak < previous.lastObservedStreak;
-      const currentClaims = reset ? [] : previous.claimedDays;
-      if (currentClaims.includes(days)) return previous;
-      return {
-        lastObservedStreak: streak,
-        claimedDays: [...currentClaims, days],
-      };
-    });
-    return reward.amount;
-  };
+  const streak = currentStreak ?? 0;
+  const claimableRewards = rewards.filter(
+    ({ days, points }) => points !== null && streak >= days && !claimedDays.includes(days),
+  );
 
-  return { claimedDays, rewards, claimableRewards, claim };
-}
+  /** 서버가 금액을 정한다. 성공하면 적립액을 돌려준다(이미 받았으면 0). */
+  const claim = useCallback(async (days: number): Promise<number | null> => {
+    try {
+      const result = await claimReward("STREAK", String(days));
+      setClaimedDays((previous) => (previous.includes(days) ? previous : [...previous, days]));
+      return result.amount;
+    } catch {
+      return null;
+    }
+  }, []);
 
-/**
- * 완전 신규 가입 시 1회만 1000P를 지급한다. 로컬스토리지 플래그로만 중복 방지하므로
- * 앱 재설치/기기 변경 시 다시 받을 수 있지만, 서버 포인트가 아니라 영향이 작아 허용한다.
- */
-export function grantWelcomeBonusIfNew(isNewUser: boolean) {
-  if (!isNewUser) return;
-  if (localStorage.getItem(WELCOME_BONUS_GRANTED_KEY) === "1") return;
-  const current = Number(localStorage.getItem(TOTAL_POINTS_KEY) ?? "0");
-  const next = Math.min(MAX_LOCAL_POINTS, current + WELCOME_BONUS_AMOUNT);
-  localStorage.setItem(TOTAL_POINTS_KEY, String(next));
-  localStorage.setItem(WELCOME_BONUS_GRANTED_KEY, "1");
-}
-
-// 방 구분 없이, 보상(선물상자/등수보너스 타입 무관)을 받는 체크인은 하루 최대 N번까지만.
-const DAILY_REWARD_CHECKIN_LIMIT = 3;
-
-const randomInt = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
-// toISOString()은 UTC 기준이라 자정~오전 9시(KST) 사이에는 아직 "어제"로 취급돼 하루 리셋이 안 된다.
-// 반드시 한국 시간 기준 날짜로 계산해야 한다.
-const dateKey = (d: Date) => d.toLocaleDateString("sv-SE", { timeZone: "Asia/Seoul" });
-
-/** 당일 출석 순위별 즉시 보너스 금액 — 1~3등만 해당, 4등부터는 null(하루 상한과는 별개) */
-export function rollDailyRankBonus(dailyRank: number): number | null {
-  if (dailyRank === 1) return randomInt(500, 600);
-  if (dailyRank === 2) return randomInt(400, 500);
-  if (dailyRank === 3) return randomInt(300, 400);
-  return null;
-}
-
-/** 오늘 보상을 받은 체크인 횟수 — 방 구분 없이 하루 최대 {@link DAILY_REWARD_CHECKIN_LIMIT}번까지만 */
-export function useDailyRewardLimit() {
-  const [state, setState] = useLocalStorage<{ date: string; count: number }>("att-points-reward-daily", { date: "", count: 0 });
-  const today = dateKey(new Date());
-  const count = state.date === today ? state.count : 0;
-  const remaining = Math.max(0, DAILY_REWARD_CHECKIN_LIMIT - count);
-
-  const increment = () => setState({ date: today, count: count + 1 });
-
-  return { remaining, increment };
+  return { currentStreak, claimedDays, rewards, claimableRewards, claim, refresh };
 }
 
 /**
  * 출석인사 미션 — 인사를 한 번 남기면 보상을 받을 수 있다.
- * 완료 여부와 수령 여부를 따로 두어, "완료했지만 아직 안 받음" 상태에서 배지를 띄운다.
- * 문의하기 보상과 마찬가지로 로컬 플래그로만 중복을 막는다.
+ * 완료/수령 플래그는 배지 표시용 UI 상태이고, 실제 지급과 중복 방지는 서버가 한다.
  */
 const GREETING_MISSION_DONE_KEY = "att-mission-greeting-done";
 
@@ -131,7 +98,6 @@ export function useGreetingMission() {
   const [done, setDone] = useLocalStorage<boolean>(GREETING_MISSION_DONE_KEY, false);
   const [rewarded, setRewarded] = useLocalStorage<boolean>("att-mission-greeting-rewarded", false);
   // 마지막으로 열어본 시점의 미션 상태. 지금 상태와 다르면 "아직 못 본 변화"가 있다는 뜻이라 배지를 띄운다.
-  // 처음에는 ""이라 "none"과도 달라서, 한 번도 안 본 사용자에게도 배지가 보인다.
   const [seenState, setSeenState] = useLocalStorage<string>("att-mission-greeting-seen", "");
   const state = done ? "done" : "none";
   return {
@@ -144,47 +110,37 @@ export function useGreetingMission() {
   };
 }
 
-/** "문의하기" 완료 보상(5000P)은 기기당 1회만 — 로컬 플래그로만 중복 방지한다. */
+/**
+ * "문의하기" 완료 보상. 중복 방지는 서버가 한다(사용자당 1회 + 문의 기록 존재 확인).
+ * 여기 플래그는 버튼 문구를 바꾸는 UI 용도다.
+ */
 export function useFeedbackReward() {
   const [rewarded, setRewarded] = useLocalStorage<boolean>("att-points-feedback-rewarded", false);
   const markRewarded = () => setRewarded(true);
   return { alreadyRewarded: rewarded, markRewarded };
 }
 
-/** 방 전체 누적 출석 포인트 — 토스 포인트 전환의 기준이 되는 총량 */
-export function useAttendancePoints() {
-  const [totalPoints, setTotalPoints] = useLocalStorage<number>(TOTAL_POINTS_KEY, 0);
-  const [pendingConversion, setPendingConversion] = useLocalStorage<number | null>("att-points-conversion-pending", null);
-
-  const addPoints = (amount: number) => setTotalPoints((prev) => Math.min(MAX_LOCAL_POINTS, prev + amount));
-
-  /** amount는 POINTS_TO_WON_RATE의 배수만 전환하고, 나머지는 출석 포인트로 남겨둔다 */
-  const requestConversion = (amount: number) => {
-    if (amount <= 0 || amount > totalPoints) return false;
-    setPendingConversion((prev) => (prev ?? 0) + amount);
-    setTotalPoints((prev) => prev - amount);
-    return true;
-  };
-
-  return { totalPoints, pendingConversion, addPoints, requestConversion };
-}
-
 /**
- * 방별 출석 선물 — 같은 방에서는 하루 1회만 700~1000P 랜덤 지급한다.
- * (방을 넘나드는 하루 전체 상한은 {@link useDailyRewardLimit}에서 체크인 단위로 따로 관리한다.)
+ * 누적 출석점수. **서버 잔액을 그대로 보여준다.**
+ *
+ * `totalPoints`가 `null`이면 아직 서버 값을 못 받은 상태다. 화면은 0이 아니라
+ * 자리표시(`-`)를 보여줘야 한다 — 0을 보여주면 "점수가 사라졌다"로 읽힌다.
  */
-export function useAttendanceGift(classroomId: number) {
-  const [claimedDate, setClaimedDate] = useLocalStorage<string>(`att-points-claimed-date-${classroomId}`, "");
+export function useAttendancePoints() {
+  const [totalPoints, setTotalPoints] = useState<number | null>(getAttendancePoints());
 
-  const todayKey = dateKey(new Date());
-  const alreadyClaimedToday = claimedDate === todayKey;
+  useEffect(() => {
+    const onChange = (event: Event) => setTotalPoints((event as CustomEvent<number>).detail);
+    window.addEventListener(ATTENDANCE_POINTS_EVENT, onChange);
+    void syncAttendancePoints().catch(() => { /* 실패해도 화면은 떠야 한다 */ });
+    return () => window.removeEventListener(ATTENDANCE_POINTS_EVENT, onChange);
+  }, []);
 
-  const claim = (): number | null => {
-    if (alreadyClaimedToday) return null;
-    const amount = randomInt(700, 1000);
-    setClaimedDate(todayKey);
-    return amount;
-  };
+  /** 보상 적립. 금액은 서버가 정하므로 종류만 넘긴다. */
+  const claim = useCallback(
+    (reward: RewardKind, ref?: string): Promise<ClaimRewardResult> => claimReward(reward, ref),
+    [],
+  );
 
-  return { claim, alreadyClaimedToday };
+  return { totalPoints, claim, refresh: syncAttendancePoints };
 }

@@ -158,11 +158,9 @@ const DEV_CLOVER_KEY = "att-dev-clover-preview";
 type DevCloverAttempt = { attemptId: string; seed: number; startedAt: number; golden: boolean };
 type DevCloverCompletion = {
   attemptId: string;
-  response: { elapsedMs: number; cloverBalance: number; totalFound: number; cloversAwarded: number; golden: boolean; fortuneIndex: number; attendanceBoxAwarded: boolean; pendingBoxes: number; personalBestMs: number; personalBest: boolean };
+  response: { elapsedMs: number; totalFound: number; golden: boolean; fortuneIndex: number; personalBestMs: number; personalBest: boolean };
 };
 type DevCloverState = {
-  cloverBalance: number;
-  pendingBoxes: number;
   totalFound: number;
   bestTimeMs: number | null;
   lastAttemptFailed: boolean;
@@ -171,21 +169,12 @@ type DevCloverState = {
   lastFortuneIndex: number;
   activeAttempt: DevCloverAttempt | null;
   lastCompletion: DevCloverCompletion | null;
-  lastBoxClaimId: string | null;
-  lastBoxClaimPoints: number;
 };
 const EMPTY_DEV_CLOVER: DevCloverState = {
-  cloverBalance: 0, pendingBoxes: 0, totalFound: 0, bestTimeMs: null, activeAttempt: null,
+  totalFound: 0, bestTimeMs: null, activeAttempt: null,
   lastAttemptFailed: false, lastFailedAt: null, lastFailedAttemptId: null,
-  lastFortuneIndex: -1, lastCompletion: null, lastBoxClaimId: null, lastBoxClaimPoints: 0,
+  lastFortuneIndex: -1, lastCompletion: null,
 };
-
-function randomDevCloverBoxPoints(): number {
-  const tier = Math.floor(Math.random() * 100);
-  if (tier < 90) return 1_000 + Math.floor(Math.random() * 501);
-  if (tier < 95) return 1_501 + Math.floor(Math.random() * 1_000);
-  return 2_501 + Math.floor(Math.random() * 500);
-}
 
 function readDevClover(): DevCloverState {
   try {
@@ -327,11 +316,36 @@ const ROOM1_MONTHLY_RANKS = [1, 2, 3, 1, 4, 2, 1, 3, 2, 1, 4, 2, 1, 3];
 function devMock(path: string, method: string, body?: string): unknown | undefined {
   if (!import.meta.env.DEV) return undefined;
 
+  if (path.startsWith("/labs/attendance-lottery/recent-winners")) {
+    const adjectives = ["부지런한", "새벽여는", "커피내린", "상쾌한", "이불박차는", "성실한"];
+    const animals = ["토끼", "펭귄", "수달", "고양이", "여우"];
+    const prizeAmounts = [1, 2, 3, 5, 10, 50, 100];
+    const now = Date.now();
+    const realWinners = Array.from({ length: 30 }, (_, index) => ({
+      id: index + 1,
+      nickname: `${adjectives[index % adjectives.length]}${animals[index % animals.length]}${String(index + 1).padStart(2, "0")}`,
+      amountWon: prizeAmounts[index % prizeAmounts.length],
+      paidAt: new Date(now - index * 60_000).toISOString(),
+      dummy: false,
+    }));
+    const demoWinners = [
+      { id: -1, nickname: "커피내린수달31", amountWon: 50, dummy: true },
+      { id: -2, nickname: "부지런한토끼07", amountWon: 5, dummy: true },
+      { id: -3, nickname: "새벽여는펭귄24", amountWon: 10, dummy: true },
+      { id: -4, nickname: "상쾌한고양이18", amountWon: 100, dummy: true },
+    ].map((winner, index) => ({ ...winner, paidAt: new Date(now - (index + 1) * 3 * 60_000).toISOString() }));
+    const mixed = [...realWinners];
+    const finalSize = realWinners.length + demoWinners.length;
+    demoWinners.forEach((winner, index) => {
+      const insertAt = Math.min(mixed.length, Math.floor((index + 1) * finalSize / (demoWinners.length + 1)));
+      mixed.splice(insertAt, 0, winner);
+    });
+    return mixed;
+  }
+
   if (path === "/labs/clover" && method === "GET") {
     const state = readDevClover();
     return {
-      cloverBalance: state.cloverBalance,
-      pendingBoxes: state.pendingBoxes,
       totalFound: state.totalFound,
       personalBestMs: state.bestTimeMs,
       ...devCloverRanking(state),
@@ -392,23 +406,14 @@ function devMock(path: string, method: string, body?: string): unknown | undefin
     state.totalFound += 1;
     state.lastAttemptFailed = false;
     const golden = attempt.golden ?? false;
-    const cloversAwarded = golden ? 3 : 1;
-    const accumulatedClovers = state.cloverBalance + cloversAwarded;
-    const boxesAwarded = Math.floor(accumulatedClovers / 10);
-    state.cloverBalance = accumulatedClovers % 10;
-    state.pendingBoxes += boxesAwarded;
     let fortuneIndex = state.lastFortuneIndex < 0 ? Math.floor(Math.random() * 10) : Math.floor(Math.random() * 9);
     if (state.lastFortuneIndex >= 0 && fortuneIndex >= state.lastFortuneIndex) fortuneIndex += 1;
     state.lastFortuneIndex = fortuneIndex;
     const response = {
       elapsedMs: effectiveElapsedMs,
-      cloverBalance: state.cloverBalance,
       totalFound: state.totalFound,
-      cloversAwarded,
       golden,
       fortuneIndex,
-      attendanceBoxAwarded: boxesAwarded > 0,
-      pendingBoxes: state.pendingBoxes,
       personalBestMs: state.bestTimeMs!,
       personalBest,
     };
@@ -417,20 +422,6 @@ function devMock(path: string, method: string, body?: string): unknown | undefin
     saveDevClover(state);
     return response;
   }
-  if (path === "/labs/clover/boxes/claim" && method === "POST") {
-    const state = readDevClover();
-    const claimId = body ? (JSON.parse(body) as { claimId: string }).claimId : "";
-    if (claimId === state.lastBoxClaimId) {
-      return { pointsAwarded: state.lastBoxClaimPoints, pendingBoxes: state.pendingBoxes };
-    }
-    if (state.pendingBoxes <= 0) throw new Error("열 수 있는 출석박스가 없어요.");
-    state.pendingBoxes -= 1;
-    state.lastBoxClaimId = claimId;
-    state.lastBoxClaimPoints = randomDevCloverBoxPoints();
-    saveDevClover(state);
-    return { pointsAwarded: state.lastBoxClaimPoints, pendingBoxes: state.pendingBoxes };
-  }
-
   if (path === "/notifications/feedback" && method === "POST") {
     return { received: true };
   }
@@ -451,9 +442,9 @@ function devMock(path: string, method: string, body?: string): unknown | undefin
   if (path === "/classrooms/my") {
     // ?emptyRooms=1 로 열면 "참여한 방이 없는" 첫 화면을 로컬에서 확인할 수 있다.
     if (new URLSearchParams(window.location.search).get("emptyRooms") === "1") {
-      return { classrooms: [], appCurrentStreak: 0, appBestStreak: 0 };
+      return { classrooms: [], appCurrentStreak: 0, appBestStreak: 0, appLastCheckInDate: null };
     }
-    return { appCurrentStreak: 8, appBestStreak: 8, classrooms: DEV_ROOM_IDS.map((id) => ({
+    return { appCurrentStreak: 3, appBestStreak: 8, appLastCheckInDate: new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Seoul" }), classrooms: DEV_ROOM_IDS.map((id) => ({
       classroomId: id, name: DEV_ROOM_NAMES.get(id), ownerId: -1, ownerNickname: "민준",
       // 방장/참여자 표시를 둘 다 확인할 수 있게 홀수 방만 방장으로 둔다.
       isOwner: -id % 2 === 1, memberCount: 3, maxMembers: 100, todayCheckedIn: (devCheckInCount.get(id) ?? 0) > 0,

@@ -4,15 +4,16 @@ import GiftBox from "./GiftBox";
 interface AttendanceGiftModalProps {
   rank: number;
   rankBonus: number | null;
-  onClaimGift: () => number | null;
+  /** 서버에 선물 수령을 요청한다. 하루 상한을 넘겼거나 이미 받았으면 null. */
+  onClaimGift: () => Promise<number | null>;
   onClose: (total: number) => void;
 }
 
 export default function AttendanceGiftModal({ rank, rankBonus, onClaimGift, onClose }: AttendanceGiftModalProps) {
   const [result, setResult] = useState<{ gift: number | null; total: number } | null>(null);
 
-  const handleOpened = () => {
-    const gift = onClaimGift();
+  const handleOpened = async () => {
+    const gift = await onClaimGift();
     const total = (gift ?? 0) + (rankBonus ?? 0);
     setResult({ gift, total });
   };
@@ -25,7 +26,7 @@ export default function AttendanceGiftModal({ rank, rankBonus, onClaimGift, onCl
           <>
             <h2 className="attendance-gift-title">출석 완료!</h2>
             {rank <= 3 && <div className="attendance-gift-rank">오늘 {rank}등으로 출석했어요</div>}
-            <GiftBox onOpened={handleOpened} />
+            <GiftBox onOpened={() => { void handleOpened(); }} />
           </>
         ) : (
           <>
@@ -34,17 +35,17 @@ export default function AttendanceGiftModal({ rank, rankBonus, onClaimGift, onCl
             <div className="attendance-gift-points-list">
               <div className="attendance-gift-point-row">
                 <span>출석 선물</span>
-                {result.gift !== null ? <strong>+{result.gift.toLocaleString()}P</strong> : <small>오늘 받을 수 있는 선물을 모두 받았어요</small>}
+                {result.gift !== null ? <strong>+{result.gift.toLocaleString()}점</strong> : <small>오늘 받을 수 있는 선물을 모두 받았어요</small>}
               </div>
               {rankBonus !== null && (
                 <div className="attendance-gift-point-row">
                   <span>{rank}등 보너스</span>
-                  <strong>+{rankBonus.toLocaleString()}P</strong>
+                  <strong>+{rankBonus.toLocaleString()}점</strong>
                 </div>
               )}
             </div>
             <div className="attendance-gift-total-label">총 지급 포인트</div>
-            <div className="attendance-gift-total">+{result.total.toLocaleString()}P</div>
+            <div className="attendance-gift-total">+{result.total.toLocaleString()}점</div>
             <button className="attendance-gift-confirm" onClick={() => onClose(result.total)}>확인</button>
           </>
         )}

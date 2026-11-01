@@ -1,8 +1,15 @@
 .lab-page { display: flex; height: 100dvh; min-height: 0; flex-direction: column; overflow: hidden; }
-.lab-header { flex: 0 0 auto; padding: 22px 20px 15px; }
+.lab-header { display: flex; flex: 0 0 auto; align-items: center; justify-content: space-between; gap: 10px; padding: 22px 20px 15px; }
 .lab-header h1 { margin: 0; font-size: 24px; font-weight: 800; }
 .lab-header p { margin: 5px 0 0; color: var(--text-secondary); font-size: 14px; }
+.lab-received-points { display: inline-flex; min-width: 0; align-items: center; gap: 4px; padding: 5px 0 5px 4px; border: 0; background: transparent; color: var(--text-secondary); font-size: 12px; white-space: nowrap; cursor: pointer; }
+.lab-received-points-icon { display: grid; width: 23px; height: 23px; flex: 0 0 23px; place-items: center; border-radius: 8px; background: #edf3ff; }
+.lab-received-points-icon span { display: grid; width: 16px; height: 16px; place-items: center; border-radius: 50%; background: #3182f6; color: #fff; font-size: 11px; font-weight: 700; line-height: 1; }
+.lab-received-points-label { font-size: 12px; }
+.lab-received-points strong { color: var(--text-primary); font-size: 14px; font-weight: 750; }
+.lab-received-points-chevron { margin-left: 1px; color: #a8b1bd; font-size: 20px; line-height: 1; }
 .lab-content { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 8px 16px 24px; }
+.lab-activity-intro { margin: 2px 4px 10px; color: var(--text-secondary); font-size: 13px; font-weight: 600; }
 .lab-clover-card { position: relative; display: grid; width: 100%; grid-template-columns: 68px minmax(0,1fr) auto; gap: 12px; align-items: center; padding: 16px; border: 0; border-radius: var(--radius-card); background: var(--bg-card); box-shadow: var(--shadow-card); color: var(--text-primary); text-align: left; cursor: pointer; }
 .lab-clover-card-icon { display: flex; width: 64px; height: 64px; align-items: center; justify-content: center; overflow: hidden; border-radius: 20px; background: #eff8ec; }
 .lab-clover-card-icon img { width: 64px; height: 64px; object-fit: contain; }
@@ -22,19 +29,49 @@
 .lab-back-button { width: 36px; height: 36px; padding: 0; border: 0; background: transparent; color: var(--text-primary); font-size: 31px; line-height: 1; cursor: pointer; }
 .lab-header-spacer { width: 36px; }
 .lab-game-content { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 2px 16px 18px; }
-.clover-balance-card { margin-bottom: 10px; padding: 12px 14px; border-radius: 16px; background: #f0f8eb; }
-.clover-balance-card.has-pending-box { animation: clover-box-glow 2.8s ease-in-out infinite; }
+.clover-balance-card { margin-bottom: 10px; padding: 8px 14px; border-radius: 16px; background: #f0f8eb; }
 .clover-balance-topline { display: flex; align-items: center; gap: 9px; font-size: 15px; font-weight: 750; }
 .clover-balance-character { display: grid; width: 42px; height: 42px; flex: 0 0 auto; place-items: center; overflow: hidden; border-radius: 14px; background: #e6f4df; }
 .clover-balance-character img { width: 40px; height: 40px; object-fit: contain; }
-.clover-guide-trigger { min-height: 34px; padding: 0 13px; border: 1px solid #d4e7cd; border-radius: 12px; background: rgba(255,255,255,.68); color: #397b42; font-size: 14px; font-weight: 750; cursor: pointer; }
-.clover-progress-track { height: 6px; overflow: hidden; border-radius: 5px; background: rgba(60,100,55,.12); }
-.clover-progress-track { margin-top: 8px; }
-.clover-progress-track span { display: block; height: 100%; border-radius: inherit; background: #5aa34c; transition: width .2s ease; }
-.clover-balance-card p { margin: 7px 0 0; color: #52754c; font-size: 11px; }
-.clover-box-open-button { min-height: 30px; margin: 0 0 0 auto; padding: 0 11px; border: 0; border-radius: 999px; background: #438747; color: #fff; font-size: 11px; font-weight: 750; cursor: pointer; }
-@keyframes clover-box-glow { 0%,100% { box-shadow: 0 0 0 0 rgba(80,151,73,0); } 50% { box-shadow: 0 0 18px 3px rgba(80,151,73,.2); } }
-@media (prefers-reduced-motion: reduce) { .clover-balance-card.has-pending-box { animation: none; box-shadow: 0 0 12px 2px rgba(80,151,73,.18); } }
+.clover-balance-topline strong { font-size: 13px; }
+.clover-guide-trigger { min-height: 32px; margin-left: auto; padding: 0 10px; border: 1px solid #d4e7cd; border-radius: 11px; background: rgba(255,255,255,.68); color: #397b42; font-size: 12px; font-weight: 750; white-space: nowrap; cursor: pointer; }
+.toss-points-detail-overlay { position: fixed; z-index: 10000; inset: 0; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(30,35,42,.48); backdrop-filter: blur(5px); }
+.toss-points-detail-dialog { position: relative; width: min(100%, 420px); padding: 30px 24px 22px; border-radius: 28px; background: #fff; box-shadow: 0 14px 44px rgba(0,0,0,.18); color: #191f28; text-align: center; animation: gift-dialog-in .2s ease-out both; }
+.toss-points-detail-close { position: absolute; top: 12px; right: 15px; width: 34px; height: 34px; border: 0; background: transparent; color: #9ba4b1; font-size: 28px; font-weight: 300; cursor: pointer; }
+.toss-points-detail-icon { display: grid; width: 62px; height: 62px; place-items: center; margin: 12px auto 18px; border-radius: 50%; background: #3182f6; color: #fff; font-size: 42px; font-weight: 600; line-height: 1; }
+.toss-points-detail-dialog h2 { margin: 0 0 20px; font-size: 23px; font-weight: 800; }
+.toss-points-detail-empty { margin: -10px 0 16px; color: #758193; font-size: 14px; }
+.toss-points-detail-notes { display: grid; gap: 14px; margin: 0 0 22px; padding: 0 0 0 20px; color: #697586; font-size: 15px; line-height: 1.6; text-align: left; }
+.toss-points-detail-notes strong { color: #191f28; }
+.toss-points-detail-confirm { width: 100%; min-height: 52px; border: 0; border-radius: 14px; background: #3182f6; color: #fff; font-size: 16px; font-weight: 750; cursor: pointer; }
+.attendance-lottery-dialog { gap: 0; }
+.attendance-lottery-preview-tag { margin: 0 0 10px; padding: 6px 9px; border-radius: 999px; background: #fff5df; color: #9c6700; font-size: 10px; font-weight: 700; }
+.attendance-lottery-description { max-width: 330px; margin: 0 auto 18px; line-height: 1.55; }
+.attendance-lottery-description strong { color: var(--accent-blue); font-weight: 800; }
+.attendance-lottery-ticket { position: relative; display: flex; min-height: 102px; flex-direction: column; align-items: center; justify-content: center; gap: 6px; width: 100%; margin: 16px 0 12px; border: 1px dashed #e6c884; border-radius: 16px; background: linear-gradient(135deg,#fff9e9,#fff3d7); color: #806324; }
+.attendance-lottery-ticket > span { color: #8f7a50; font-size: 12px; }
+.attendance-lottery-ticket > strong { color: #1c2736; font-size: 27px; font-weight: 850; font-variant-numeric: tabular-nums; }
+.attendance-lottery-prize-range { min-height: 94px; margin: 0 0 10px; border: 0; background: #f6f7f9; color: var(--text-primary); }
+.attendance-lottery-prize-range > span { color: var(--text-secondary); }
+.attendance-lottery-prize-range > strong { color: var(--accent-blue); }
+.attendance-lottery-balance { margin-bottom: 14px; color: var(--text-secondary); font-size: 12px; }
+.attendance-lottery-hint { margin: 8px 0 0; color: var(--text-secondary); font-size: 12px; }
+.attendance-lottery-error { margin: 0 0 10px; color: var(--accent-red); font-size: 12px; }
+.attendance-lottery-dialog .attendance-gift-confirm:disabled { cursor: default; opacity: .5; }
+.attendance-lottery-scratch-ticket { display: flex; min-height: 228px; flex-direction: row; align-items: stretch; gap: 10px; overflow: hidden; padding: 12px 13px; border: 3px solid #48afff; border-radius: 22px; background: linear-gradient(145deg,#f2fcff 0%,#c9f0ff 52%,#e3f4ff 100%); box-shadow: inset 0 0 0 3px rgba(255,255,255,.72), 0 8px 22px rgba(61,157,238,.2); color: #263850; }
+.attendance-lottery-scratch-ticket.is-revealed { border-color: #48afff; background: linear-gradient(145deg,#f2fcff 0%,#c9f0ff 52%,#e3f4ff 100%); }
+.attendance-lottery-ticket-side { display: flex; width: 38px; flex: 0 0 38px; flex-direction: column; align-items: center; justify-content: space-around; border-right: 2px dashed #49aaff; color: #42afff; font-size: 19px; }
+.attendance-lottery-ticket-side span:nth-child(2) { color: #ffc837; font-size: 22px; }
+.attendance-lottery-ticket-body { display: flex; min-width: 0; flex: 1; flex-direction: column; gap: 7px; }
+.attendance-lottery-ticket-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: #347ebe; font-size: 12px; font-weight: 800; }
+.attendance-lottery-ticket-heading strong { color: #5aaddf; font-size: 9px; letter-spacing: 1.4px; }
+.attendance-lottery-scratch-area { position: relative; display: grid; min-height: 146px; flex: 1; place-items: center; overflow: hidden; border: 2px solid rgba(255,255,255,.88); border-radius: 15px; background: linear-gradient(135deg,#f5faff,#e6f4ff); box-shadow: inset 0 1px 8px rgba(77,145,201,.13); }
+.attendance-lottery-prize-underlay { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; color: #4284b6; }
+.attendance-lottery-prize-underlay > span { font-size: 11px; font-weight: 700; }
+.attendance-lottery-prize-underlay > strong { color: #2489e2; font-size: 38px; font-weight: 900; line-height: 1.08; }
+.attendance-lottery-prize-underlay > small { color: #6887a1; font-size: 11px; }
+.attendance-lottery-scratch-ticket.is-revealed .attendance-lottery-prize-underlay > span { color: #2789d8; }
+.attendance-lottery-scratch-surface { position: absolute; inset: 0; width: 100%; height: 100%; border-radius: inherit; touch-action: none; cursor: crosshair; }
 .clover-start-button { width: 100%; min-height: 43px; margin-top: 10px; border: 0; border-radius: 12px; background: #438747; color: #fff; font-size: 14px; font-weight: 750; cursor: pointer; }
 .clover-start-button:disabled { opacity: .6; cursor: default; }
 .clover-result-copy { margin: 10px 0 0; color: #39803c; font-size: 13px; font-weight: 700; }
@@ -52,6 +89,22 @@
 .clover-found-modal .clover-result-record .clover-result-time { margin: 0; font-size: 32px; }
 .clover-result-record p { margin: 0; color: #6a7788; font-size: 11px; }
 .clover-result-record .clover-personal-best { margin-top: 6px; font-size: 13px; }
+.clover-earned-points { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; padding: 10px 13px; border-radius: 13px; background: #eef7eb; color: #52754c; font-size: 13px; font-weight: 700; }
+.clover-earned-points strong { color: #328345; font-size: 20px; font-weight: 850; }
+.clover-guide-dialog { position: relative; justify-content: flex-start; gap: 0; padding: 18px 20px 20px; }
+.clover-guide-close { position: absolute; z-index: 3; top: 9px; right: 12px; width: 34px; height: 34px; border: 0; background: transparent; color: #98a1af; font-size: 27px; font-weight: 300; line-height: 1; cursor: pointer; }
+.clover-guide-scene { position: relative; width: 100%; height: clamp(170px, 29dvh, 230px); flex: 0 0 auto; margin: 16px 0 12px; overflow: hidden; border-radius: 18px; background: #315132; animation: gift-dialog-in .24s ease-out both; }
+.clover-guide-scene-reward { height: clamp(170px, 29dvh, 230px); overflow: visible; background: transparent; }
+.clover-guide-scene .meadow { position: relative; width: 100%; height: 100%; min-height: 0; overflow: hidden; border-radius: inherit; background: #315132; }
+.clover-guide-scene .meadow-canvas { display: block; width: 100%; height: 100%; min-height: 0; pointer-events: none; }
+.clover-guide-speech { min-height: 0; padding: 13px 15px; }
+.clover-guide-speech h2 { min-height: 0; margin-bottom: 6px; }
+.clover-guide-speech p { min-height: 0; }
+.clover-guide-reward-scene { display: flex; width: 100%; height: 100%; flex-direction: column; align-items: center; justify-content: center; gap: 7px; background: transparent; color: #438747; font-size: 15px; font-weight: 750; }
+.clover-guide-reward-scene .clover-found-leaf { filter: drop-shadow(0 8px 12px rgba(67,135,71,.28)); }
+.clover-guide-nav { display: flex; flex: 0 0 51px; align-items: center; gap: 10px; margin-top: auto; }
+.clover-guide-nav .onboarding-next { flex: 1; }
+.clover-guide-prev { min-width: 72px; min-height: 51px; border: 0; border-radius: 14px; background: #f2f4f6; color: #4e5968; font-size: 14px; font-weight: 700; cursor: pointer; }
 .clover-found-modal .clover-result-copy { margin-top: 12px; }
 .clover-found-modal .clover-result-fortune { margin-top: 10px; color: #397c48; font-size: 14px; font-weight: 700; line-height: 1.5; }
 .clover-found-modal-golden { border-color: #e8c96a; box-shadow: 0 0 0 1px #e8c96a88, 0 0 26px 6px #f1cc6380, 0 18px 48px #19251c26; }
@@ -63,23 +116,8 @@
 .clover-found-modal-golden .clover-result-record { border-color: #f0e4bb; background: #fffaf0; }
 .clover-found-modal-golden .clover-result-fortune { color: #a87917; }
 .clover-secondary-button { background: #eef4ec; color: #438747; }
-.clover-box-loading { margin: 18px 0 8px; color: var(--text-secondary); font-size: 14px; }
-.clover-box-error { margin: 12px 0 18px; color: var(--accent-red); font-size: 13px; }
-.clover-guide-dialog { position: relative; justify-content: flex-start; gap: 0; padding: 18px 20px 20px; }
-.clover-guide-close { position: absolute; z-index: 3; top: 9px; right: 12px; width: 34px; height: 34px; border: 0; background: transparent; color: #98a1af; font-size: 27px; font-weight: 300; line-height: 1; cursor: pointer; }
-.clover-guide-scene { position: relative; width: 100%; height: clamp(170px, 29dvh, 230px); flex: 0 0 auto; margin: 16px 0 12px; overflow: hidden; border-radius: 18px; background: #315132; animation: gift-dialog-in .24s ease-out both; }
-.clover-guide-scene-reward { height: clamp(170px, 29dvh, 230px); overflow: visible; background: transparent; }
-.clover-guide-scene .meadow { position: relative; width: 100%; height: 100%; min-height: 0; overflow: hidden; border-radius: inherit; background: #315132; }
-.clover-guide-scene .meadow-canvas { display: block; width: 100%; height: 100%; min-height: 0; pointer-events: none; }
-.clover-guide-speech { min-height: 0; padding: 13px 15px; }
-.clover-guide-speech h2 { min-height: 0; margin-bottom: 6px; }
-.clover-guide-speech p { min-height: 0; }
-.clover-guide-reward-scene { display: flex; width: 100%; height: 100%; flex-direction: column; align-items: center; justify-content: center; background: transparent; color: #438747; font-size: 14px; font-weight: 750; }
-.clover-guide-reward-scene img { width: min(72%, 210px); height: min(100%, 210px); object-fit: contain; filter: drop-shadow(0 8px 10px rgba(41,86,45,.12)); }
-.clover-guide-nav { display: flex; flex: 0 0 51px; align-items: center; gap: 10px; margin-top: auto; }
-.clover-guide-nav .onboarding-next { flex: 1; }
-.clover-guide-prev { min-width: 72px; min-height: 51px; border: 0; border-radius: 14px; background: #f2f4f6; color: #4e5968; font-size: 14px; font-weight: 700; cursor: pointer; }
 .clover-continue-dialog { gap: 12px; padding: 22px 20px 20px; }
+.clover-continue-close { position: absolute; z-index: 3; top: 9px; right: 12px; width: 34px; height: 34px; border: 0; background: transparent; color: #98a1af; font-size: 27px; font-weight: 300; line-height: 1; cursor: pointer; }
 .clover-continue-character { width: 112px; height: 112px; margin: 12px auto 0; border-radius: 28px; background: #eff8ec; object-fit: contain; }
 .clover-continue-dialog .clover-guide-speech { min-height: 0; }
 .clover-continue-dialog .clover-guide-speech h2 { min-height: 0; }

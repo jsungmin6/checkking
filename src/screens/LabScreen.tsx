@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
 import HomeTabBar from "../components/HomeTabBar";
 import type { HomeTab } from "../components/HomeTabBar";
-import DevRequestModal from "../components/DevRequestModal";
 import { api } from "../utils/api";
+import AttendanceLotteryModal from "../components/AttendanceLotteryModal";
+import TossPointsReceivedModal from "../components/TossPointsReceivedModal";
+import { useAttendancePoints } from "../hooks/useAttendancePoints";
+import {  syncTossPointLedger, TOSS_POINTS_RECEIVED_EVENT, TOSS_POINTS_RECEIVED_KEY } from "../utils/tossPromotion";
 import "../styles/lab.css";
 
 interface Props {
@@ -13,7 +16,6 @@ interface Props {
 }
 
 interface CloverOverview {
-  pendingBoxes: number;
   personalBestMs: number | null;
   myRank: number | null;
   participantCount: number;
@@ -26,8 +28,35 @@ export default function LabScreen({
   const [personalBestMs, setPersonalBestMs] = useState<number | null>(null);
   const [myRank, setMyRank] = useState<number | null>(null);
   const [participantCount, setParticipantCount] = useState<number | null>(null);
-  const [hasPendingBox, setHasPendingBox] = useState(false);
-  const [showDevRequestModal, setShowDevRequestModal] = useState(false);
+  const [showLotteryModal, setShowLotteryModal] = useState(false);
+  const [showTossPointsDetail, setShowTossPointsDetail] = useState(false);
+  const [tossPointsReceived, setTossPointsReceived] = useState(() => {
+    const stored = Number(localStorage.getItem(TOSS_POINTS_RECEIVED_KEY) ?? "0");
+    return Number.isFinite(stored) && stored > 0 ? stored : 0;
+  });
+  const { totalPoints, refresh: refreshPoints } = useAttendancePoints();
+
+  useEffect(() => {
+    void syncTossPointLedger();
+  }, []);
+
+  useEffect(() => {
+    const updateReceivedPoints = (event: Event) => {
+      const detail = (event as CustomEvent<number>).detail;
+      if (Number.isFinite(detail)) setTossPointsReceived(detail);
+    };
+    const updateFromStorage = (event: StorageEvent) => {
+      if (event.key !== TOSS_POINTS_RECEIVED_KEY) return;
+      const stored = Number(event.newValue ?? "0");
+      setTossPointsReceived(Number.isFinite(stored) && stored > 0 ? stored : 0);
+    };
+    window.addEventListener(TOSS_POINTS_RECEIVED_EVENT, updateReceivedPoints);
+    window.addEventListener("storage", updateFromStorage);
+    return () => {
+      window.removeEventListener(TOSS_POINTS_RECEIVED_EVENT, updateReceivedPoints);
+      window.removeEventListener("storage", updateFromStorage);
+    };
+  }, []);
 
   useEffect(() => {
     api<CloverOverview>("/labs/clover")
@@ -35,7 +64,6 @@ export default function LabScreen({
         setPersonalBestMs(overview.personalBestMs ?? null);
         setMyRank(overview.myRank ?? null);
         setParticipantCount(overview.participantCount ?? 0);
-        setHasPendingBox((overview.pendingBoxes ?? 0) > 0);
       })
       .catch(() => {});
   }, []);
@@ -49,10 +77,39 @@ export default function LabScreen({
   return (
     <div className="page lab-page">
       <header className="lab-header">
-        <h1>놀이터</h1>
+        <h1>포인트</h1>
+        <button
+          type="button"
+          className="lab-received-points"
+          onClick={() => setShowTossPointsDetail(true)}
+          aria-label={`출석왕에서 지금까지 받은 토스포인트 ${tossPointsReceived.toLocaleString()}원 자세히 보기`}
+        >
+          <span className="lab-received-points-icon" aria-hidden="true"><span>P</span></span>
+          <span className="lab-received-points-label">출석왕에서 받은 토스포인트</span>
+          <strong>{tossPointsReceived.toLocaleString()}원</strong>
+          <span className="lab-received-points-chevron" aria-hidden="true">›</span>
+        </button>
       </header>
 
       <main className="lab-content">
+        <div style={{
+          display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 12,
+          marginBottom: 14, padding: "16px 18px", borderRadius: "var(--radius-card)",
+          background: "linear-gradient(135deg, var(--accent-blue), #5B9CF6)", color: "#fff",
+        }}>
+          <div>
+            <div style={{ fontSize: 12, opacity: 0.85, marginBottom: 4 }}>출석점수</div>
+            <div style={{ fontSize: 24, fontWeight: 800 }}>{totalPoints === null ? "-" : `${totalPoints.toLocaleString()}점`}</div>
+          </div>
+          <button type="button" onClick={() => setShowLotteryModal(true)} style={{
+            padding: "10px 14px", borderRadius: "var(--radius-button)", border: "none",
+            background: "rgba(255,255,255,0.2)", color: "#fff", fontSize: 13, fontWeight: 700,
+            whiteSpace: "nowrap", cursor: "pointer",
+          }}>
+            출석복권 구매
+          </button>
+        </div>
+        <p className="lab-activity-intro">다양한 활동을 통해 빠르게 출석 점수를 모아 봐요!</p>
         <button className="lab-clover-card" onClick={onOpenCloverFinder}>
           <span className="lab-clover-card-icon" aria-hidden="true">
             <img src="/emojis/redrawn/wellwish-chick.png" alt="" />
@@ -61,7 +118,6 @@ export default function LabScreen({
             <strong>네잎 클로버 빨리 찾기</strong>
           </span>
           <span className="lab-clover-card-meta">
-            {hasPendingBox && <span className="lab-clover-card-dot" aria-label="받을 출석박스가 있어요" />}
             {participantCount !== null && <span>{participantCount}명 참여</span>}
           </span>
           <span className="lab-clover-card-arrow" aria-hidden="true">›</span>
@@ -72,23 +128,20 @@ export default function LabScreen({
             </span>
           )}
         </button>
-        <div style={{ marginTop: 18 }}>
-          <div style={{ margin: "0 4px 8px", color: "var(--text-secondary)", fontSize: 12 }}>기타</div>
-          <button onClick={() => setShowDevRequestModal(true)} style={{
-            display: "flex", width: "100%", alignItems: "center", justifyContent: "space-between",
-            padding: "16px 20px", border: 0, borderRadius: "var(--radius-card)",
-            background: "var(--bg-card)", boxShadow: "var(--shadow-card)",
-            color: "var(--text-primary)", fontSize: 15, textAlign: "left", cursor: "pointer",
-          }}>
-            <span>개발 요구하기</span>
-            <span style={{ color: "var(--text-secondary)", fontSize: 13 }}>{">"}</span>
-          </button>
-        </div>
-        <p className="lab-footnote">놀이터 기능은 이용하면서 계속 추가할게요.</p>
+        <p className="lab-footnote">포인트 기능을 계속 추가할게요.</p>
       </main>
 
       <HomeTabBar active="lab" onSelect={handleTabChange} />
-      {showDevRequestModal && <DevRequestModal onClose={() => setShowDevRequestModal(false)} />}
+      {showLotteryModal && (
+        <AttendanceLotteryModal
+          totalPoints={totalPoints ?? 0}
+          onClose={() => { setShowLotteryModal(false); void refreshPoints(); }}
+          onPointsChanged={() => { void refreshPoints(); }}
+        />
+      )}
+      {showTossPointsDetail && (
+        <TossPointsReceivedModal amount={tossPointsReceived} onClose={() => setShowTossPointsDetail(false)} />
+      )}
     </div>
   );
 }

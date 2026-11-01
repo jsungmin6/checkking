@@ -7,7 +7,8 @@ interface MissionModalProps {
   missions: MissionState[];
   onClose: () => void;
   /** 선물상자를 열어 보상이 확정됐을 때 */
-  onRewarded: (missionId: string, amount: number) => void;
+  /** 적립 금액은 서버가 정한다. 여기서는 어떤 미션인지만 알린다. */
+  onRewarded: (missionId: string) => void;
 }
 
 export default function MissionModal({ missions, onClose, onRewarded }: MissionModalProps) {
@@ -18,7 +19,7 @@ export default function MissionModal({ missions, onClose, onRewarded }: MissionM
   const handleGiftOpened = () => {
     if (!claiming) return;
     setOpened(true);
-    onRewarded(claiming.id, claiming.reward);
+    onRewarded(claiming.id);
     // 이전 버전에서 이미 완료해 둔 미션이나 완료 시 알림 전송에 실패한 경우를 보완한다.
     reportMissionCompleted(claiming.id);
   };
@@ -42,11 +43,11 @@ export default function MissionModal({ missions, onClose, onRewarded }: MissionM
               <div className="attendance-gift-points-list">
                 <div className="attendance-gift-point-row">
                   <span>미션 보상</span>
-                  <strong>+{claiming.reward.toLocaleString()}P</strong>
+                  <strong>+{claiming.reward.toLocaleString()}점</strong>
                 </div>
               </div>
               <div className="attendance-gift-total-label">총 지급 포인트</div>
-              <div className="attendance-gift-total">+{claiming.reward.toLocaleString()}P</div>
+              <div className="attendance-gift-total">+{claiming.reward.toLocaleString()}점</div>
               <button className="attendance-gift-confirm" onClick={onClose}>확인</button>
             </>
           )}

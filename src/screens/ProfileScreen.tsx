@@ -8,6 +8,7 @@ import type { User } from "../types";
 import { markMissionDone } from "../hooks/useMissions";
 import { avatarEmojiSrc } from "../utils/emoji";
 import AvatarChangeModal from "../components/AvatarChangeModal";
+import DevRequestModal from "../components/DevRequestModal";
 import { useAttendancePoints } from "../hooks/useAttendancePoints";
 
 interface ProfileScreenProps {
@@ -25,6 +26,7 @@ export default function ProfileScreen({ user, onNavigateHome, onNavigatePublicRo
   const [editing, setEditing] = useState(false);
   const [viewingTerms, setViewingTerms] = useState<{ url: string; title: string } | null>(null);
   const [accountOpen, setAccountOpen] = useState(false);
+  const [showDevRequestModal, setShowDevRequestModal] = useState(false);
   const [nickname, setNickname] = useState(user.nickname);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -105,6 +107,7 @@ export default function ProfileScreen({ user, onNavigateHome, onNavigatePublicRo
           onChanged={onAvatarUpdate}
         />
       )}
+      {showDevRequestModal && <DevRequestModal onClose={() => setShowDevRequestModal(false)} />}
       <div style={{ padding: "20px 20px 12px" }}>
         <div style={{ fontSize: 22, fontWeight: 700 }}>내 정보</div>
       </div>
@@ -142,7 +145,7 @@ export default function ProfileScreen({ user, onNavigateHome, onNavigatePublicRo
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 8, marginBottom: 14 }}>
             {[
               { label: "최대 연속 출석", value: appBestStreak === null ? "-" : `${appBestStreak}일` },
-              { label: "누적 포인트", value: `${totalPoints.toLocaleString()}P` },
+              { label: "누적 출석점수", value: totalPoints === null ? "-" : `${totalPoints.toLocaleString()}점` },
               { label: "클로버 기록", value: cloverSummary?.personalBestMs != null
                 ? `${cloverSummary.myRank != null ? `${cloverSummary.myRank}위 · ` : ""}${(cloverSummary.personalBestMs / 1000).toFixed(2)}초`
                 : "기록 없음" },
@@ -219,6 +222,19 @@ export default function ProfileScreen({ user, onNavigateHome, onNavigatePublicRo
               </div>
             ))}
           </div>
+        </div>
+
+        <div style={{ padding: "24px 16px 0" }}>
+          <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 8 }}>기타</div>
+          <button onClick={() => setShowDevRequestModal(true)} style={{
+            display: "flex", width: "100%", alignItems: "center", justifyContent: "space-between",
+            padding: "16px 20px", border: 0, borderRadius: "var(--radius-card)",
+            background: "var(--bg-card)", boxShadow: "var(--shadow-card)",
+            color: "var(--text-primary)", fontSize: 15, textAlign: "left", cursor: "pointer",
+          }}>
+            <span>개발 요구하기</span>
+            <span style={{ color: "var(--text-secondary)", fontSize: 13 }}>{">"}</span>
+          </button>
         </div>
 
         <div style={{ height: 32 }} />

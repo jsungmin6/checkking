@@ -19,7 +19,7 @@ export default function CloverContinueModal({ onClose, onRewarded }: Props) {
     try {
       const watched = await showTossRewardedAd(CLOVER_CONTINUE_AD_GROUP_ID, "CLOVER_CONTINUE");
       if (!watched) {
-        setError("광고를 끝까지 시청하면 5판 더 할 수 있어요.");
+        setError("광고를 끝까지 시청하면 3판 더 할 수 있어요.");
         return;
       }
       onRewarded();
@@ -34,16 +34,16 @@ export default function CloverContinueModal({ onClose, onRewarded }: Props) {
   return (
     <div className="onboarding-overlay clover-continue-overlay">
       <section className="onboarding-dialog clover-continue-dialog" role="dialog" aria-modal="true" aria-label="계속 플레이하기">
-        {!watchingAd && <button className="clover-guide-close" onClick={onClose} aria-label="닫기">×</button>}
+        {!watchingAd && <button className="clover-continue-close" onClick={onClose} aria-label="닫기">×</button>}
         <img className="clover-continue-character" src="/emojis/redrawn/wellwish-chick.png" alt="클로버를 든 캐릭터" />
         <div className="onboarding-speech clover-guide-speech">
           <span className="onboarding-speaker">네잎 클로버 빨리 찾기</span>
-          <h2>5판을 모두 플레이했어요!</h2>
-          <p>리워드 광고를 끝까지 시청하면 5판 더 할 수 있어요.</p>
+          <h2>3판을 모두 플레이했어요!</h2>
+          <p>리워드 광고를 끝까지 시청하면 3판 더 할 수 있어요.</p>
         </div>
         {error && <p className="clover-continue-error" role="alert">{error}</p>}
         <button className="onboarding-next" onClick={() => void handleWatch()} disabled={watchingAd}>
-          {watchingAd ? "광고를 준비하고 있어요" : "광고 보고 5판 더 하기"}
+          {watchingAd ? "광고를 준비하고 있어요" : "광고 보고 3판 더 하기"}
         </button>
         {!watchingAd && <button className="clover-continue-later" onClick={onClose}>나중에</button>}
       </section>

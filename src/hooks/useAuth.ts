@@ -1,7 +1,7 @@
 import { useCallback, useState, useEffect } from "react";
 import { TOKEN_KEYS, KAKAO_REDIRECT_URI } from "../constants";
 import { api, clearTokens, setTokens, restoreTokensFromTossStorage } from "../utils/api";
-import { grantWelcomeBonusIfNew } from "./useAttendancePoints";
+import { claimReward } from "../utils/attendancePoints";
 import type { AuthResponse, User, Profile } from "../types";
 
 interface AuthState {
@@ -12,6 +12,15 @@ interface AuthState {
 }
 
 const KAKAO_CODE_KEY = "kakao_auth_code";
+
+/**
+ * 신규 가입 환영 점수. 금액과 1회 제한은 서버가 판단하므로 종류만 알린다.
+ * 실패해도 로그인 흐름을 막지 않는다 — 다음 진입에서 다시 시도된다.
+ */
+function grantWelcomeBonusIfNewUser(isNewUser: boolean) {
+  if (!isNewUser) return;
+  void claimReward("WELCOME").catch(() => { /* 다음 진입에 재시도 */ });
+}
 
 export function useAuth() {
   const [state, setState] = useState<AuthState>({ user: null, loading: true, error: null, needsTermsAgreement: false });
@@ -47,7 +56,7 @@ export function useAuth() {
           .then((data) => {
             console.log("[출석왕] 카카오 로그인 성공:", data.user.nickname);
             setTokens(data.accessToken, data.refreshToken);
-            grantWelcomeBonusIfNew(data.isNewUser);
+            grantWelcomeBonusIfNewUser(data.isNewUser);
             setState({ user: data.user, loading: false, error: null, needsTermsAgreement: data.isNewUser });
           })
           .catch((e) => {
@@ -118,7 +127,7 @@ export function useAuth() {
       body: JSON.stringify({ authorizationCode, redirectUri: KAKAO_REDIRECT_URI }),
     });
     setTokens(data.accessToken, data.refreshToken);
-    grantWelcomeBonusIfNew(data.isNewUser);
+    grantWelcomeBonusIfNewUser(data.isNewUser);
     setState({ user: data.user, loading: false, error: null, needsTermsAgreement: data.isNewUser });
     return data;
   }, []);
@@ -131,7 +140,7 @@ export function useAuth() {
       body: JSON.stringify({ accessToken: kakaoAccessToken }),
     });
     setTokens(data.accessToken, data.refreshToken);
-    grantWelcomeBonusIfNew(data.isNewUser);
+    grantWelcomeBonusIfNewUser(data.isNewUser);
     setState({ user: data.user, loading: false, error: null, needsTermsAgreement: data.isNewUser });
   }, []);
 
@@ -143,7 +152,7 @@ export function useAuth() {
       body: JSON.stringify({ identityToken }),
     });
     setTokens(data.accessToken, data.refreshToken);
-    grantWelcomeBonusIfNew(data.isNewUser);
+    grantWelcomeBonusIfNewUser(data.isNewUser);
     setState({ user: data.user, loading: false, error: null, needsTermsAgreement: data.isNewUser });
   }, []);
 
@@ -154,7 +163,7 @@ export function useAuth() {
       body: JSON.stringify({ authorizationCode, referrer }),
     });
     setTokens(data.accessToken, data.refreshToken);
-    grantWelcomeBonusIfNew(data.isNewUser);
+    grantWelcomeBonusIfNewUser(data.isNewUser);
     setState({ user: data.user, loading: false, error: null, needsTermsAgreement: data.isNewUser });
     return data;
   }, []);

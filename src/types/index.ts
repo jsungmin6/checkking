@@ -143,6 +143,8 @@ export interface CheckInResponse {
   status: AttendanceStatus;
   /** 방을 가리지 않는 내 누적 출석 횟수 — 만족도를 물어볼 시점인지 판단하는 데 쓴다. */
   myTotalCheckIns: number;
+  /** 서버가 지급한 1~3등 보너스. 1~3등이 아니거나 하루 상한을 넘겼으면 null. */
+  rankBonusPoints: number | null;
 }
 
 export interface TodayRanking {

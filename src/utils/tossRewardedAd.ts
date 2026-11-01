@@ -57,7 +57,7 @@ async function loadAdOnce(
 /** Returns true only after the SDK reports that the user earned the reward. */
 export async function showTossRewardedAd(
   adGroupId: string,
-  placement?: "AVATAR_CHANGE" | "CLOVER_CONTINUE" | "POINTS_CONVERSION",
+  placement?: "AVATAR_CHANGE" | "CLOVER_CONTINUE" | "CLOVER_BOX_DOUBLE" | "POINTS_CONVERSION" | "ATTENDANCE_LOTTERY",
 ): Promise<boolean> {
   if (!isTossApp()) return true;
 

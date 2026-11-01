@@ -3,7 +3,7 @@
  * 작은 크기(22px)에서 뭉개지지 않도록 선이 아니라 면으로 채운다.
  */
 export type TabIconName =
-  | "home" | "search" | "lab" | "profile"
+  | "home" | "search" | "points" | "profile"
   | "today" | "greeting" | "ranking" | "stats" | "settings";
 
 interface TabIconProps {
@@ -31,9 +31,12 @@ const PATHS: Record<TabIconName, React.ReactNode> = {
       d="M10.8 2.6a8.2 8.2 0 1 1-4.6 15l-2.6 2.6a1.4 1.4 0 0 1-2-2l2.6-2.6a8.2 8.2 0 0 1 6.6-13Zm0 2.8a5.4 5.4 0 1 0 0 10.8 5.4 5.4 0 0 0 0-10.8Z"
     />
   ),
-  // 놀이터 — 플라스크
-  lab: (
-    <path fillRule="evenodd" clipRule="evenodd" d="M9 2a1.2 1.2 0 0 0 0 2.4h.8v5.1l-5.1 8.1A2.9 2.9 0 0 0 7.2 22h9.6a2.9 2.9 0 0 0 2.5-4.4l-5.1-8.1V4.4h.8a1.2 1.2 0 0 0 0-2.4H9Zm3.2 8.2-4.3 6.9h8.2l-4.3-6.9V4.4h-1.2v5.8h1.6Z" />
+  // 포인트 — 안에 P가 들어간 코인
+  points: (
+    <>
+      <circle cx="12" cy="12" r="10" />
+      <path d="M9 6.5h4.2a3.4 3.4 0 1 1 0 6.8H11v4.2H9V6.5Zm2 1.8v3.2h2.2a1.6 1.6 0 1 0 0-3.2H11Z" fill="var(--bg-primary, #fff)" />
+    </>
   ),
   // 사람
   profile: (

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Meadow } from "./Meadow";
+import { CloverIcon } from "./CloverIcon";
 import type { ActiveField } from "./domain";
 
 interface Props {
@@ -18,8 +19,8 @@ const STEPS = [
     scene: "drag" as const,
   },
   {
-    title: "출석박스를 받아보세요",
-    description: "네잎클로버를 모으면 랜덤 출석 포인트 박스가 도착해요.",
+    title: "출석점수를 바로 받아요",
+    description: "성공하면 출석점수를 바로 받아요.",
     scene: "reward" as const,
   },
 ];
@@ -45,20 +46,19 @@ export default function CloverGuideModal({ onClose }: Props) {
         <button className="clover-guide-close" onClick={onClose} aria-label="안내 닫기">×</button>
         <div className={`clover-guide-scene${current.scene === "reward" ? " clover-guide-scene-reward" : ""}`} key={step}>
           {current.scene === "reward" ? (
-            <div className="clover-guide-reward-scene">
-              <img src="/rewards/gift-box-closed.png" alt="파란 리본이 달린 출석박스" />
+            <div className="clover-guide-reward-scene" aria-hidden="true">
+              <CloverIcon seed={24} size={112} />
+              <strong>출석점수 지급</strong>
             </div>
           ) : (
-            <>
-              <Meadow
-                field={guideField}
-                onFound={() => {}}
-                onInspect={() => {}}
-                hintSignal={0}
-                readOnly
-                demoMode={current.scene}
-              />
-            </>
+            <Meadow
+              field={guideField}
+              onFound={() => {}}
+              onInspect={() => {}}
+              hintSignal={0}
+              readOnly
+              demoMode={current.scene}
+            />
           )}
         </div>
 

@@ -6,9 +6,14 @@ interface GiftBoxProps {
   label?: string;
   hint?: string;
   autoOpenRequest?: number;
+  imageSrc?: string;
+  imageAlt?: string;
 }
 
-export default function GiftBox({ disabled, onOpened, label = "출석 선물이 도착했어요", hint = "탭해서 열어보세요", autoOpenRequest = 0 }: GiftBoxProps) {
+export default function GiftBox({
+  disabled, onOpened, label = "출석 선물이 도착했어요", hint = "탭해서 열어보세요", autoOpenRequest = 0,
+  imageSrc = "/rewards/gift-box-closed.png", imageAlt = "파란 리본이 달린 선물 상자",
+}: GiftBoxProps) {
   const [opening, setOpening] = useState(false);
   const timer = useRef<number | null>(null);
   const lastAutoOpenRequest = useRef(0);
@@ -46,7 +51,7 @@ export default function GiftBox({ disabled, onOpened, label = "출석 선물이 
       aria-label={`${label} 상자 열기`}
     >
       <span className="attendance-gift-image-frame">
-        <img className="attendance-gift-image attendance-gift-image-closed" src="/rewards/gift-box-closed.png" alt="파란 리본이 달린 선물 상자" />
+        <img className="attendance-gift-image attendance-gift-image-closed" src={imageSrc} alt={imageAlt} />
       </span>
       <strong>{label}</strong>
       <span className="attendance-gift-hint">{opening ? "선물을 여는 중..." : hint}</span>

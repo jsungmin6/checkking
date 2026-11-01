@@ -73,11 +73,11 @@ export default function FeedbackModal({ onClose, onRewarded, alreadyRewarded }: 
               <div className="attendance-gift-points-list">
                 <div className="attendance-gift-point-row">
                   <span>문의 선물</span>
-                  <strong>+{FEEDBACK_REWARD.toLocaleString()}P</strong>
+                  <strong>+{FEEDBACK_REWARD.toLocaleString()}점</strong>
                 </div>
               </div>
               <div className="attendance-gift-total-label">총 지급 포인트</div>
-              <div className="attendance-gift-total">+{FEEDBACK_REWARD.toLocaleString()}P</div>
+              <div className="attendance-gift-total">+{FEEDBACK_REWARD.toLocaleString()}점</div>
               <button className="attendance-gift-confirm" onClick={onClose}>확인</button>
             </>
           )}
@@ -131,7 +131,7 @@ export default function FeedbackModal({ onClose, onRewarded, alreadyRewarded }: 
                 color: "var(--accent-blue)", fontSize: 13, fontWeight: 700,
               }}>
                 <img src="/rewards/gift-box-closed.png" alt="" style={{ width: 20, height: 20, objectFit: "contain" }} />
-                문의 완료하면 +{FEEDBACK_REWARD.toLocaleString()}P 드려요!
+                문의 완료하면 +{FEEDBACK_REWARD.toLocaleString()}점 드려요!
               </div>
             )}
 

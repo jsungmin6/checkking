@@ -77,9 +77,9 @@ export default function ConvertPointsModal({ totalPoints, onClose, onConverted }
         width: "100%", maxWidth: 340, background: "var(--bg-card)", borderRadius: 20,
         padding: "24px 22px 22px", textAlign: "center",
       }}>
-        <div style={{ fontSize: 17, fontWeight: 700, marginBottom: 6 }}>토스 포인트로 바꾸기</div>
+        <div style={{ fontSize: 17, fontWeight: 700, marginBottom: 6 }}>토스포인트로 바꾸기</div>
         <div style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 20 }}>
-          출석 포인트 {POINTS_TO_WON_RATE.toLocaleString()}P는 토스 포인트 1P(1원)이 돼요<br />
+          출석점수 {POINTS_TO_WON_RATE.toLocaleString()}점은 토스포인트 1P(현금 1원)가 돼요<br />
           (하루 최대 {maxWon}P까지 전환 가능)
         </div>
 
@@ -88,19 +88,19 @@ export default function ConvertPointsModal({ totalPoints, onClose, onConverted }
           padding: "16px 12px", borderRadius: 14, background: "var(--bg-secondary)", marginBottom: 12,
         }}>
           <div style={{ textAlign: "center" }}>
-            <div style={{ fontSize: 11, color: "var(--text-secondary)", marginBottom: 2 }}>출석 포인트</div>
-            <div style={{ fontSize: 20, fontWeight: 800 }}>{convertibleCoins.toLocaleString()}P</div>
+            <div style={{ fontSize: 11, color: "var(--text-secondary)", marginBottom: 2 }}>출석점수</div>
+            <div style={{ fontSize: 20, fontWeight: 800 }}>{convertibleCoins.toLocaleString()}점</div>
           </div>
           <div style={{ fontSize: 18, color: "var(--text-secondary)" }}>→</div>
           <div style={{ textAlign: "center" }}>
-            <div style={{ fontSize: 11, color: "var(--text-secondary)", marginBottom: 2 }}>토스 포인트</div>
+            <div style={{ fontSize: 11, color: "var(--text-secondary)", marginBottom: 2 }}>토스포인트</div>
             <div style={{ fontSize: 20, fontWeight: 800, color: "var(--accent-blue)" }}>{convertibleWon.toLocaleString()}P</div>
           </div>
         </div>
 
         {remainderCoins > 0 && (
           <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 16 }}>
-            남은 {remainderCoins.toLocaleString()}P는 출석 포인트로 계속 쌓여요
+            남은 {remainderCoins.toLocaleString()}점은 출석점수로 계속 쌓여요
           </div>
         )}
 

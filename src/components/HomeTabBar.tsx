@@ -12,7 +12,7 @@ interface HomeTabBarProps {
 const TABS: { key: HomeTab; label: string; icon: TabIconName }[] = [
   { key: "home", label: "홈", icon: "home" },
   { key: "publicRooms", label: "방 찾기", icon: "search" },
-  { key: "lab", label: "놀이터", icon: "lab" },
+  { key: "lab", label: "포인트", icon: "points" },
   { key: "profile", label: "내 정보", icon: "profile" },
 ];
 
@@ -59,7 +59,7 @@ export default function HomeTabBar({ active, onSelect }: HomeTabBarProps) {
             }}>
               <TabIcon name={tab.icon} />
               {tab.key === "lab" && !playgroundSeen && !on && (
-                <span aria-label="새 놀이터" style={{
+                <span aria-label="새 포인트" style={{
                   position: "absolute", top: 1, right: 8, width: 9, height: 9,
                   border: "2px solid var(--bg-primary)", borderRadius: "50%", background: "var(--accent-red, #F04452)",
                 }} />

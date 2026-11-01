@@ -5,7 +5,6 @@ import HomeTabBar from "../components/HomeTabBar";
 import TossBannerAd from "../components/TossBannerAd";
 import AdMobBanner from "../components/AdMobBanner";
 import Toast from "../components/Toast";
-import ConvertPointsModal from "../components/ConvertPointsModal";
 import FeedbackButton from "../components/FeedbackButton";
 import MissionButton from "../components/MissionButton";
 import MissionModal from "../components/MissionModal";
@@ -15,7 +14,7 @@ import FeedbackModal from "../components/FeedbackModal";
 import OnboardingModal from "../components/OnboardingModal";
 import StreakRewardModal from "../components/StreakRewardModal";
 import { useToast } from "../hooks/useToast";
-import { useAttendancePoints, useFeedbackReward, useStreakMilestoneRewards, POINTS_TO_WON_RATE } from "../hooks/useAttendancePoints";
+import { useAttendancePoints, useFeedbackReward, useStreakMilestoneRewards } from "../hooks/useAttendancePoints";
 import { useMissions } from "../hooks/useMissions";
 import { useNews } from "../hooks/useNews";
 import { maybePromptMissionPushConsent } from "../utils/pushConsent";
@@ -31,16 +30,35 @@ interface HomeScreenProps {
   onNavigateLab: () => void;
 }
 
+interface AttendanceLotteryWinner {
+  id: number;
+  nickname: string;
+  amountWon: number;
+  paidAt: string;
+}
+
+const WINNER_ROTATION_INTERVAL_MS = 3_000;
+const WINNER_REFRESH_INTERVAL_MS = 30_000;
+
+function maskWinnerNickname(nickname: string): string {
+  const characters = Array.from(nickname);
+  if (characters.length <= 2) return nickname;
+  return `${"*".repeat(characters.length - 2)}${characters.slice(-2).join("")}`;
+}
+
 export default function HomeScreen({
   accountType, onNavigateCreateRoom, onNavigatePublicRooms, onNavigateRoom, onNavigateProfile, onNavigateLab,
 }: HomeScreenProps) {
   const [rooms, setRooms] = useState<ClassroomListItem[]>([]);
-  const [appCurrentStreak, setAppCurrentStreak] = useState<number | null>(null);
+  const [recentLotteryWinners, setRecentLotteryWinners] = useState<AttendanceLotteryWinner[]>([]);
+  const [recentLotteryWinnerIndex, setRecentLotteryWinnerIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const { toastMessage, showToast } = useToast();
   const roomLimit = accountType === "PREMIUM" ? 50 : 10;
-  const { totalPoints, addPoints, requestConversion } = useAttendancePoints();
-  const streakRewards = useStreakMilestoneRewards(appCurrentStreak);
+  const { claim: claimPointReward, refresh: refreshPoints } = useAttendancePoints();
+  // 연속 출석일과 수령 내역을 서버에서 받는다. 기기를 바꿔도 이어진다.
+  const streakRewards = useStreakMilestoneRewards();
+  const appCurrentStreak = streakRewards.currentStreak;
   const { alreadyRewarded: feedbackAlreadyRewarded, markRewarded: markFeedbackRewarded } = useFeedbackReward();
   const { missions, hasUpdate: missionHasUpdate, markSeen: markMissionSeen, claim: claimMission } = useMissions();
   const { news, hasUnread: newsHasUnread, markSeen: markNewsSeen } = useNews();
@@ -50,34 +68,17 @@ export default function HomeScreen({
   const [missionJustRewarded, setMissionJustRewarded] = useState(false);
   // 남은 미션이 없으면(전부 보상받았거나 이벤트를 내렸으면) 버튼이 사라진다.
   const showMissionButton = missions.length > 0;
-  const [showConvertModal, setShowConvertModal] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [showStreakRewardModal, setShowStreakRewardModal] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(() => localStorage.getItem("att-onboarding-seen") !== "1");
-
-  const handleConvertPoints = () => {
-    if (totalPoints < POINTS_TO_WON_RATE) {
-      showToast(`${POINTS_TO_WON_RATE.toLocaleString()}P부터 전환할 수 있어요`);
-      return;
-    }
-    setShowConvertModal(true);
-  };
-
-  const handleConverted = (convertedCoins: number) => {
-    requestConversion(convertedCoins);
-    setShowConvertModal(false);
-    showToast(`토스 포인트 ${(convertedCoins / POINTS_TO_WON_RATE).toLocaleString()}P로 전환됐어요`);
-  };
-
 
   const handleCreateRoom = async () => {
     let currentRooms = rooms;
     if (loading) {
       try {
-        const data = await api<{ classrooms: ClassroomListItem[]; appCurrentStreak?: number }>("/classrooms/my");
+        const data = await api<{ classrooms: ClassroomListItem[] }>("/classrooms/my");
         currentRooms = data.classrooms;
         setRooms(currentRooms);
-        setAppCurrentStreak(data.appCurrentStreak ?? 0);
       } catch {
         onNavigateCreateRoom();
         return;
@@ -91,17 +92,52 @@ export default function HomeScreen({
   };
 
   useEffect(() => {
-    api<{ classrooms: ClassroomListItem[]; appCurrentStreak?: number }>("/classrooms/my")
+    api<{ classrooms: ClassroomListItem[] }>("/classrooms/my")
       .then((data) => {
         setRooms(data.classrooms);
-        setAppCurrentStreak(data.appCurrentStreak ?? 0);
       })
       .catch(() => {
         setRooms([]);
-        setAppCurrentStreak(null);
       })
       .finally(() => setLoading(false));
   }, []);
+
+
+  useEffect(() => {
+    let active = true;
+    const loadRecentLotteryWinner = () => {
+      api<AttendanceLotteryWinner[]>("/labs/attendance-lottery/recent-winners")
+        .then((winners) => {
+          if (active) {
+            setRecentLotteryWinners(winners.slice(0, 34));
+          }
+        })
+        .catch(() => {
+          // 일시적인 네트워크 오류에는 마지막으로 받은 당첨자 목록을 유지한다.
+        });
+    };
+    loadRecentLotteryWinner();
+    const refreshTimer = window.setInterval(loadRecentLotteryWinner, WINNER_REFRESH_INTERVAL_MS);
+    return () => {
+      active = false;
+      window.clearInterval(refreshTimer);
+    };
+  }, []);
+
+  useEffect(() => {
+    setRecentLotteryWinnerIndex(0);
+  }, [recentLotteryWinners[0]?.id]);
+
+  useEffect(() => {
+    if (recentLotteryWinners.length < 2) {
+      setRecentLotteryWinnerIndex(0);
+      return;
+    }
+    const rotationTimer = window.setInterval(() => {
+      setRecentLotteryWinnerIndex((current) => (current + 1) % recentLotteryWinners.length);
+    }, WINNER_ROTATION_INTERVAL_MS);
+    return () => window.clearInterval(rotationTimer);
+  }, [recentLotteryWinners.length]);
 
   const handleTabChange = (tab: HomeTab) => {
     if (tab === "profile") {
@@ -110,45 +146,50 @@ export default function HomeScreen({
     else if (tab === "lab") onNavigateLab();
   };
 
+  const activeLotteryWinner = recentLotteryWinners.length > 0
+    ? recentLotteryWinners[recentLotteryWinnerIndex % recentLotteryWinners.length]
+    : null;
+
   return (
     <div className="page" style={{ display: "flex", flexDirection: "column", height: "100dvh", minHeight: 0, overflow: "hidden" }}>
       <div style={{ padding: "20px 20px 12px", display: "flex", justifyContent: "space-between", alignItems: "center", flexShrink: 0 }}>
         <div style={{ display: "flex", alignItems: "center", minWidth: 0 }}>
           <div style={{ fontSize: 22, fontWeight: 700 }}>내 방</div>
-          {appCurrentStreak !== null && (appCurrentStreak > 0 || streakRewards.claimableRewards.length > 0) && (
-            <button
-              type="button"
-              className="app-streak-reward-badge"
-              onClick={() => setShowStreakRewardModal(true)}
-              aria-label={streakRewards.claimableRewards.length > 0
-                ? "연속 출석 보상 확인"
-                : `출석 ${appCurrentStreak}일째`}
-            >
-              <img className="app-streak-reward-icon" src="/rewards/gift-box-closed.png" alt="" aria-hidden="true" />
-              <span>{appCurrentStreak > 0 ? <>출석 <strong>{appCurrentStreak}일째!</strong></> : "출석 보상!"}</span>
-              {streakRewards.claimableRewards.length > 0 && <span className="streak-reward-dot" aria-label="받을 보상이 있어요" />}
-            </button>
-          )}
+          <button
+            type="button"
+            className="app-streak-reward-badge"
+            onClick={() => setShowStreakRewardModal(true)}
+            aria-label={streakRewards.claimableRewards.length > 0
+              ? "연속 출석 보상 확인"
+              : `연속 출석 ${appCurrentStreak ?? 0}일`}
+          >
+            <span>연속 출석 <strong>{appCurrentStreak ?? 0}일</strong></span>
+            {streakRewards.claimableRewards.length > 0 && <span className="streak-reward-dot" aria-label="받을 보상이 있어요" />}
+          </button>
         </div>
         {/* 방 만들기/참여는 "방 찾기" 탭에 모아두어, 홈 헤더에는 소식만 남긴다. */}
         <NewsButton hasUnread={newsHasUnread} onClick={() => { markNewsSeen(); setShowNewsModal(true); }} />
       </div>
-      <div style={{
-        margin: "0 16px 12px", padding: "16px 18px", borderRadius: "var(--radius-card)",
-        background: "linear-gradient(135deg, var(--accent-blue), #5B9CF6)", color: "#fff",
-        display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 12,
-        flexShrink: 0, maxWidth: 420,
-      }}>
-        <div>
-          <div style={{ fontSize: 12, opacity: 0.85, marginBottom: 4 }}>출석 포인트</div>
-          <div style={{ fontSize: 24, fontWeight: 800 }}>{totalPoints.toLocaleString()}P</div>
+      <div className="attendance-box-promo">
+        <div className="attendance-box-winner-window" aria-live="off">
+          <span className="attendance-box-winner-label">최대 5,000원 당첨!</span>
+          <span key={activeLotteryWinner?.id ?? "empty"} className="attendance-box-winner-line">
+            {activeLotteryWinner
+              ? `${maskWinnerNickname(activeLotteryWinner.nickname)}님 ${activeLotteryWinner.amountWon.toLocaleString()}원 당첨!`
+              : "첫 당첨의 주인공이 되어보세요"}
+          </span>
         </div>
-        <button onClick={handleConvertPoints} style={{
-          padding: "10px 14px", borderRadius: "var(--radius-button)", border: "none",
-          background: "rgba(255,255,255,0.2)", color: "#fff", fontSize: 13, fontWeight: 700,
-          whiteSpace: "nowrap", cursor: "pointer",
-        }}>
-          토스 포인트로 바꾸기
+        <button type="button" className="attendance-box-promo-button" onClick={onNavigateLab}>
+          <svg className="attendance-box-promo-image" viewBox="0 0 48 48" aria-hidden="true">
+            <path d="M10 8h28a4 4 0 0 1 4 4v7a5 5 0 0 0 0 10v7a4 4 0 0 1-4 4H10a4 4 0 0 1-4-4v-7a5 5 0 0 0 0-10v-7a4 4 0 0 1 4-4Z" fill="#fff" />
+            <path d="M24 11v26" stroke="#8bb7fb" strokeWidth="2" strokeDasharray="2 3" />
+            <path d="m16.8 17.2 1.7 3.5 3.9.6-2.8 2.7.7 3.9-3.5-1.8-3.5 1.8.7-3.9-2.8-2.7 3.9-.6 1.7-3.5Z" fill="#ffbd35" />
+            <path d="M29 19h7M29 24h6M29 29h7" stroke="#4388ee" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+          <span className="attendance-box-promo-action">
+            <span>출석복권 받기</span>
+            <span aria-hidden="true" className="attendance-box-promo-arrow">›</span>
+          </span>
         </button>
       </div>
 
@@ -192,27 +233,19 @@ export default function HomeScreen({
         <AdMobBanner />
       </div>
       <Toast message={toastMessage} />
-      {showConvertModal && (
-        <ConvertPointsModal
-          totalPoints={totalPoints}
-          onClose={() => setShowConvertModal(false)}
-          onConverted={handleConverted}
-        />
-      )}
       {showStreakRewardModal && (
         <StreakRewardModal
           currentStreak={appCurrentStreak ?? 0}
           claimedDays={streakRewards.claimedDays}
           onClaim={streakRewards.claim}
-          onRewarded={addPoints}
-          onClose={() => setShowStreakRewardModal(false)}
+          onClose={() => { setShowStreakRewardModal(false); void refreshPoints(); }}
         />
       )}
       {showFeedbackModal && (
         <FeedbackModal
           onClose={() => setShowFeedbackModal(false)}
           alreadyRewarded={feedbackAlreadyRewarded}
-          onRewarded={(amount) => { addPoints(amount); markFeedbackRewarded(); }}
+          onRewarded={() => { void claimPointReward("FEEDBACK").catch(() => {}); markFeedbackRewarded(); }}
         />
       )}
       {showNewsModal && <NewsModal news={news} onClose={() => setShowNewsModal(false)} />}
@@ -227,8 +260,8 @@ export default function HomeScreen({
               maybePromptMissionPushConsent();
             }
           }}
-          onRewarded={(missionId, amount) => {
-            addPoints(amount);
+          onRewarded={(missionId) => {
+            void claimPointReward("MISSION", missionId).catch(() => {});
             claimMission(missionId);
             setMissionJustRewarded(true);
           }}

@@ -1,6 +1,5 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import HomeTabBar from "../components/HomeTabBar";
-import GiftBox from "../components/GiftBox";
 import type { HomeTab } from "../components/HomeTabBar";
 import { useAttendancePoints } from "../hooks/useAttendancePoints";
 import { Meadow } from "../lab/clover/Meadow";
@@ -22,8 +21,6 @@ interface Props {
 }
 
 interface CloverOverview {
-  cloverBalance: number;
-  pendingBoxes: number;
   totalFound: number;
   personalBestMs: number | null;
   myRank: number | null;
@@ -42,22 +39,19 @@ interface CloverAttempt {
 
 interface CloverResult {
   elapsedMs: number;
-  cloverBalance: number;
   totalFound: number;
-  cloversAwarded: number;
   golden: boolean;
   fortuneIndex: number;
-  attendanceBoxAwarded: boolean;
-  pendingBoxes: number;
   personalBestMs: number | null;
   personalBest: boolean;
+  pointsAwarded: number;
 }
 
 type FinderPhase = "ready" | "starting" | "playing" | "submitting" | "success" | "failed" | "timeoutReveal" | "timeout";
 
 const ATTEMPT_DURATION_MS = 60_000;
-const FREE_CLOVER_ROUNDS = 5;
-const CLOVER_ROUNDS_PER_AD = 5;
+const FREE_CLOVER_ROUNDS = 3;
+const CLOVER_ROUNDS_PER_AD = 3;
 type CloverRoundBudget = { remaining: number; completedAttemptIds: string[] };
 
 const formatElapsed = (ms: number) => `${(ms / 1000).toFixed(2)}초`;
@@ -74,52 +68,30 @@ export default function CloverFinderScreen({
   const [inspectMessage, setInspectMessage] = useState("");
   const [hintSignal, setHintSignal] = useState(0);
   const [rankingLoading, setRankingLoading] = useState(true);
-  const [boxModalOpen, setBoxModalOpen] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
   const [continueModalOpen, setContinueModalOpen] = useState(false);
-  const [boxStage, setBoxStage] = useState<"closed" | "claiming" | "opened" | "error">("closed");
-  const [boxError, setBoxError] = useState("");
-  const [lastBoxPoints, setLastBoxPoints] = useState(0);
   const [roundBudget, setRoundBudget] = useState<CloverRoundBudget>(() => {
     try {
       const saved = localStorage.getItem("att-clover-round-budget-v1");
-      return saved ? JSON.parse(saved) as CloverRoundBudget : { remaining: FREE_CLOVER_ROUNDS, completedAttemptIds: [] };
+      if (!saved) return { remaining: FREE_CLOVER_ROUNDS, completedAttemptIds: [] };
+      const budget = JSON.parse(saved) as CloverRoundBudget;
+      return {
+        ...budget,
+        remaining: Math.max(0, Math.min(FREE_CLOVER_ROUNDS, budget.remaining)),
+      };
     } catch {
       return { remaining: FREE_CLOVER_ROUNDS, completedAttemptIds: [] };
     }
   });
-  const claimIdRef = useRef<string | null>(null);
   const phaseRef = useRef<FinderPhase>("ready");
   const attemptRef = useRef<CloverAttempt | null>(null);
   const inspectTimeoutRef = useRef<number | null>(null);
   const timeoutRevealRef = useRef<number | null>(null);
-  const { addPoints } = useAttendancePoints();
+  const { claim: claimPointReward } = useAttendancePoints();
 
   useEffect(() => {
     localStorage.setItem("att-clover-round-budget-v1", JSON.stringify(roundBudget));
   }, [roundBudget]);
-
-  const claimBox = useCallback(async () => {
-    if (boxStage === "claiming") return;
-    const claimId = claimIdRef.current ?? crypto.randomUUID();
-    claimIdRef.current = claimId;
-    setBoxError("");
-    setBoxStage("claiming");
-    try {
-      const claimed = await api<{ pointsAwarded: number; pendingBoxes: number }>("/labs/clover/boxes/claim", {
-        method: "POST",
-        body: JSON.stringify({ claimId }),
-      });
-      addPoints(claimed.pointsAwarded);
-      setLastBoxPoints(claimed.pointsAwarded);
-      setOverview((previous) => previous ? { ...previous, pendingBoxes: claimed.pendingBoxes } : previous);
-      claimIdRef.current = null;
-      setBoxStage("opened");
-    } catch (claimError) {
-      setBoxError(claimError instanceof Error ? claimError.message : "출석박스를 열지 못했어요.");
-      setBoxStage("error");
-    }
-  }, [addPoints, boxStage]);
 
   const updatePhase = (next: FinderPhase) => {
     phaseRef.current = next;
@@ -136,10 +108,6 @@ export default function CloverFinderScreen({
       };
     });
   }, []);
-
-  useEffect(() => {
-    if (roundBudget.remaining === 0 && (phase === "success" || phase === "timeout")) setContinueModalOpen(true);
-  }, [phase, roundBudget.remaining]);
 
   const refreshOverview = useCallback(async () => {
     setRankingLoading(true);
@@ -227,18 +195,19 @@ export default function CloverFinderScreen({
     updatePhase("submitting");
     setError("");
     try {
-      const found = await api<CloverResult>(`/labs/clover/attempts/${activeAttempt.attemptId}/found`, {
+      const found = await api<Omit<CloverResult, "pointsAwarded">>(`/labs/clover/attempts/${activeAttempt.attemptId}/found`, {
         method: "POST",
         body: JSON.stringify({ penaltySeconds: activeAttempt.penaltySeconds }),
       });
+      // 금액은 서버가 정한다. 서버가 기록한 마지막 완료 attemptId와 일치해야 적립된다.
+      const reward = await claimPointReward("CLOVER", activeAttempt.attemptId);
+      const pointsAwarded = reward.amount;
       countCompletedRound(activeAttempt.attemptId);
       incrementMissionProgress("clover-finder");
-      setResult(found);
+      setResult({ ...found, pointsAwarded });
       setRemainingMs(Math.max(0, activeAttempt.localDeadlineMs - Date.now()));
       setOverview((previous) => previous ? {
         ...previous,
-        cloverBalance: found.cloverBalance,
-        pendingBoxes: found.pendingBoxes,
         totalFound: found.totalFound,
         personalBestMs: found.personalBestMs,
       } : previous);
@@ -250,7 +219,7 @@ export default function CloverFinderScreen({
       if (isTimeout) revealMissedClover();
       else updatePhase("failed");
     }
-  }, [countCompletedRound, refreshOverview, revealMissedClover]);
+  }, [claimPointReward, countCompletedRound, refreshOverview, revealMissedClover]);
 
   const handleContinueRewarded = () => {
     setRoundBudget((previous) => ({
@@ -283,10 +252,6 @@ export default function CloverFinderScreen({
   };
 
   const remainingSeconds = Math.ceil(Math.max(0, remainingMs) / 1000);
-  const pendingBoxes = overview?.pendingBoxes ?? 0;
-  const cloverProgressPercent = overview?.pendingBoxes
-    ? 100
-    : Math.min(100, Math.max(0, overview?.cloverBalance ?? 0) * 10);
   const rankingRows = useMemo(() => {
     if (!overview) return [];
     const rows = new Map<number, CloverOverview["ranking"][number]>();
@@ -299,22 +264,18 @@ export default function CloverFinderScreen({
   return (
     <div className="page lab-page clover-finder-page">
       <header className="lab-game-header">
-        <button className="lab-back-button" onClick={onBack} aria-label="놀이터로 돌아가기">‹</button>
+        <button className="lab-back-button" onClick={onBack} aria-label="포인트로 돌아가기">‹</button>
         <h1>네잎 클로버 빨리 찾기</h1>
         <span className="lab-header-spacer" />
       </header>
 
       <main className="lab-game-content">
-        <section className={`clover-balance-card${pendingBoxes > 0 ? " has-pending-box" : ""}`}>
+        <section className="clover-balance-card">
           <div className="clover-balance-topline">
             <span className="clover-balance-character"><img src="/emojis/redrawn/wellwish-chick.png" alt="" /></span>
+            <strong>성공하면 출석점수를 제공해요!</strong>
             <button className="clover-guide-trigger" onClick={() => setGuideOpen(true)}>설명</button>
-            {pendingBoxes > 0 && <button className="clover-box-open-button" onClick={() => { setBoxStage("closed"); setBoxModalOpen(true); }}>
-              출석박스 열기{pendingBoxes > 1 ? ` · ${pendingBoxes}개` : ""}
-            </button>}
           </div>
-          <div className="clover-progress-track"><span style={{ width: `${cloverProgressPercent}%` }} /></div>
-          <p>랜덤 출석 포인트 박스를 드려요.</p>
         </section>
 
         <section className="lab-meadow-stage" aria-label="네잎클로버 찾기">
@@ -379,9 +340,13 @@ export default function CloverFinderScreen({
                   <strong className="clover-result-time">{formatElapsed(result.elapsedMs)}</strong>
                   {result.personalBestMs !== null && !result.personalBest && <p className="clover-personal-best">내 최고 기록 {formatElapsed(result.personalBestMs)}</p>}
                 </div>
+                <div className="clover-earned-points">
+                  <span>출석점수</span>
+                  <strong>+{result.pointsAwarded.toLocaleString()}점</strong>
+                </div>
                 <p className="clover-result-fortune">{result.golden ? GOLDEN_CLOVER_MESSAGE : CLOVER_FORTUNES[result.fortuneIndex]?.text ?? "오늘도 행운이 함께해요!"}</p>
                 <button className="clover-start-button" onClick={handleContinue}>
-                  {roundBudget.remaining <= 0 ? "광고 보고 5판 더 하기" : "다시 도전"}
+                  {roundBudget.remaining <= 0 ? "광고 보고 3판 더 하기" : "다시 도전"}
                 </button>
               </section>
             </div>
@@ -393,7 +358,7 @@ export default function CloverFinderScreen({
                 <h2 id="clover-timeout-title">이번 판은 여기까지예요</h2>
                 <p>다음 판에서 새 밭을 열고 다시 찾아보세요.</p>
                 <button className="clover-start-button" onClick={handleContinue}>
-                  {roundBudget.remaining <= 0 ? "광고 보고 5판 더 하기" : "다음 판 시작"}
+                  {roundBudget.remaining <= 0 ? "광고 보고 3판 더 하기" : "다음 판 시작"}
                 </button>
               </section>
             </div>
@@ -436,33 +401,6 @@ export default function CloverFinderScreen({
             ) : <p className="clover-ranking-empty">랭킹을 불러오지 못했어요.</p>}
         </section>
 
-        {boxModalOpen && <div className="attendance-gift-overlay">
-          <section className={`attendance-gift-dialog${boxStage === "opened" ? " is-opened" : ""}`} role="dialog" aria-modal="true" aria-label="클로버 출석박스">
-            {boxStage !== "claiming" && <button className="attendance-gift-close" onClick={() => setBoxModalOpen(false)} aria-label="닫기">×</button>}
-            {boxStage === "closed" && <>
-              <h2 className="attendance-gift-title">클로버 보상</h2>
-              <GiftBox onOpened={() => void claimBox()} label="출석박스가 도착했어요" />
-            </>}
-            {boxStage === "claiming" && <>
-              <h2 className="attendance-gift-title">출석박스를 여는 중이에요</h2>
-              <p className="clover-box-loading">잠시만 기다려주세요.</p>
-            </>}
-            {boxStage === "error" && <>
-              <h2 className="attendance-gift-title">출석박스를 열지 못했어요</h2>
-              <p className="clover-box-error" role="alert">{boxError}</p>
-              <button className="attendance-gift-confirm" onClick={() => void claimBox()}>다시 시도</button>
-            </>}
-            {boxStage === "opened" && <>
-              <img className="attendance-gift-open-image" src="/rewards/gift-box-open.png" alt="포인트가 나온 열린 출석박스" />
-              <h2 className="attendance-gift-title attendance-gift-result-title">출석박스를 열었어요!</h2>
-              <div className="attendance-gift-total-label">출석 포인트</div>
-              <div className="attendance-gift-total">+{lastBoxPoints.toLocaleString()}P</div>
-              {(overview?.pendingBoxes ?? 0) > 0
-                ? <button className="attendance-gift-confirm" onClick={() => { claimIdRef.current = null; setBoxStage("closed"); }}>다음 출석박스 열기</button>
-                : <button className="attendance-gift-confirm" onClick={() => setBoxModalOpen(false)}>확인</button>}
-            </>}
-          </section>
-        </div>}
         {guideOpen && <CloverGuideModal onClose={() => setGuideOpen(false)} />}
         {continueModalOpen && <CloverContinueModal onClose={() => setContinueModalOpen(false)} onRewarded={handleContinueRewarded} />}
       </main>
