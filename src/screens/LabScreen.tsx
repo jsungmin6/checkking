@@ -124,21 +124,32 @@ export default function LabScreen({
             출석복권 구매
           </button>
         </div>
-        {/* 홈과 같은 배지. 출석 도장은 점수를 모으는 가장 큰 경로라 여기서도 바로 열 수 있어야 한다. */}
-        <div className="lab-activity-head">
-          <p className="lab-activity-intro">다양한 활동을 통해 빠르게 출석 점수를 모아 봐요!</p>
-          <button
-            type="button"
-            className="app-streak-reward-badge"
-            onClick={() => setShowStreakRewardModal(true)}
-            aria-label={streakRewards.claimableRewards.length > 0
-              ? "연속 출석 보상받기 — 받을 보상이 있어요"
-              : "연속 출석 보상받기"}
-          >
-            <span>출석 보상 확인</span>
-            {streakRewards.claimableRewards.length > 0 && <span className="streak-reward-dot" aria-label="받을 보상이 있어요" />}
-          </button>
-        </div>
+        <p className="lab-activity-intro">다양한 활동을 통해 빠르게 출석 점수를 모아 봐요!</p>
+        {/* 클로버와 같은 카드. 출석 도장은 점수를 모으는 가장 큰 경로라 나란히 둔다. */}
+        <button
+          className="lab-clover-card lab-streak-card"
+          onClick={() => setShowStreakRewardModal(true)}
+          aria-label={streakRewards.claimableRewards.length > 0
+            ? "출석 보상 확인 — 받을 보상이 있어요"
+            : "출석 보상 확인"}
+        >
+          <span className="lab-clover-card-icon" aria-hidden="true">
+            <img src="/출석왕_로고_배경제거.png" alt="" />
+          </span>
+          <span className="lab-clover-card-copy">
+            <strong>출석 보상 확인</strong>
+          </span>
+          <span className="lab-clover-card-meta">
+            <span>연속 {streakRewards.currentStreak}일</span>
+          </span>
+          <span className="lab-clover-card-arrow" aria-hidden="true">›</span>
+          {streakRewards.claimableRewards.length > 0 && (
+            <span className="lab-clover-card-progress">
+              <span className="lab-streak-card-ready">받을 보상이 있어요</span>
+              <span className="lab-clover-card-dot" aria-hidden="true" />
+            </span>
+          )}
+        </button>
         <button className="lab-clover-card" onClick={onOpenCloverFinder}>
           <span className="lab-clover-card-icon" aria-hidden="true">
             <img src="/emojis/redrawn/wellwish-chick.png" alt="" />

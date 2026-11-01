@@ -180,6 +180,8 @@
 .clover-inline-ad { margin: 18px 0 4px; border-radius: 14px; overflow: hidden; }
 .attendance-lottery-ad { margin: 12px 0 0; border-radius: 12px; overflow: hidden; }
 .toss-points-detail-ad { margin: 4px 0 16px; border-radius: 12px; overflow: hidden; }
-/* 안내 문구와 출석 보상 배지를 한 줄에. 문구가 길면 줄바꿈되고 배지는 오른쪽에 붙는다. */
-.lab-activity-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 2px 4px 10px; }
-.lab-activity-head .lab-activity-intro { margin: 0; min-width: 0; }
+/* 출석 보상 카드 — 클로버 카드와 같은 틀을 쓰고 아이콘 배경만 다르다. */
+.lab-streak-card { margin-bottom: 10px; }
+.lab-streak-card .lab-clover-card-icon { background: #eef4ff; }
+.lab-streak-card .lab-clover-card-icon img { width: 46px; height: 46px; }
+.lab-streak-card-ready { color: var(--accent-blue); font-weight: 700; }
