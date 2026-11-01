@@ -261,9 +261,9 @@ function consumeRewardQuota(): boolean {
 
 /** 등수별 즉시 보너스 범위. 4등부터는 없다. */
 function rankBonusRange(dailyRank: number): { min: number; max: number } | null {
-  if (dailyRank === 1) return { min: 500, max: 600 };
-  if (dailyRank === 2) return { min: 400, max: 500 };
-  if (dailyRank === 3) return { min: 300, max: 400 };
+  if (dailyRank === 1) return { min: 800, max: 900 };
+  if (dailyRank === 2) return { min: 700, max: 800 };
+  if (dailyRank === 3) return { min: 600, max: 700 };
   return null;
 }
 
@@ -302,7 +302,7 @@ export function claimAttendanceGift(classroomId: number): { amount: number; tota
   if (hasClaimedGiftToday(classroomId)) return null;
   if (!consumeRewardQuota()) return null;
   appendToList(GIFT_CLAIMED_KEY, giftKey(classroomId));
-  const amount = randomInt(200, 800);
+  const amount = randomInt(1_500, 2_000);
   return { amount, totalPoints: addPoints(amount) };
 }
 
