@@ -14,11 +14,12 @@ interface TossBannerAdProps {
   adGroupId?: string;
   variant?: "card" | "expanded";
   /**
-   * 컨테이너 높이(px). 생략하면 인라인으로 붙어 광고가 높이를 정한다.
+   * 컨테이너 높이(px). **`null`이면 광고가 높이를 정한다(인라인).**
    *
+   * 이미지 강조형처럼 세로로 긴 배너에 96px을 물리면 잘린다. 고정형만 96px을 쓴다.
    * 너비는 **항상 화면 너비(100%)** 여야 한다 — 고정값은 정책 위반이다.
    */
-  height?: number;
+  height?: number | null;
   className?: string;
 }
 
@@ -88,7 +89,7 @@ export default function TossBannerAd({
     <div
       ref={containerRef}
       className={className}
-      style={{ width: "100%", flexShrink: 0, margin: 0, ...(height ? { height } : {}) }}
+      style={{ width: "100%", flexShrink: 0, margin: 0, ...(height != null ? { height } : {}) }}
     />
   );
 }

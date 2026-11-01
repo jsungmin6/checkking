@@ -376,13 +376,6 @@ export default function CloverFinderScreen({
           )}
         </section>
 
-        {/* 게임판과 랭킹 사이. 게임 중에는 시선을 끌지 않도록 텍스트형을 쓴다. */}
-        <TossBannerAd
-          adGroupId={BANNER_AD_GROUPS.text}
-          variant="card"
-          className="clover-inline-ad"
-        />
-
         <section className="clover-ranking-section">
           <div className="clover-ranking-heading">
             <h2>네잎 클로버 찾기 랭킹</h2>
@@ -408,6 +401,13 @@ export default function CloverFinderScreen({
               </ol>
             ) : <p className="clover-ranking-empty">랭킹을 불러오지 못했어요.</p>}
         </section>
+
+        {/* 랭킹 아래. 게임판 쪽에 두면 플레이 중 시선을 뺏는다. */}
+        <TossBannerAd
+          adGroupId={BANNER_AD_GROUPS.text}
+          variant="card"
+          className="clover-inline-ad"
+        />
 
         {guideOpen && <CloverGuideModal onClose={() => setGuideOpen(false)} />}
         {continueModalOpen && <CloverContinueModal onClose={() => setContinueModalOpen(false)} onRewarded={handleContinueRewarded} />}

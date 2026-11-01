@@ -140,10 +140,14 @@ export default function LabScreen({
             </span>
           )}
         </button>
-        {/* 클로버 카드 바로 아래. 하단 고정 배너 대신 이미지 강조형을 쓴다. */}
+        {/*
+          클로버 카드 아래. 이미지 강조형은 세로로 길어서 높이를 고정하면 잘린다 —
+          height를 주지 않고 광고가 정하게 둔다.
+        */}
         <TossBannerAd
           adGroupId={BANNER_AD_GROUPS.imageEmphasis}
           variant="expanded"
+          height={null}
           className="lab-inline-ad"
         />
         <p className="lab-footnote">포인트 기능을 계속 추가할게요.</p>
