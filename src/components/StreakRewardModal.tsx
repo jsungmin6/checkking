@@ -2,6 +2,28 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { getStreakMilestoneRewards } from "../hooks/useAttendancePoints";
 
 const DAYS_PER_PAGE = 8;
+
+/**
+ * 7일차부터 5일마다(7·12·17·22…97) 출석점수 외에 토스포인트도 받는다.
+ *
+ * 조건과 금액이 **서버 StreakTossRewardService와 같아야 한다** — 화면에 적힌 금액과
+ * 실제 지급액이 다르면 안 된다. 금액은 콘솔 프로모션 "출석왕_출석"의 지급액(10원)이다.
+ */
+const TOSS_REWARD_FIRST_DAY = 7;
+const TOSS_REWARD_INTERVAL = 5;
+const TOSS_REWARD_WON = 10;
+const isTossRewardDay = (days: number) =>
+  days >= TOSS_REWARD_FIRST_DAY && (days - TOSS_REWARD_FIRST_DAY) % TOSS_REWARD_INTERVAL === 0;
+
+/** 포인트 탭 아이콘과 같은 P 코인. 작은 크기에서 뭉개지지 않게 면으로 채운다. */
+function TossPointCoin() {
+  return (
+    <svg className="streak-reward-toss-coin" viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="12" cy="12" r="10" />
+      <path d="M9 6.5h4.2a3.4 3.4 0 1 1 0 6.8H11v4.2H9V6.5Zm2 1.8v3.2h2.2a1.6 1.6 0 1 0 0-3.2H11Z" />
+    </svg>
+  );
+}
 const getPageForStreak = (streak: number) => Math.min(
   Math.ceil(100 / DAYS_PER_PAGE) - 1,
   Math.max(0, Math.floor(Math.max(0, streak - 1) / DAYS_PER_PAGE)),
@@ -81,10 +103,12 @@ export default function StreakRewardModal({
                   return (
                     <button
                       type="button"
-                      className={`streak-reward-card${canClaim ? " is-claimable" : ""}${attended ? " is-stamped" : ""}${isClaimed ? " is-claimed" : ""}`}
+                      className={`streak-reward-card${canClaim ? " is-claimable" : ""}${attended ? " is-stamped" : ""}${isClaimed ? " is-claimed" : ""}${isTossRewardDay(days) ? " is-toss-reward" : ""}`}
                       key={days}
                       disabled={!canClaim}
-                      aria-label={`${days}일차 ${points === null ? "출석 도장" : `${points.toLocaleString()}점`} ${canClaim ? "받기" : isClaimed ? "받음" : attended ? "완료" : remaining(days)}`}
+                      aria-label={`${days}일차 ${points === null ? "출석 도장" : `${points.toLocaleString()}점`}`
+                        + `${isTossRewardDay(days) ? `, 토스포인트 ${TOSS_REWARD_WON}원 추가` : ""}`
+                        + ` ${canClaim ? "받기" : isClaimed ? "받음" : attended ? "완료" : remaining(days)}`}
                       onClick={() => { void handleClaim(days); }}
                     >
                       <span className="streak-reward-day">{days}일차</span>
@@ -103,6 +127,12 @@ export default function StreakRewardModal({
                         )}
                       </span>
                       <strong className={`streak-reward-points ${pointsTone}`}>{points === null ? "도장만" : `${points.toLocaleString()}점`}</strong>
+                      {isTossRewardDay(days) && (
+                        <span className="streak-reward-toss">
+                          <TossPointCoin />
+                          {TOSS_REWARD_WON}원
+                        </span>
+                      )}
                       <span className="streak-reward-card-state">
                         {canClaim ? "받기" : isClaimed ? <><span aria-hidden="true">✓</span> 받음</> : attended ? "완료" : remaining(days)}
                       </span>

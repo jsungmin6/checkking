@@ -29,7 +29,7 @@ export const MISSIONS: MissionDef[] = [
     title: "출석인사 미션",
     description: "방에 들어가 '인사' 탭에서 출석 인사를 남겨보세요.",
     todo: "인사 탭에서 인사 남기기",
-    reward: 10_000,
+    reward: 5_000,
     guideImage: "/missions/greeting.png",
   },
   {
@@ -37,7 +37,7 @@ export const MISSIONS: MissionDef[] = [
     title: "친구 초대 미션",
     description: "방에 자리가 남아 있으면 '순위' 탭에서 친구를 초대할 수 있어요.",
     todo: "순위 탭에서 친구 초대하기",
-    reward: 10_000,
+    reward: 5_000,
     guideImage: "/missions/invite.png",
   },
   {
@@ -45,7 +45,7 @@ export const MISSIONS: MissionDef[] = [
     title: "닉네임 바꾸기 미션",
     description: "처음 이름은 아무렇게나 지어드려요. '내 정보'에서 마음에 드는 이름으로 바꿔보세요.",
     todo: "내 정보에서 닉네임 바꾸기",
-    reward: 10_000,
+    reward: 5_000,
     guideImage: "/missions/nickname.png",
   },
   {
@@ -53,7 +53,7 @@ export const MISSIONS: MissionDef[] = [
     title: "네잎 클로버 빨리 찾기 성공하기",
     description: "포인트 → 네잎 클로버 빨리 찾기에서 네잎 클로버를 1분 안에 3회 찾아보세요.",
     todo: "네잎 클로버를 1분 안에 찾기",
-    reward: 10_000,
+    reward: 5_000,
     targetCount: 3,
     titleImage: "/emojis/redrawn/wellwish-chick.png",
     guideImage: "/missions/clover-finder.png",
@@ -63,7 +63,7 @@ export const MISSIONS: MissionDef[] = [
     title: "사진 인증방 출석하기",
     description: "사진 인증방을 직접 만들거나 사진 인증방에 참여하세요. 사진으로 2회 출석하면 완료돼요.",
     todo: "사진 인증방에서 사진으로 2회 출석하기",
-    reward: 10_000,
+    reward: 5_000,
     targetCount: 2,
     guideSteps: [
       { image: "/missions/photo-attendance-create.png", caption: "방 만들기에서 사진 인증을 선택해요" },

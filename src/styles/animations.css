@@ -126,6 +126,22 @@
 .streak-reward-card-state { color: var(--text-muted, #9aa4b2); font-size: 9px; white-space: nowrap; }
 .streak-reward-card.is-claimable .streak-reward-card-state { border-radius: 999px; background: #dceaff; color: #276fc9; font-weight: 800; padding: 2px 9px; }
 .streak-reward-card.is-claimed .streak-reward-card-state { border-radius: 999px; background: #cfe2ff; color: #1c65bd; font-weight: 800; padding: 2px 8px; }
+/* 연속 출석 7·12·17…일차 — 토스포인트도 받는 날.
+   기존 카드 상태색이 파랑 계열이라(받기/받음), 특별한 날은 보라로 구분한다.
+   is-claimable/is-claimed 뒤에 두어 그 상태에서도 보라가 유지되게 한다. */
+.streak-reward-card.is-toss-reward { min-height: 120px; border-color: #ddcbff; background: #f8f3ff; }
+.streak-reward-card.is-toss-reward.is-claimable { border-color: #b492ff; background: #f2e9ff; cursor: pointer; }
+.streak-reward-card.is-toss-reward.is-claimed { border-color: #c4abff; background: #eee4ff; }
+.streak-reward-card.is-toss-reward.is-stamped .streak-reward-stamp { border-color: #9a6ef0; color: #7a4bd8; background: #f1e8ff; }
+.streak-reward-card.is-toss-reward.is-claimed .streak-reward-stamp { border-color: #bda2f5; background: #e7daff; }
+.streak-reward-card.is-toss-reward.is-claimable .streak-reward-card-state,
+.streak-reward-card.is-toss-reward.is-claimed .streak-reward-card-state { background: #e4d6ff; color: #5f34c4; }
+
+.streak-reward-toss { display: inline-flex; align-items: center; gap: 3px; color: #6b3fd4; font-size: 10px; font-weight: 800; white-space: nowrap; }
+.streak-reward-toss-coin { width: 11px; height: 11px; flex-shrink: 0; }
+.streak-reward-toss-coin circle { fill: currentColor; }
+.streak-reward-toss-coin path { fill: #fff; }
+
 .streak-reward-caption { margin: 12px 0 0; color: var(--text-secondary); font-size: 12px; }
 .streak-reward-success-icon { display: grid; width: 58px; height: 58px; place-items: center; margin: 12px 0 16px; border-radius: 50%; background: #eaf5ec; color: #3d914c; font-size: 32px; font-weight: 800; }
 @keyframes streak-logo-stamp {
