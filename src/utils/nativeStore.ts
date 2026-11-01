@@ -41,6 +41,7 @@ const MANAGED_KEYS: Record<string, MergeRule> = {
   "att-reward-daily": "native",
   "att-gift-claimed": "native",
   "att-lottery-first-done": "flag",
+  "att-other-app-visited": "native",
 };
 
 let hydrated = false;

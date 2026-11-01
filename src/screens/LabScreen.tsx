@@ -8,6 +8,8 @@ import AttendanceLotteryModal from "../components/AttendanceLotteryModal";
 import TossPointsReceivedModal from "../components/TossPointsReceivedModal";
 import { useAttendancePoints, useStreakMilestoneRewards } from "../hooks/useAttendancePoints";
 import StreakRewardModal from "../components/StreakRewardModal";
+import OtherAppsModal from "../components/OtherAppsModal";
+import { OTHER_APP_VISIT_POINTS, unvisitedCount } from "../utils/otherApps";
 import { STREAK_REWARD_WON, syncTossPointLedger, TOSS_POINTS_RECEIVED_EVENT, TOSS_POINTS_RECEIVED_KEY } from "../utils/tossPromotion";
 import { nextTossRewardDay } from "../utils/attendancePoints";
 import "../styles/lab.css";
@@ -35,6 +37,9 @@ export default function LabScreen({
   const [showLotteryModal, setShowLotteryModal] = useState(false);
   const [showTossPointsDetail, setShowTossPointsDetail] = useState(false);
   const [showStreakRewardModal, setShowStreakRewardModal] = useState(false);
+  const [showOtherApps, setShowOtherApps] = useState(false);
+  // 아직 점수를 안 받은 앱 수. 모달에서 받고 나오면 줄어든다.
+  const [unvisitedApps, setUnvisitedApps] = useState(unvisitedCount);
   const [tossPointsReceived, setTossPointsReceived] = useState(() => {
     const stored = Number(localStorage.getItem(TOSS_POINTS_RECEIVED_KEY) ?? "0");
     return Number.isFinite(stored) && stored > 0 ? stored : 0;
@@ -181,6 +186,25 @@ export default function LabScreen({
             </span>
           )}
         </button>
+        {/* 클로버 다음. 다른 미니앱으로 보내고 처음 여는 앱마다 점수를 준다. */}
+        <button className="lab-clover-card lab-other-apps-card" onClick={() => setShowOtherApps(true)}>
+          <span className="lab-clover-card-icon" aria-hidden="true">🧭</span>
+          <span className="lab-clover-card-copy">
+            <strong>다른 앱 둘러보고 출석점수 받기</strong>
+          </span>
+          <span className="lab-clover-card-meta">
+            {unvisitedApps > 0 && <span>{unvisitedApps}개 남음</span>}
+          </span>
+          <span className="lab-clover-card-arrow" aria-hidden="true">›</span>
+          {unvisitedApps > 0 && (
+            <span className="lab-clover-card-progress">
+              <span className="lab-streak-card-ready">
+                처음 열어보는 앱마다 {OTHER_APP_VISIT_POINTS.toLocaleString()}점
+              </span>
+              <span className="lab-clover-card-dot" aria-hidden="true" />
+            </span>
+          )}
+        </button>
         {/*
           클로버 카드 아래. 이미지 강조형은 세로로 길어서 높이를 고정하면 잘린다 —
           height를 주지 않고 광고가 정하게 둔다.
@@ -210,6 +234,12 @@ export default function LabScreen({
           grantFailure={streakRewards.grantFailure}
           onClaim={streakRewards.claim}
           onClose={() => { setShowStreakRewardModal(false); void refreshPoints(); }}
+        />
+      )}
+      {showOtherApps && (
+        <OtherAppsModal
+          onClose={() => { setShowOtherApps(false); setUnvisitedApps(unvisitedCount()); }}
+          onEarned={() => { setUnvisitedApps(unvisitedCount()); void refreshPoints(); }}
         />
       )}
       {showTossPointsDetail && (

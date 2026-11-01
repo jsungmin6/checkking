@@ -95,7 +95,8 @@ const FEEDBACK_GRANTED_KEY = "att-points-feedback-rewarded";
 const MISSION_GRANTED_KEY = "att-mission-rewarded";
 const CLOVER_GRANTED_KEY = "att-clover-rewarded";
 
-function readList(key: string): string[] {
+/** 기기에 남긴 문자열 목록. 수령 기록처럼 "이미 한 것"을 담는다. */
+export function readList(key: string): string[] {
   try {
     const parsed = JSON.parse(readStore(key) ?? "[]");
     return Array.isArray(parsed) ? parsed.map(String) : [];
@@ -104,7 +105,7 @@ function readList(key: string): string[] {
   }
 }
 
-function appendToList(key: string, value: string, keep = 50) {
+export function appendToList(key: string, value: string, keep = 50) {
   const next = [...readList(key).filter((item) => item !== value), value].slice(-keep);
   writeStore(key, JSON.stringify(next));
 }

@@ -186,3 +186,20 @@
 .lab-streak-card .lab-clover-card-icon { background: #eef4ff; }
 .lab-streak-card .lab-clover-card-icon img { width: 46px; height: 46px; }
 .lab-streak-card-ready { color: var(--accent-blue); font-weight: 700; }
+
+/* 다른 앱 둘러보기 */
+.lab-other-apps-card { margin-bottom: 10px; }
+.lab-other-apps-card .lab-clover-card-icon { background: #fff4e5; font-size: 34px; }
+.other-apps-dialog { gap: 0; }
+.other-apps-list { display: flex; width: 100%; flex-direction: column; gap: 8px; margin: 16px 0 4px; padding: 0; list-style: none; }
+.other-apps-item { display: flex; width: 100%; align-items: center; gap: 11px; padding: 12px 13px; border: 1px solid var(--border-light); border-radius: 14px; background: var(--bg-card); color: var(--text-primary); text-align: left; cursor: pointer; }
+.other-apps-item:disabled { cursor: default; opacity: .6; }
+.other-apps-item.is-visited { background: var(--bg-secondary); }
+.other-apps-emoji { display: grid; width: 42px; height: 42px; flex: 0 0 42px; place-items: center; border-radius: 13px; background: #f3f6fa; font-size: 23px; }
+.other-apps-copy { display: flex; min-width: 0; flex: 1; flex-direction: column; gap: 2px; }
+.other-apps-copy strong { font-size: 15px; font-weight: 750; }
+.other-apps-copy > span { color: var(--text-secondary); font-size: 12px; }
+.other-apps-reward { flex-shrink: 0; color: var(--accent-blue); font-size: 13px; font-weight: 800; white-space: nowrap; }
+.other-apps-item.is-visited .other-apps-reward { color: var(--text-muted); }
+.other-apps-message { margin: 10px 0 0; color: var(--accent-red); font-size: 12px; }
+.other-apps-ad { margin: 14px 0 12px; border-radius: 12px; overflow: hidden; }
