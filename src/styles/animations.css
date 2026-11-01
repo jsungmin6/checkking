@@ -437,6 +437,8 @@
 /* 금액처럼 눈에 먼저 들어와야 하는 값. 본문 강조보다 한 단계 위다. */
 .onboarding-speech p strong.onboarding-accent { color: var(--accent-blue); font-weight: 800; }
 /* 토스포인트를 받는 날의 도장 자리 — 일차 숫자 대신 코인을 원 크기에 맞춘다. */
-.streak-reward-card.is-toss-reward .streak-reward-stamp .streak-reward-toss-coin { width: 34px; height: 34px; }
+/* 코인은 currentColor를 쓰는데 도장 원의 기본 색이 회색이라 그대로 두면 회색 P가 된다.
+   토스포인트 아이콘이므로 포인트 탭과 같은 파랑으로 못 박는다. */
+.streak-reward-card.is-toss-reward .streak-reward-stamp .streak-reward-toss-coin { width: 34px; height: 34px; color: #3182f6; }
 .streak-reward-card.is-toss-reward .streak-reward-toss { font-size: 12px; }
 .streak-reward-card.is-toss-reward .streak-reward-toss .streak-reward-toss-coin { width: 13px; height: 13px; }
