@@ -75,22 +75,22 @@
 .clover-start-button { width: 100%; min-height: 43px; margin-top: 10px; border: 0; border-radius: 12px; background: #438747; color: #fff; font-size: 14px; font-weight: 750; cursor: pointer; }
 .clover-start-button:disabled { opacity: .6; cursor: default; }
 .clover-result-copy { margin: 10px 0 0; color: #39803c; font-size: 13px; font-weight: 700; }
-.clover-found-modal { overflow: visible; padding: 18px 20px 20px; border: 1px solid #cfe2c2; box-shadow: 0 0 0 1px #a9cc9666, 0 0 24px 5px #a5d98555, 0 18px 48px #19251c26; }
-.clover-found-art { position: relative; display: flex; width: 106px; height: 106px; align-items: center; justify-content: center; margin: 0 auto 3px; }
+.clover-found-modal { width: min(100%, 300px); overflow: visible; padding: 14px 16px 16px; border: 1px solid #cfe2c2; box-shadow: 0 0 0 1px #a9cc9666, 0 0 24px 5px #a5d98555, 0 18px 48px #19251c26; }
+.clover-found-art { position: relative; display: flex; width: 76px; height: 76px; align-items: center; justify-content: center; margin: 0 auto 2px; }
 .clover-found-leaf { position: relative; z-index: 1; filter: drop-shadow(0 0 12px #a8d78b); animation: clover-found-pop .72s cubic-bezier(.2,1.45,.38,1) both; }
-.clover-found-orbit { position: absolute; width: 78px; height: 78px; border: 1px solid #c6dfb7; border-radius: 50%; background: #f3f8ef; box-shadow: 0 0 24px #b9dc9b80; animation: clover-orbit-flash .72s ease-out both; }
+.clover-found-orbit { position: absolute; width: 58px; height: 58px; border: 1px solid #c6dfb7; border-radius: 50%; background: #f3f8ef; box-shadow: 0 0 24px #b9dc9b80; animation: clover-orbit-flash .72s ease-out both; }
 .clover-found-orbit::after { position: absolute; inset: -7px; border: 1px dashed #d4e7c8; border-radius: 50%; content: ""; }
 .clover-found-spark { position: absolute; z-index: 2; color: #86a966; animation: clover-sparkle-pop .7s ease-out both; }
 .clover-found-spark-a { top: 22px; left: 4px; animation-delay: .12s; }
 .clover-found-spark-b { top: 4px; right: 4px; font-size: 22px; animation-delay: .2s; }
 .clover-found-spark-c { right: 1px; bottom: 17px; animation-delay: .28s; }
-.clover-found-modal h2 { margin: 0 0 3px; font-size: 20px; }
-.clover-result-record { width: 100%; margin-top: 9px; padding: 8px 12px 10px; border: 1px solid #e5eee2; border-radius: 15px; background: #f6f9f5; }
-.clover-found-modal .clover-result-record .clover-result-time { margin: 0; font-size: 32px; }
+.clover-found-modal h2 { margin: 0 0 2px; font-size: 16px; }
+.clover-result-record { width: 100%; margin-top: 7px; padding: 6px 10px 8px; border: 1px solid #e5eee2; border-radius: 13px; background: #f6f9f5; }
+.clover-found-modal .clover-result-record .clover-result-time { margin: 0; font-size: 24px; }
 .clover-result-record p { margin: 0; color: #6a7788; font-size: 11px; }
-.clover-result-record .clover-personal-best { margin-top: 6px; font-size: 13px; }
-.clover-earned-points { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; padding: 10px 13px; border-radius: 13px; background: #eef7eb; color: #52754c; font-size: 13px; font-weight: 700; }
-.clover-earned-points strong { color: #328345; font-size: 20px; font-weight: 850; }
+.clover-result-record .clover-personal-best { margin-top: 4px; font-size: 11px; }
+.clover-earned-points { display: flex; align-items: center; justify-content: space-between; margin-top: 8px; padding: 8px 11px; border-radius: 11px; background: #eef7eb; color: #52754c; font-size: 12px; font-weight: 700; }
+.clover-earned-points strong { color: #328345; font-size: 16px; font-weight: 850; }
 .clover-guide-dialog { position: relative; justify-content: flex-start; gap: 0; padding: 18px 20px 20px; }
 .clover-guide-close { position: absolute; z-index: 3; top: 9px; right: 12px; width: 34px; height: 34px; border: 0; background: transparent; color: #98a1af; font-size: 27px; font-weight: 300; line-height: 1; cursor: pointer; }
 .clover-guide-scene { position: relative; width: 100%; height: clamp(170px, 29dvh, 230px); flex: 0 0 auto; margin: 16px 0 12px; overflow: hidden; border-radius: 18px; background: #315132; animation: gift-dialog-in .24s ease-out both; }
@@ -106,7 +106,8 @@
 .clover-guide-nav .onboarding-next { flex: 1; }
 .clover-guide-prev { min-width: 72px; min-height: 51px; border: 0; border-radius: 14px; background: #f2f4f6; color: #4e5968; font-size: 14px; font-weight: 700; cursor: pointer; }
 .clover-found-modal .clover-result-copy { margin-top: 12px; }
-.clover-found-modal .clover-result-fortune { margin-top: 10px; color: #397c48; font-size: 14px; font-weight: 700; line-height: 1.5; }
+.clover-found-modal .clover-result-fortune { margin-top: 8px; color: #397c48; font-size: 12px; font-weight: 700; line-height: 1.45; }
+.clover-found-modal .clover-start-button { min-height: 38px; margin-top: 8px; border-radius: 11px; font-size: 13px; }
 .clover-found-modal-golden { border-color: #e8c96a; box-shadow: 0 0 0 1px #e8c96a88, 0 0 26px 6px #f1cc6380, 0 18px 48px #19251c26; }
 .clover-found-modal-golden .clover-found-leaf { filter: drop-shadow(0 0 14px #f3cf68); }
 .clover-found-modal-golden .clover-found-orbit { border-color: #e8ca70; background: #fff8e2; box-shadow: 0 0 26px #efd16d99; }

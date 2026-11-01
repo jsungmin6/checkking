@@ -330,7 +330,7 @@ export default function CloverFinderScreen({
               <section className={`clover-stage-modal-card clover-found-modal${result.golden ? " clover-found-modal-golden" : ""}`} role="dialog" aria-modal="true" aria-labelledby="clover-result-title">
                 <div className="clover-found-art" aria-hidden="true">
                   <span className="clover-found-orbit" />
-                  <CloverIcon seed={field.seed} golden={result.golden} />
+                  <CloverIcon size={76} seed={field.seed} golden={result.golden} />
                   <span className="clover-found-spark clover-found-spark-a">✦</span>
                   <span className="clover-found-spark clover-found-spark-b">✧</span>
                   <span className="clover-found-spark clover-found-spark-c">✦</span>
