@@ -1,3 +1,4 @@
+import TossBannerAd, { BANNER_AD_GROUPS } from "./TossBannerAd";
 interface Props {
   amount: number;
   onClose: () => void;
@@ -25,6 +26,12 @@ export default function TossPointsReceivedModal({ amount, onClose }: Props) {
           <li>토스 앱 <strong>혜택</strong> 메뉴에서 받은 포인트를 확인할 수 있어요</li>
           <li>모아서 <strong>현금처럼</strong> 쓸 수 있어요</li>
         </ul>
+        {/* 확인 버튼 위. 금액과 안내를 읽은 뒤에 보이게 둔다. */}
+        <TossBannerAd
+          adGroupId={BANNER_AD_GROUPS.text}
+          variant="card"
+          className="toss-points-detail-ad"
+        />
         <button className="toss-points-detail-confirm" onClick={onClose}>확인</button>
       </section>
     </div>

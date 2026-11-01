@@ -16,7 +16,7 @@ const DAYS_PER_PAGE = 8;
 const TOSS_REWARD_WON = STREAK_REWARD_WON;
 
 /** 포인트 탭 아이콘과 같은 P 코인. 작은 크기에서 뭉개지지 않게 면으로 채운다. */
-function TossPointCoin() {
+export function TossPointCoin() {
   return (
     <svg className="streak-reward-toss-coin" viewBox="0 0 24 24" aria-hidden="true">
       <circle cx="12" cy="12" r="10" />

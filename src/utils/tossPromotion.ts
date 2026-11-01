@@ -55,7 +55,16 @@ function addTossPointsReceived(amountWon: number) {
  * 구버전 토스 앱에서는 `isSupported()`가 false다 — 던지지 않고 코드로 돌려준다.
  */
 export async function grantTossPromotionReward(promotionCode: string, amount: number): Promise<GrantRewardOutcome> {
-  if (!isTossApp()) return { ok: false, code: "NOT_TOSS_APP" };
+  if (!isTossApp()) {
+    // 개발 서버에서는 지급이 성공한 것처럼 흉내 낸다. 그러지 않으면 복권도 도장도
+    // "토스 앱에서만 받을 수 있어요"에서 막혀 뒷 화면을 전혀 볼 수 없다.
+    // **실제 돈은 나가지 않는다** — 토스 SDK를 부르지 않는다.
+    if (import.meta.env.DEV) {
+      console.info("[출석왕] 개발 모드 가짜 지급", { promotionCode, amount });
+      return { ok: true, key: `dev-${Date.now().toString(36)}` };
+    }
+    return { ok: false, code: "NOT_TOSS_APP" };
+  }
   const { Promotion } = await import("@apps-in-toss/web-framework");
   if (!Promotion.grantReward.isSupported()) return { ok: false, code: "UNSUPPORTED_VERSION" };
   try {

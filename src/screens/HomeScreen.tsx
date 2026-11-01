@@ -70,7 +70,10 @@ export default function HomeScreen({
   const showMissionButton = missions.length > 0;
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [showStreakRewardModal, setShowStreakRewardModal] = useState(false);
-  const [showOnboarding, setShowOnboarding] = useState(() => localStorage.getItem("att-onboarding-seen") !== "1");
+  // 개발 서버에서는 가이드를 고칠 때마다 봐야 하므로 "봤음" 플래그를 무시한다.
+  const [showOnboarding, setShowOnboarding] = useState(
+    () => import.meta.env.DEV || localStorage.getItem("att-onboarding-seen") !== "1",
+  );
 
   const handleCreateRoom = async () => {
     let currentRooms = rooms;

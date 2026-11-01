@@ -83,7 +83,32 @@ export default function TossBannerAd({
     };
   }, [adGroupId, variant]);
 
-  if (!isTossApp()) return null;
+  if (!isTossApp()) {
+    // 토스 앱이 아니면 광고가 뜨지 않는다. 그대로 비워 두면 개발 서버에서 자리와
+    // 여백을 확인할 수 없으므로, 개발 빌드에서만 점선으로 자리를 표시한다.
+    if (!import.meta.env.DEV) return null;
+    return (
+      <div
+        className={className}
+        title={`${adGroupId} · ${variant}`}
+        style={{
+          display: "grid",
+          placeItems: "center",
+          width: "100%",
+          height: height ?? 150,
+          flexShrink: 0,
+          border: "1.5px dashed #dfe3e8",
+          borderRadius: 16,
+          background: "#fafbfc",
+          color: "#b0b8c1",
+          fontSize: 14,
+          fontWeight: 600,
+        }}
+      >
+        배너 광고 미리보기
+      </div>
+    );
+  }
 
   return (
     <div

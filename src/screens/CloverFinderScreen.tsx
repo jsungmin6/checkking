@@ -5,12 +5,12 @@ import { useAttendancePoints } from "../hooks/useAttendancePoints";
 import { Meadow } from "../lab/clover/Meadow";
 import { CloverIcon } from "../lab/clover/CloverIcon";
 import CloverGuideModal from "../lab/clover/CloverGuideModal";
-import CloverContinueModal from "../lab/clover/CloverContinueModal";
 import { CLOVER_FORTUNES, GOLDEN_CLOVER_MESSAGE } from "../lab/clover/fortunes";
 import type { ActiveField } from "../lab/clover/domain";
 import { incrementMissionProgress } from "../hooks/useMissions";
 import { api } from "../utils/api";
 import TossBannerAd, { BANNER_AD_GROUPS } from "../components/TossBannerAd";
+import { showTossInterstitialAd } from "../utils/tossRewardedAd";
 import "../styles/lab.css";
 
 interface Props {
@@ -51,9 +51,9 @@ interface CloverResult {
 type FinderPhase = "ready" | "starting" | "playing" | "submitting" | "success" | "failed" | "timeoutReveal" | "timeout";
 
 const ATTEMPT_DURATION_MS = 60_000;
-const FREE_CLOVER_ROUNDS = 3;
-const CLOVER_ROUNDS_PER_AD = 3;
-type CloverRoundBudget = { remaining: number; completedAttemptIds: string[] };
+
+/** 콘솔 광고 그룹 "출석왕_전면형". 다음 판으로 넘어갈 때 한 번 보여준다. */
+const CLOVER_RETRY_AD_GROUP_ID = "ait.v2.live.3e114abe2d31408c";
 
 const formatElapsed = (ms: number) => `${(ms / 1000).toFixed(2)}초`;
 
@@ -70,45 +70,18 @@ export default function CloverFinderScreen({
   const [hintSignal, setHintSignal] = useState(0);
   const [rankingLoading, setRankingLoading] = useState(true);
   const [guideOpen, setGuideOpen] = useState(false);
-  const [continueModalOpen, setContinueModalOpen] = useState(false);
-  const [roundBudget, setRoundBudget] = useState<CloverRoundBudget>(() => {
-    try {
-      const saved = localStorage.getItem("att-clover-round-budget-v1");
-      if (!saved) return { remaining: FREE_CLOVER_ROUNDS, completedAttemptIds: [] };
-      const budget = JSON.parse(saved) as CloverRoundBudget;
-      return {
-        ...budget,
-        remaining: Math.max(0, Math.min(FREE_CLOVER_ROUNDS, budget.remaining)),
-      };
-    } catch {
-      return { remaining: FREE_CLOVER_ROUNDS, completedAttemptIds: [] };
-    }
-  });
+  /** 다음 판 전면 광고를 불러오는 중. 버튼을 잠가 두 번 눌리지 않게 한다. */
+  const [loadingRetryAd, setLoadingRetryAd] = useState(false);
   const phaseRef = useRef<FinderPhase>("ready");
   const attemptRef = useRef<CloverAttempt | null>(null);
   const inspectTimeoutRef = useRef<number | null>(null);
   const timeoutRevealRef = useRef<number | null>(null);
   const { claim: claimPointReward } = useAttendancePoints();
 
-  useEffect(() => {
-    localStorage.setItem("att-clover-round-budget-v1", JSON.stringify(roundBudget));
-  }, [roundBudget]);
-
   const updatePhase = (next: FinderPhase) => {
     phaseRef.current = next;
     setPhase(next);
   };
-
-  const countCompletedRound = useCallback((attemptId: string | undefined) => {
-    if (!attemptId) return;
-    setRoundBudget((previous) => {
-      if (previous.completedAttemptIds.includes(attemptId)) return previous;
-      return {
-        remaining: Math.max(0, previous.remaining - 1),
-        completedAttemptIds: [...previous.completedAttemptIds.slice(-99), attemptId],
-      };
-    });
-  }, []);
 
   const refreshOverview = useCallback(async () => {
     setRankingLoading(true);
@@ -125,7 +98,6 @@ export default function CloverFinderScreen({
     if (phaseRef.current !== "playing" && phaseRef.current !== "submitting") return;
     if (timeoutRevealRef.current !== null) window.clearTimeout(timeoutRevealRef.current);
     const timedOutAttemptId = attemptRef.current?.attemptId;
-    countCompletedRound(timedOutAttemptId);
     setHintSignal((value) => value + 1);
     updatePhase("timeoutReveal");
     if (timedOutAttemptId) {
@@ -137,7 +109,7 @@ export default function CloverFinderScreen({
       timeoutRevealRef.current = null;
       if (phaseRef.current === "timeoutReveal") updatePhase("timeout");
     }, 2600);
-  }, [countCompletedRound, refreshOverview]);
+  }, [refreshOverview]);
 
   useEffect(() => { void refreshOverview(); }, [refreshOverview]);
 
@@ -165,10 +137,6 @@ export default function CloverFinderScreen({
 
   const startAttempt = async () => {
     if (phaseRef.current === "starting" || phaseRef.current === "playing" || phaseRef.current === "submitting") return;
-    if (roundBudget.remaining <= 0) {
-      setContinueModalOpen(true);
-      return;
-    }
     setError("");
     setResult(null);
     setHintSignal(0);
@@ -203,7 +171,6 @@ export default function CloverFinderScreen({
       // 황금 클로버는 보상이 더 크다. 같은 attemptId로는 한 번만 적립된다.
       const reward = await claimPointReward("CLOVER", activeAttempt.attemptId, { golden: found.golden });
       const pointsAwarded = reward.amount;
-      countCompletedRound(activeAttempt.attemptId);
       incrementMissionProgress("clover-finder");
       setResult({ ...found, pointsAwarded });
       setRemainingMs(Math.max(0, activeAttempt.localDeadlineMs - Date.now()));
@@ -220,19 +187,23 @@ export default function CloverFinderScreen({
       if (isTimeout) revealMissedClover();
       else updatePhase("failed");
     }
-  }, [claimPointReward, countCompletedRound, refreshOverview, revealMissedClover]);
+  }, [claimPointReward, refreshOverview, revealMissedClover]);
 
-  const handleContinueRewarded = () => {
-    setRoundBudget((previous) => ({
-      ...previous,
-      remaining: previous.remaining + CLOVER_ROUNDS_PER_AD,
-    }));
-    setContinueModalOpen(false);
-  };
-
-  const handleContinue = () => {
-    if (roundBudget.remaining <= 0) setContinueModalOpen(true);
-    else void startAttempt();
+  /**
+   * 다음 판으로 넘어간다. **전면 광고를 한 번 보여준 뒤** 시작한다.
+   *
+   * 광고가 실패해도 그냥 시작한다 — {@link showTossInterstitialAd}는 던지지 않는다.
+   * 광고 사정으로 플레이를 막으면 심사에서 "행동을 강제로 막는 배치"로 걸린다.
+   */
+  const handleContinue = async () => {
+    if (loadingRetryAd) return;
+    setLoadingRetryAd(true);
+    try {
+      await showTossInterstitialAd(CLOVER_RETRY_AD_GROUP_ID);
+    } finally {
+      setLoadingRetryAd(false);
+      void startAttempt();
+    }
   };
 
   const field = useMemo<ActiveField>(() => ({
@@ -346,8 +317,8 @@ export default function CloverFinderScreen({
                   <strong>+{result.pointsAwarded.toLocaleString()}점</strong>
                 </div>
                 <p className="clover-result-fortune">{result.golden ? GOLDEN_CLOVER_MESSAGE : CLOVER_FORTUNES[result.fortuneIndex]?.text ?? "오늘도 행운이 함께해요!"}</p>
-                <button className="clover-start-button" onClick={handleContinue}>
-                  {roundBudget.remaining <= 0 ? "광고 보고 3판 더 하기" : "다시 도전"}
+                <button className="clover-start-button" onClick={() => void handleContinue()} disabled={loadingRetryAd}>
+                  {loadingRetryAd ? "광고 불러오는 중" : "광고 보고 다시 도전"}
                 </button>
               </section>
             </div>
@@ -358,8 +329,8 @@ export default function CloverFinderScreen({
               <section className="clover-stage-modal-card" role="dialog" aria-modal="true" aria-labelledby="clover-timeout-title">
                 <h2 id="clover-timeout-title">이번 판은 여기까지예요</h2>
                 <p>다음 판에서 새 밭을 열고 다시 찾아보세요.</p>
-                <button className="clover-start-button" onClick={handleContinue}>
-                  {roundBudget.remaining <= 0 ? "광고 보고 3판 더 하기" : "다음 판 시작"}
+                <button className="clover-start-button" onClick={() => void handleContinue()} disabled={loadingRetryAd}>
+                  {loadingRetryAd ? "광고 불러오는 중" : "광고 보고 다음 판"}
                 </button>
               </section>
             </div>
@@ -410,7 +381,6 @@ export default function CloverFinderScreen({
         />
 
         {guideOpen && <CloverGuideModal onClose={() => setGuideOpen(false)} />}
-        {continueModalOpen && <CloverContinueModal onClose={() => setContinueModalOpen(false)} onRewarded={handleContinueRewarded} />}
       </main>
 
       <HomeTabBar active="lab" onSelect={handleTabChange} />

@@ -54,6 +54,56 @@ async function loadAdOnce(
   });
 }
 
+/**
+ * 전면 광고를 한 번 보여준다. 닫히면 끝이다.
+ *
+ * 리워드 광고와 달리 `userEarnedReward`를 기다리지 않는다 — 전면 광고는 보상의
+ * **조건이 아니라** 보상 직전에 끼워 넣는 노출이다.
+ *
+ * **실패해도 던지지 않는다.** 광고가 안 떴다고 받을 보상을 막으면 사용자만 손해다.
+ * 실패 사유는 집계로만 남긴다.
+ */
+export async function showTossInterstitialAd(adGroupId: string): Promise<void> {
+  if (!isTossApp()) return;
+
+  try {
+    const { loadFullScreenAd, showFullScreenAd } = await import("@apps-in-toss/web-framework");
+    if (!loadFullScreenAd.isSupported() || !showFullScreenAd.isSupported()) return;
+
+    try {
+      await loadAdOnce(loadFullScreenAd, adGroupId);
+    } catch {
+      // 한 번 더. "No fill"처럼 재시도하면 종종 성공하는 실패가 많다.
+      await new Promise((r) => setTimeout(r, 1500));
+      await loadAdOnce(loadFullScreenAd, adGroupId);
+    }
+
+    await new Promise<void>((resolve) => {
+      let cleanup: (() => void) | undefined;
+      let settled = false;
+      const finish = () => {
+        if (settled) return;
+        settled = true;
+        window.clearTimeout(timeout);
+        cleanup?.();
+        resolve();
+      };
+      // 닫힘 이벤트가 오지 않아도 보상 화면으로 넘어가야 한다.
+      const timeout = window.setTimeout(finish, 180_000);
+
+      cleanup = showFullScreenAd({
+        options: { adGroupId },
+        onEvent: (event) => {
+          if (event.type === "dismissed" || event.type === "failedToShow") finish();
+        },
+        onError: () => finish(),
+      });
+    });
+  } catch (error) {
+    void reportAdLoadFailed(adGroupId, error instanceof Error ? error.message : "unknown_error");
+  }
+}
+
 /** Returns true only after the SDK reports that the user earned the reward. */
 export async function showTossRewardedAd(
   adGroupId: string,

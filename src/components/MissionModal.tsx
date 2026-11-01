@@ -1,7 +1,11 @@
 import { useState } from "react";
 import GiftBox from "./GiftBox";
 import { reportMissionCompleted } from "../hooks/useMissions";
+import { showTossInterstitialAd } from "../utils/tossRewardedAd";
 import type { MissionState } from "../hooks/useMissions";
+
+/** 콘솔 광고 그룹 "출석왕_전면형". */
+const MISSION_REWARD_AD_GROUP_ID = "ait.v2.live.3e114abe2d31408c";
 
 interface MissionModalProps {
   missions: MissionState[];
@@ -15,6 +19,35 @@ export default function MissionModal({ missions, onClose, onRewarded }: MissionM
   /** 보상 수령 중인 미션 — null이면 목록 화면. */
   const [claiming, setClaiming] = useState<MissionState | null>(null);
   const [opened, setOpened] = useState(false);
+  /**
+   * 펼쳐 둔 미션. 한 번에 하나만 펼친다 — 전부 펼치면 예전처럼 길어진다.
+   *
+   * 처음에는 **받을 수 있는 미션**을 펼친다. 전부 접어 두면 보상받기 버튼이 숨어
+   * 한 번 더 눌러야 한다. 받을 게 없으면 전부 접힌 채로 시작한다.
+   */
+  const [expandedId, setExpandedId] = useState<string | null>(
+    () => missions.find((m) => m.done)?.id ?? null,
+  );
+  /** 광고를 불러오는 중인 미션. 그동안 버튼을 잠가 두 번 눌리지 않게 한다. */
+  const [loadingAdFor, setLoadingAdFor] = useState<string | null>(null);
+
+  /**
+   * 광고를 본 뒤 보상 단계로 넘어간다.
+   *
+   * 광고가 실패해도 그냥 넘어간다 — {@link showTossInterstitialAd}가 던지지 않는다.
+   * 받을 수 있는 보상을 광고 사정으로 막으면 안 된다.
+   */
+  const handleClaim = async (mission: MissionState) => {
+    if (loadingAdFor) return;
+    setLoadingAdFor(mission.id);
+    try {
+      await showTossInterstitialAd(MISSION_REWARD_AD_GROUP_ID);
+    } finally {
+      setLoadingAdFor(null);
+      setOpened(false);
+      setClaiming(mission);
+    }
+  };
 
   const handleGiftOpened = () => {
     if (!claiming) return;
@@ -95,19 +128,55 @@ export default function MissionModal({ missions, onClose, onRewarded }: MissionM
           이벤트 미션
         </div>
 
-        {missions.map((mission, index) => (
+        {missions.map((mission, index) => {
+          const expanded = expandedId === mission.id;
+          return (
           <div
             key={mission.id}
             style={{
-              paddingTop: index === 0 ? 0 : 16, marginTop: index === 0 ? 0 : 16,
+              paddingTop: index === 0 ? 0 : 14, marginTop: index === 0 ? 0 : 14,
               borderTop: index === 0 ? "none" : "1px solid var(--border-light)",
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 17, fontWeight: 800, marginBottom: 6 }}>
-              {mission.titleImage && <img src={mission.titleImage} alt="" style={{ width: 25, height: 25, objectFit: "contain" }} />}
-              <span>{mission.title}</span>
-            </div>
-            <div style={{ fontSize: 13.5, color: "var(--text-secondary)", lineHeight: 1.6, marginBottom: mission.guideImage || mission.guideSteps?.length ? 10 : 14 }}>
+            {/* 제목 줄만 보이고, 누르면 펼쳐진다. 미션이 늘어도 목록이 길어지지 않는다. */}
+            <button
+              type="button"
+              onClick={() => setExpandedId(expanded ? null : mission.id)}
+              aria-expanded={expanded}
+              style={{
+                display: "flex", alignItems: "center", gap: 8, width: "100%",
+                padding: "6px 0", border: "none", background: "transparent",
+                color: "var(--text-primary)", textAlign: "left", cursor: "pointer",
+              }}
+            >
+              {mission.titleImage && <img src={mission.titleImage} alt="" style={{ width: 25, height: 25, objectFit: "contain", flexShrink: 0 }} />}
+              <span style={{ flex: 1, minWidth: 0, fontSize: 16, fontWeight: 800 }}>{mission.title}</span>
+              {mission.done ? (
+                <span style={{
+                  flexShrink: 0, padding: "3px 8px", borderRadius: 7, fontSize: 11, fontWeight: 800,
+                  background: "rgba(49,130,246,0.12)", color: "var(--accent-blue)",
+                }}>
+                  받기
+                </span>
+              ) : mission.targetCount !== undefined ? (
+                <span style={{ flexShrink: 0, color: "var(--text-secondary)", fontSize: 12, fontWeight: 700 }}>
+                  {mission.progress}/{mission.targetCount}
+                </span>
+              ) : null}
+              <span
+                aria-hidden="true"
+                style={{
+                  flexShrink: 0, color: "var(--text-muted)", fontSize: 18, lineHeight: 1,
+                  transform: expanded ? "rotate(180deg)" : "none", transition: "transform .18s ease",
+                }}
+              >
+                ⌄
+              </span>
+            </button>
+
+            {!expanded ? null : (
+            <>
+            <div style={{ fontSize: 13.5, color: "var(--text-secondary)", lineHeight: 1.6, margin: "6px 0", marginBottom: mission.guideImage || mission.guideSteps?.length ? 10 : 14 }}>
               {mission.description}
             </div>
 
@@ -161,21 +230,29 @@ export default function MissionModal({ missions, onClose, onRewarded }: MissionM
 
             {mission.done ? (
               <button
-                onClick={() => { setOpened(false); setClaiming(mission); }}
+                onClick={() => { void handleClaim(mission); }}
+                disabled={loadingAdFor !== null}
                 style={{
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
                   width: "100%", padding: 13, borderRadius: "var(--radius-button)", border: "none",
-                  background: "var(--accent-blue)", color: "#fff", fontSize: 14, fontWeight: 800, cursor: "pointer",
+                  background: "var(--accent-blue)", color: "#fff", fontSize: 14, fontWeight: 800,
+                  cursor: loadingAdFor !== null ? "default" : "pointer",
+                  opacity: loadingAdFor !== null ? 0.6 : 1,
                 }}
               >
-                보상받기
+                {loadingAdFor === mission.id && <span className="ad-loading-spinner" aria-hidden="true" />}
+                {loadingAdFor === mission.id ? "광고 불러오는 중" : "광고 보고 보상받기"}
               </button>
             ) : (
               <div style={{ textAlign: "center", fontSize: 13, color: "var(--text-muted)", padding: "6px 0" }}>
                 아직 완료하지 않았어요
               </div>
             )}
+            </>
+            )}
           </div>
-        ))}
+          );
+        })}
 
         <button
           onClick={onClose}
