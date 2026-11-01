@@ -11,6 +11,8 @@
 .lab-content { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 8px 16px 24px; }
 /* 아래 카드들을 묶는 안내. 본문이 아니라 소제목처럼 읽혀야 해서 크고 진하게 둔다. */
 .lab-activity-intro { margin: 10px 4px 12px; color: var(--text-primary); font-size: 17px; font-weight: 800; line-height: 1.4; }
+/* 카드끼리 붙어 보여서 공통 간격을 준다. 개별 카드에서 또 주지 않는다. */
+.lab-clover-card + .lab-clover-card { margin-top: 14px; }
 .lab-clover-card { position: relative; display: grid; width: 100%; grid-template-columns: 68px minmax(0,1fr) auto; gap: 12px; align-items: center; padding: 16px; border: 0; border-radius: var(--radius-card); background: var(--bg-card); box-shadow: var(--shadow-card); color: var(--text-primary); text-align: left; cursor: pointer; }
 .lab-clover-card-icon { display: flex; width: 64px; height: 64px; align-items: center; justify-content: center; overflow: hidden; border-radius: 20px; background: #eff8ec; }
 .lab-clover-card-icon img { width: 64px; height: 64px; object-fit: contain; }
@@ -182,13 +184,11 @@
 .attendance-lottery-ad { margin: 12px 0 0; border-radius: 12px; overflow: hidden; }
 .toss-points-detail-ad { margin: 4px 0 16px; border-radius: 12px; overflow: hidden; }
 /* 출석 보상 카드 — 클로버 카드와 같은 틀을 쓰고 아이콘 배경만 다르다. */
-.lab-streak-card { margin-bottom: 10px; }
 .lab-streak-card .lab-clover-card-icon { background: #eef4ff; }
 .lab-streak-card .lab-clover-card-icon img { width: 46px; height: 46px; }
 .lab-streak-card-ready { color: var(--accent-blue); font-weight: 700; }
 
 /* 다른 앱 둘러보기 */
-.lab-other-apps-card { margin-bottom: 10px; }
 .lab-other-apps-card .lab-clover-card-icon { background: #fff4e5; font-size: 34px; }
 .other-apps-dialog { gap: 0; }
 .other-apps-list { display: flex; width: 100%; flex-direction: column; gap: 8px; margin: 16px 0 4px; padding: 0; list-style: none; }
