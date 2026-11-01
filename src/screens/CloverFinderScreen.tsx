@@ -9,6 +9,7 @@ import { CLOVER_FORTUNES, GOLDEN_CLOVER_MESSAGE } from "../lab/clover/fortunes";
 import type { ActiveField } from "../lab/clover/domain";
 import { incrementMissionProgress } from "../hooks/useMissions";
 import { api } from "../utils/api";
+import { isTossApp } from "../utils/platform";
 import TossBannerAd, { BANNER_AD_GROUPS } from "../components/TossBannerAd";
 import { showTossInterstitialAd } from "../utils/tossRewardedAd";
 import "../styles/lab.css";
@@ -236,7 +237,14 @@ export default function CloverFinderScreen({
   return (
     <div className="page lab-page clover-finder-page">
       <header className="lab-game-header">
-        <button className="lab-back-button" onClick={onBack} aria-label="포인트로 돌아가기">‹</button>
+        {/*
+          토스 앱에서는 네비게이션 바에 뒤로가기가 있다. 여기서도 그리면 버튼이 둘이
+          되어 심사에서 반려된다(2026-11-01). 다른 화면은 BackHeader가 같은 이유로
+          스스로 숨는데, 이 화면만 자체 버튼을 쓰고 있었다.
+        */}
+        {isTossApp()
+          ? <span className="lab-header-spacer" />
+          : <button className="lab-back-button" onClick={onBack} aria-label="포인트로 돌아가기">‹</button>}
         <h1>네잎 클로버 빨리 찾기</h1>
         <span className="lab-header-spacer" />
       </header>
