@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { getStreakMilestoneRewards } from "../hooks/useAttendancePoints";
-import { isTossRewardDay } from "../utils/localStreak";
+import { FIRST_TOSS_REWARD_DAY, TOSS_REWARD_INTERVAL, isTossRewardDay } from "../utils/localStreak";
 import { STREAK_REWARD_WON } from "../utils/tossPromotion";
 
 const DAYS_PER_PAGE = 8;
@@ -44,6 +44,8 @@ export default function StreakRewardModal({
 }: StreakRewardModalProps) {
   const rewards = getStreakMilestoneRewards(currentStreak);
   const [stampAnimationDay, setStampAnimationDay] = useState<number | null>(null);
+  // 지급을 기다리는 동안 다른 카드까지 잠근다. 중복 지급 방어다.
+  const [claiming, setClaiming] = useState(false);
   const stampTimer = useRef<number | null>(null);
   const carouselRef = useRef<HTMLDivElement>(null);
   const pages = Array.from({ length: Math.ceil(rewards.length / DAYS_PER_PAGE) }, (_, index) =>
@@ -59,12 +61,22 @@ export default function StreakRewardModal({
     if (carouselRef.current) carouselRef.current.scrollLeft = currentPage * carouselRef.current.clientWidth;
   }, [currentStreak]);
 
+  /**
+   * 도장을 받는다. **받는 동안 모든 카드를 잠근다** — 토스포인트 지급을 기다리는
+   * 사이에 두 번 눌리면 같은 일차가 두 번 지급될 수 있다.
+   */
   const handleClaim = async (days: number) => {
-    const amount = await onClaim(days);
-    if (amount === null) return;   // 서버가 거절했다(아직 그 일차에 도달하지 않음 등)
-    setStampAnimationDay(days);
-    if (stampTimer.current !== null) window.clearTimeout(stampTimer.current);
-    stampTimer.current = window.setTimeout(() => setStampAnimationDay(null), 700);
+    if (claiming) return;
+    setClaiming(true);
+    try {
+      const amount = await onClaim(days);
+      if (amount === null) return;   // 아직 그 일차에 도달하지 않음 등
+      setStampAnimationDay(days);
+      if (stampTimer.current !== null) window.clearTimeout(stampTimer.current);
+      stampTimer.current = window.setTimeout(() => setStampAnimationDay(null), 700);
+    } finally {
+      setClaiming(false);
+    }
   };
 
   const remaining = (days: number) => `${Math.max(0, days - currentStreak)}일 후`;
@@ -107,7 +119,7 @@ export default function StreakRewardModal({
                       type="button"
                       className={`streak-reward-card${canClaim ? " is-claimable" : ""}${attended ? " is-stamped" : ""}${isClaimed ? " is-claimed" : ""}${isTossRewardDay(days) ? " is-toss-reward" : ""}`}
                       key={days}
-                      disabled={!canClaim}
+                      disabled={!canClaim || claiming}
                       aria-label={`${days}일차 ${points === null ? "출석 도장" : `${points.toLocaleString()}점`}`
                         + `${isTossRewardDay(days) ? `, 토스포인트 ${TOSS_REWARD_WON}원 추가` : ""}`
                         + ` ${canClaim ? "받기" : isClaimed ? "받음" : attended ? "완료" : remaining(days)}`}
@@ -147,6 +159,12 @@ export default function StreakRewardModal({
         {grantFailure
           ? <p className="streak-reward-caption is-failure">{grantFailure}</p>
           : <p className="streak-reward-caption">연속 출석이 쌓일수록 보상이 커져요! 놓치지 마세요.</p>}
+        {/* 프로모션 고지 — 지급 시점·조건·제한·중단 가능성. 빠지면 심사에서 반려된다. */}
+        <p className="promotion-notice">
+          {FIRST_TOSS_REWARD_DAY}일차부터 {TOSS_REWARD_INTERVAL}일마다 토스포인트 {TOSS_REWARD_WON}원을
+          받는 즉시 드려요. 부정한 방법으로 참여하면 지급되지 않고, 이 이벤트는 사전 안내 없이
+          중단될 수 있어요.
+        </p>
       </section>
     </div>
   );

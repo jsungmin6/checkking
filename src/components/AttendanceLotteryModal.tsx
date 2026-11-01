@@ -197,6 +197,11 @@ export default function AttendanceLotteryModal({ totalPoints, onPointsChanged, o
                 : `광고 보고 ${TICKET_PRICE.toLocaleString()}점으로 복권 긁기`}
             </button>
             {totalPoints < TICKET_PRICE && <p className="attendance-lottery-hint">{TICKET_PRICE.toLocaleString()}점부터 구매할 수 있어요.</p>}
+            {/* 프로모션 고지 — 지급 시점·조건·제한·중단 가능성. 빠지면 심사에서 반려된다. */}
+            <p className="promotion-notice">
+              당첨된 토스포인트는 긁는 즉시 들어와요. 부정한 방법으로 참여하면 지급되지 않고,
+              이 이벤트는 사전 안내 없이 중단될 수 있어요.
+            </p>
           </>
         ) : (
           <>

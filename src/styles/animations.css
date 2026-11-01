@@ -144,6 +144,9 @@
 
 .streak-reward-caption { margin: 12px 0 0; color: var(--text-secondary); font-size: 12px; }
 .streak-reward-caption.is-failure { color: var(--accent-red); font-weight: 600; }
+
+/* 프로모션 필수 고지. 눈에 띄지 않되 읽을 수 있어야 한다 — 빠지면 심사에서 반려된다. */
+.promotion-notice { margin: 10px 0 0; color: var(--text-secondary); font-size: 10px; line-height: 1.5; opacity: .85; }
 .streak-reward-success-icon { display: grid; width: 58px; height: 58px; place-items: center; margin: 12px 0 16px; border-radius: 50%; background: #eaf5ec; color: #3d914c; font-size: 32px; font-weight: 800; }
 @keyframes streak-logo-stamp {
   0% { opacity: 0; transform: translate(-50%, calc(-50% - 18px)) scale(2.2) rotate(-14deg); filter: blur(2px); }
