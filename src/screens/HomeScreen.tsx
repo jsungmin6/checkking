@@ -172,7 +172,7 @@ export default function HomeScreen({
       </div>
       <div className="attendance-box-promo">
         <div className="attendance-box-winner-window" aria-live="off">
-          <span className="attendance-box-winner-label">최대 5,000원 당첨!</span>
+          <span className="attendance-box-winner-label">1,000원 당첨 찬스!</span>
           <span key={activeLotteryWinner?.id ?? "empty"} className="attendance-box-winner-line">
             {activeLotteryWinner
               ? `${maskWinnerNickname(activeLotteryWinner.nickname)}님 ${activeLotteryWinner.amountWon.toLocaleString()}원 당첨!`
