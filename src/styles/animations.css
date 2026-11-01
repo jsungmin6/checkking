@@ -143,6 +143,7 @@
 .streak-reward-toss-coin path { fill: #fff; }
 
 .streak-reward-caption { margin: 12px 0 0; color: var(--text-secondary); font-size: 12px; }
+.streak-reward-caption.is-failure { color: var(--accent-red); font-weight: 600; }
 .streak-reward-success-icon { display: grid; width: 58px; height: 58px; place-items: center; margin: 12px 0 16px; border-radius: 50%; background: #eaf5ec; color: #3d914c; font-size: 32px; font-weight: 800; }
 @keyframes streak-logo-stamp {
   0% { opacity: 0; transform: translate(-50%, calc(-50% - 18px)) scale(2.2) rotate(-14deg); filter: blur(2px); }

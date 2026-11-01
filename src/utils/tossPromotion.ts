@@ -67,21 +67,52 @@ export async function grantTossPromotionReward(promotionCode: string, amount: nu
   }
 }
 
+export interface StreakRewardOutcome {
+  /** 지급된 금액(원). 지급하지 않았으면 0. */
+  amountWon: number;
+  /** 실패했을 때의 토스 에러 코드. 지급 대상이 아니거나 성공했으면 없다. */
+  errorCode?: string;
+}
+
+/** 하루에 받을 수 있는 금액을 넘겼을 때 토스가 주는 코드. 내일이면 다시 받을 수 있다. */
+export const DAILY_LIMIT_ERROR_CODE = "4110";
+
 /**
  * 연속 출석 보상 10원을 지급한다. 지급에 성공하면 누적액에 더하고 수령 기록을 남긴다.
  *
  * 이미 받은 일차면 아무것도 하지 않는다. 실패하면 기록을 남기지 않으므로 다음에
  * 다시 시도된다 — 하루 지급 한도를 넘겨 실패한 경우(4110) 다음 날 받을 수 있다.
+ *
+ * **실패 코드를 반드시 돌려준다.** 코드를 삼키면 왜 안 들어왔는지 알 방법이 없다.
  */
-export async function grantStreakReward(day: number): Promise<number> {
+export async function grantStreakReward(day: number): Promise<StreakRewardOutcome> {
   const { isTossRewardDay, hasTossRewardPaid, markTossRewardPaid } = await import("./localStreak");
-  if (!isTossRewardDay(day) || hasTossRewardPaid(day)) return 0;
+  if (!isTossRewardDay(day) || hasTossRewardPaid(day)) return { amountWon: 0 };
 
   const outcome = await grantTossPromotionReward(STREAK_PROMOTION_CODE, STREAK_REWARD_WON);
-  if (!outcome.ok) return 0;
+  if (!outcome.ok) return { amountWon: 0, errorCode: outcome.code };
   markTossRewardPaid(day);
   addTossPointsReceived(STREAK_REWARD_WON);
-  return STREAK_REWARD_WON;
+  return { amountWon: STREAK_REWARD_WON };
+}
+
+/** 지급 실패를 사람 말로 바꾼다. 모르는 코드는 그대로 붙여 원인을 추적할 수 있게 한다. */
+export function describeGrantFailure(errorCode: string): string {
+  switch (errorCode) {
+    case DAILY_LIMIT_ERROR_CODE:
+      return "오늘 받을 수 있는 포인트를 다 받았어요. 내일 다시 들어와요.";
+    case "4112":
+      return "지급할 포인트가 떨어졌어요. 곧 채워둘게요.";
+    case "4109":
+    case "4105":
+      return "지금은 포인트를 받을 수 없어요.";
+    case "NOT_TOSS_APP":
+      return "토스 앱에서만 포인트를 받을 수 있어요.";
+    case "UNSUPPORTED_VERSION":
+      return "토스 앱을 최신으로 업데이트하면 받을 수 있어요.";
+    default:
+      return `포인트 지급에 실패했어요. (${errorCode})`;
+  }
 }
 
 // ─── 복권 ──────────────────────────────────────────────────────────────────

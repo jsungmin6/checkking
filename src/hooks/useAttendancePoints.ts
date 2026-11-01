@@ -20,7 +20,7 @@ import {
   syncStreakFromServer,
   type StreakProgress,
 } from "../utils/localStreak";
-import { grantStreakReward } from "../utils/tossPromotion";
+import { describeGrantFailure, grantStreakReward, type StreakRewardOutcome } from "../utils/tossPromotion";
 
 export const POINTS_TO_WON_RATE = 1000; // 출석점수 1,000점 = 토스포인트 1P (현금 1원)
 
@@ -46,6 +46,8 @@ export function getStreakMilestoneRewards(_currentStreak?: number) {
  */
 export function useStreakMilestoneRewards() {
   const [progress, setProgress] = useState<StreakProgress>(getStreakProgress);
+  // 토스포인트가 왜 안 들어왔는지. 코드를 삼키면 원인을 추적할 수 없다.
+  const [grantFailure, setGrantFailure] = useState<string | null>(null);
   const rewards = getStreakMilestoneRewards();
 
   const refresh = useCallback(async () => {
@@ -55,7 +57,8 @@ export function useStreakMilestoneRewards() {
     // 실패했으면(4110) 다음 날 여기서 다시 받는다.
     for (const day of next.claimedDays) {
       if (isTossRewardDay(day) && !hasTossRewardPaid(day)) {
-        await grantStreakReward(day).catch(() => 0);
+        const outcome = await grantStreakReward(day).catch((): StreakRewardOutcome => ({ amountWon: 0 }));
+        if (outcome.errorCode) setGrantFailure(describeGrantFailure(outcome.errorCode));
       }
     }
   }, []);
@@ -73,18 +76,25 @@ export function useStreakMilestoneRewards() {
     ({ days, points }) => points !== null && streak >= days && !claimedDays.includes(days),
   );
 
-  /** 도장을 받는다. 지급 대상 일차면 토스포인트도 함께 지급한다. */
+  /**
+   * 도장을 받는다. 지급 대상 일차면 토스포인트도 함께 지급한다.
+   *
+   * 지급을 **기다린다.** 기다리지 않으면 도장만 찍히고 포인트는 뒤늦게 들어와,
+   * 누른 사람 입장에서는 안 들어온 것처럼 보인다. 지급이 실패해도 도장 수령은
+   * 그대로 둔다 — 실패하면 기록이 남지 않아 다음에 다시 시도된다.
+   */
   const claim = useCallback(async (days: number): Promise<number | null> => {
+    setGrantFailure(null);
     const result = await claimReward("STREAK", String(days));
     setProgress(getStreakProgress());
     if (result.amount > 0 || result.alreadyGiven) {
-      // 지급 실패가 도장 수령을 막지 않는다. 실패하면 기록이 남지 않아 다음에 다시 시도된다.
-      void grantStreakReward(days).catch(() => 0);
+      const outcome = await grantStreakReward(days).catch((): StreakRewardOutcome => ({ amountWon: 0 }));
+      if (outcome.errorCode) setGrantFailure(describeGrantFailure(outcome.errorCode));
     }
     return result.amount;
   }, []);
 
-  return { currentStreak: streak, claimedDays, rewards, claimableRewards, claim, refresh };
+  return { currentStreak: streak, claimedDays, rewards, claimableRewards, claim, refresh, grantFailure };
 }
 
 /**

@@ -32,13 +32,15 @@ const getPageForStreak = (streak: number) => Math.min(
 interface StreakRewardModalProps {
   currentStreak: number;
   claimedDays: number[];
-  /** 서버에 적립을 요청한다. 성공하면 적립액(이미 받았으면 0), 실패하면 null. */
+  /** 토스포인트가 안 들어왔을 때 보여줄 이유. 들어왔으면 null. */
+  grantFailure?: string | null;
+  /** 도장을 받는다. 성공하면 적립액(이미 받았으면 0), 실패하면 null. */
   onClaim: (days: number) => Promise<number | null>;
   onClose: () => void;
 }
 
 export default function StreakRewardModal({
-  currentStreak, claimedDays, onClaim, onClose,
+  currentStreak, claimedDays, grantFailure, onClaim, onClose,
 }: StreakRewardModalProps) {
   const rewards = getStreakMilestoneRewards(currentStreak);
   const [stampAnimationDay, setStampAnimationDay] = useState<number | null>(null);
@@ -142,7 +144,9 @@ export default function StreakRewardModal({
             </div>
           ))}
         </div>
-        <p className="streak-reward-caption">연속 출석이 쌓일수록 보상이 커져요! 놓치지 마세요.</p>
+        {grantFailure
+          ? <p className="streak-reward-caption is-failure">{grantFailure}</p>
+          : <p className="streak-reward-caption">연속 출석이 쌓일수록 보상이 커져요! 놓치지 마세요.</p>}
       </section>
     </div>
   );

@@ -237,6 +237,7 @@ export default function HomeScreen({
         <StreakRewardModal
           currentStreak={appCurrentStreak ?? 0}
           claimedDays={streakRewards.claimedDays}
+          grantFailure={streakRewards.grantFailure}
           onClaim={streakRewards.claim}
           onClose={() => { setShowStreakRewardModal(false); void refreshPoints(); }}
         />
