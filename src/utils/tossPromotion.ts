@@ -2,11 +2,8 @@ import { isTossApp } from "./platform";
 import { api } from "./api";
 
 // 토스 콘솔 "출석왕_포인트교환" 프로모션(자체포인트). 2026-10-20부터 "진행 중".
-export const POINTS_PROMOTION_CODE_TEST = "TEST_01M59XGPDJKMB4636WJYDABD1W";
+// 복권은 이 코드를 서버에서 쓴다(서버 설정 toss.promotion.attendance-lottery-code).
 export const POINTS_PROMOTION_CODE_REAL = "01M59XGPDJKMB4636WJYDABD1W";
-// 출석복권과 포인트 교환은 진행 중인 토스 프로모션 코드를 공유한다.
-export const ATTENDANCE_LOTTERY_PROMOTION_CODE =
-  import.meta.env.VITE_ATTENDANCE_LOTTERY_PROMOTION_CODE || POINTS_PROMOTION_CODE_REAL;
 
 // 포인트 교환 화면의 앱 자체 일일 한도. 프로모션 전체 콘솔 한도와는 별도다.
 export const PROMOTION_DAILY_CAP_WON = 100;
@@ -51,7 +48,17 @@ export type GrantRewardOutcome =
   | { ok: true; key: string }
   | { ok: false; code: string };
 
-/** 토스 "자체포인트" 프로모션으로 실제 토스 포인트를 지급한다. amount 단위는 원. */
+/**
+ * 토스 "자체포인트" 프로모션으로 실제 토스 포인트를 지급한다. amount 단위는 원.
+ *
+ * ⚠️ **새 지급 경로에 이 함수를 쓰지 말 것.** 지급 금액을 클라이언트가 정하게 되어,
+ * 서버가 실제로 얼마가 나갔는지 알 수 없고 변조된 호출이 콘솔 1회 한도까지 받아갈 수 있다.
+ * 복권은 이 때문에 서버 지급(POST /labs/attendance-lottery/scratch)으로 옮겼다.
+ *
+ * 현재 이 함수를 쓰는 곳은 `ConvertPointsModal` 하나이고, 그 모달은 **어디서도
+ * import되지 않는다**(홈의 "토스 포인트로 바꾸기" 진입점을 의도적으로 제거했다).
+ * 포인트 교환을 다시 열 때는 이 함수를 되살리지 말고 서버 지급으로 만들어야 한다.
+ */
 export async function grantTossPromotionReward(
   promotionCode: string,
   amount: number,
