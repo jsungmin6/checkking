@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import HomeTabBar from "../components/HomeTabBar";
+import TossBannerAd from "../components/TossBannerAd";
+import AdMobBanner from "../components/AdMobBanner";
 import type { HomeTab } from "../components/HomeTabBar";
 import { api } from "../utils/api";
 import AttendanceLotteryModal from "../components/AttendanceLotteryModal";
@@ -131,7 +133,9 @@ export default function LabScreen({
         <p className="lab-footnote">포인트 기능을 계속 추가할게요.</p>
       </main>
 
+      <TossBannerAd />
       <HomeTabBar active="lab" onSelect={handleTabChange} />
+      <AdMobBanner />
       {showLotteryModal && (
         <AttendanceLotteryModal
           totalPoints={totalPoints ?? 0}

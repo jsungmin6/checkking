@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { showTossRewardedAd, reportAdLoadFailed } from "../utils/tossRewardedAd";
 import { newLotteryDrawId, scratchAttendanceLottery } from "../utils/tossPromotion";
 
-const TICKET_PRICE = 10_000;
+const TICKET_PRICE = 5_000;
 const ATTENDANCE_LOTTERY_AD_GROUP_ID = "ait.v2.live.320548a2f8304a56";
 
 
@@ -175,13 +175,13 @@ export default function AttendanceLotteryModal({ totalPoints, onPointsChanged, o
           <>
             <h2 className="attendance-gift-title">출석복권</h2>
             <div className="attendance-gift-rank attendance-lottery-description">
-              출석점수 10,000점으로 복권 1장을 살 수 있어요.<br />
-              <strong>꽝 없이</strong> 토스포인트를 바로 드려요. (1P = 현금 1원)
+              출석점수 {TICKET_PRICE.toLocaleString()}점으로 복권 1장을 구매할 수 있어요.<br />
+              당첨된 토스포인트는 <strong>1P가 현금 1원</strong>의 가치예요.
             </div>
             <div className="attendance-lottery-ticket attendance-lottery-prize-range">
               <span>최대 당첨 금액</span>
               <strong>1,000원</strong>
-              <span>꽝 없이 최소 1원</span>
+              <span>1,000 토스포인트</span>
             </div>
             <div className="attendance-lottery-balance">보유 출석점수 {totalPoints.toLocaleString()}점</div>
             {error && <div className="attendance-lottery-error">{error}</div>}
@@ -196,12 +196,12 @@ export default function AttendanceLotteryModal({ totalPoints, onPointsChanged, o
                 ? "광고 불러오는 중"
                 : `광고 보고 ${TICKET_PRICE.toLocaleString()}점으로 복권 긁기`}
             </button>
-            {totalPoints < TICKET_PRICE && <p className="attendance-lottery-hint">10,000점부터 구매할 수 있어요.</p>}
+            {totalPoints < TICKET_PRICE && <p className="attendance-lottery-hint">{TICKET_PRICE.toLocaleString()}점부터 구매할 수 있어요.</p>}
           </>
         ) : (
           <>
             <h2 className="attendance-gift-title">복권을 긁어보세요</h2>
-            <div className="attendance-gift-rank">출석점수 10,000점을 사용했어요.</div>
+            <div className="attendance-gift-rank">출석점수 {TICKET_PRICE.toLocaleString()}점을 사용했어요.</div>
             <div className={`attendance-lottery-ticket attendance-lottery-scratch-ticket${step === "result" ? " is-revealed" : ""}`}>
               <div className="attendance-lottery-ticket-side" aria-hidden="true">
                 <span>✦</span><span>★</span><span>✦</span>
