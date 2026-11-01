@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, afterEach } from "vitest";
-import { rollLotteryPrize, LOTTERY_MAX_PRIZE_WON } from "../tossPromotion";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { rollLotteryPrize, isFirstLotteryScratch, LOTTERY_MAX_PRIZE_WON, FIRST_SCRATCH_PRIZE_WON } from "../tossPromotion";
 
 /**
  * 복권 당첨 금액 분포를 고정한다. **실제 돈이 나가는 숫자다.**
@@ -14,8 +14,19 @@ import { rollLotteryPrize, LOTTERY_MAX_PRIZE_WON } from "../tossPromotion";
  * 경계가 전부 밀리므로, 표를 손볼 때 이 테스트가 먼저 깨져야 한다.
  */
 describe("rollLotteryPrize", () => {
+  // 테스트는 node 환경이라 localStorage가 없다. 읽기/쓰기만 있는 최소 스텁을 둔다.
+  beforeEach(() => {
+    const store = new Map<string, string>();
+    vi.stubGlobal("localStorage", {
+      getItem: (key: string) => store.get(key) ?? null,
+      setItem: (key: string, value: string) => void store.set(key, value),
+      removeItem: (key: string) => void store.delete(key),
+    });
+  });
+
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
   });
 
   /** roll = floor(random * 1_000_000)이 정확히 그 값이 되도록 고정한다. */
@@ -72,5 +83,21 @@ describe("rollLotteryPrize", () => {
   it("최대 당첨금은 콘솔 프로모션의 지급 금액과 같다", () => {
     // 이 값을 올리려면 콘솔 프로모션을 먼저 바꿔야 한다. 코드만 올리면 4114로 거부된다.
     expect(LOTTERY_MAX_PRIZE_WON).toBe(1_000);
+  });
+
+  it("첫 복권은 추첨하지 않고 5원으로 고정한다", () => {
+    // 지급에 성공해야 표시가 서므로, 아직 안 긁은 상태에서는 늘 true다.
+    expect(isFirstLotteryScratch()).toBe(true);
+    expect(FIRST_SCRATCH_PRIZE_WON).toBe(5);
+
+    localStorage.setItem("att-lottery-first-done", "1");
+    expect(isFirstLotteryScratch()).toBe(false);
+  });
+
+  it("첫 복권 금액은 분포 안에 있고 상한을 넘지 않는다", () => {
+    // 표에 없는 금액을 주면 콘솔 상한 검증과 어긋날 수 있다.
+    const tiers = [1, 2, 3, 5, 10, 50, 100, LOTTERY_MAX_PRIZE_WON];
+    expect(tiers).toContain(FIRST_SCRATCH_PRIZE_WON);
+    expect(FIRST_SCRATCH_PRIZE_WON).toBeLessThanOrEqual(LOTTERY_MAX_PRIZE_WON);
   });
 });

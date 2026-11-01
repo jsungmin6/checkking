@@ -40,6 +40,7 @@ const MANAGED_KEYS: Record<string, MergeRule> = {
   "att-clover-rewarded": "native",
   "att-reward-daily": "native",
   "att-gift-claimed": "native",
+  "att-lottery-first-done": "flag",
 };
 
 let hydrated = false;

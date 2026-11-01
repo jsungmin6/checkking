@@ -1,5 +1,5 @@
 import { isTossApp } from "./platform";
-import { TOSS_RECEIVED_KEY, readNumber, writeStore } from "./nativeStore";
+import { TOSS_RECEIVED_KEY, readNumber, readStore, writeStore } from "./nativeStore";
 import { spendPoints, addPoints } from "./attendancePoints";
 
 /**
@@ -156,6 +156,23 @@ export function rollLotteryPrize(): number {
   return LOTTERY_MAX_PRIZE_WON;
 }
 
+/** 첫 복권을 긁었는지. 지급에 성공한 뒤에만 선다. */
+const FIRST_SCRATCH_KEY = "att-lottery-first-done";
+
+/**
+ * 첫 복권 당첨금. **추첨하지 않고 고정한다.**
+ *
+ * 처음 긁은 사람의 88%가 1~3원을 보게 되는데(실제 분포), 그 숫자로는 "이게 되는
+ * 기능이구나"가 전해지지 않는다. 첫 장만 5원으로 두어 체감을 올린다. 분포 안에
+ * 있는 금액이고(10% 구간), 고지한 "최대 1,000원" 범위도 벗어나지 않는다.
+ */
+export const FIRST_SCRATCH_PRIZE_WON = 5;
+
+/** 아직 첫 복권을 긁지 않았는지. */
+export function isFirstLotteryScratch(): boolean {
+  return readStore(FIRST_SCRATCH_KEY) !== "1";
+}
+
 export interface AttendanceLotteryScratchResult {
   drawId: string;
   amountWon: number;
@@ -173,13 +190,16 @@ export async function scratchAttendanceLottery(drawId: string): Promise<Attendan
   if (spendPoints(LOTTERY_TICKET_PRICE) === null) {
     throw new LotteryError("출석점수가 모자라요.");
   }
-  const amountWon = rollLotteryPrize();
+  const firstScratch = isFirstLotteryScratch();
+  const amountWon = firstScratch ? FIRST_SCRATCH_PRIZE_WON : rollLotteryPrize();
   const outcome = await grantTossPromotionReward(LOTTERY_PROMOTION_CODE, amountWon);
   if (!outcome.ok) {
     addPoints(LOTTERY_TICKET_PRICE);   // 지급 실패 — 차감을 되돌린다.
     // 왜 안 됐는지 그대로 보여준다. "잠시 후 다시"라고만 하면 원인을 알 수 없다.
     throw new LotteryError(describeGrantFailure(outcome.code));
   }
+  // 지급이 끝난 뒤에 표시한다. 실패했으면 다음에도 첫 장으로 친다.
+  if (firstScratch) writeStore(FIRST_SCRATCH_KEY, "1");
   addTossPointsReceived(amountWon);
   return { drawId, amountWon };
 }
