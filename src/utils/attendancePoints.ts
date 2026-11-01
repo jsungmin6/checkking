@@ -1,27 +1,25 @@
-import { api } from "./api";
+import { POINTS_TOTAL_KEY, readNumber, readStore, writeStore } from "./nativeStore";
 
 /**
- * 출석점수의 단일 소스. **서버 잔액만 믿는다.**
+ * 출석점수의 단일 소스. **기기에 저장된 값이 진실이다.**
  *
- * 예전에는 localStorage(`att-points-total`)가 잔액이었다. 그래서 서버가 보상을 결정해도
- * 올려줄 잔액이 없었고, 복권 차감도 신뢰할 수 없었다. 지금은 서버 원장이 진실이고
- * 이 모듈은 화면이 공유하는 캐시일 뿐이다.
+ * 서버 원장으로 옮겼다가 되돌렸다. 앱인토스는 토스 앱 안에서만 도는 웹뷰고, 실제 돈
+ * (토스포인트)의 지급 상한은 토스 콘솔이 강제한다. 출석점수는 그 지급의 입장권일 뿐이라
+ * 서버 원장·잔액 테이블·이관 감사까지 둘 이유가 없었다. 그 구조는 Oracle 유니크 함정과
+ * 트랜잭션 경계 문제로 하루에 네 번 장애를 냈다.
  *
- * 여러 화면이 같은 값을 봐야 해서 모듈 수준 상태 + CustomEvent로 알린다
- * (레포의 `tossPromotion.ts`가 쓰는 방식과 같다). Context를 새로 끼우지 않는다.
+ * 저장은 {@link ./nativeStore}를 쓴다 — `localStorage`가 아니라 앱인토스 네이티브
+ * `Storage`가 진실이라, 웹뷰가 바뀌거나 딥링크로 들어와도 점수가 유지된다.
+ *
+ * **서버는 최초 1회만 본다.** 이미 서버 원장에 잔액이 쌓인 사용자를 위해 한 번
+ * 내려받아 큰 쪽을 택하고, 그 뒤로는 서버를 보지 않는다.
+ *
+ * 여러 화면이 같은 값을 봐야 해서 모듈 수준 상태 + CustomEvent로 알린다.
  */
 
 export const ATTENDANCE_POINTS_EVENT = "att-points-balance-change";
 
-/** 이관 전 기기에 남아 있던 잔액. 서버로 한 번 넘기고 나면 더 쓰지 않는다. */
-const LEGACY_TOTAL_POINTS_KEY = "att-points-total";
-
 export type RewardKind = "WELCOME" | "STREAK" | "MISSION" | "CLOVER" | "FEEDBACK";
-
-interface BalanceResponse {
-  totalPoints: number;
-  migrated: boolean;
-}
 
 export interface ClaimRewardResult {
   amount: number;
@@ -29,104 +27,256 @@ export interface ClaimRewardResult {
   alreadyGiven: boolean;
 }
 
-export interface StreakRewardStatus {
-  currentStreak: number;
-  claimedDays: number[];
+export interface ClaimRewardOptions {
+  /** 클로버 전용 — 황금 클로버는 보상이 더 크다. */
+  golden?: boolean;
 }
+
+// ─── 보상 금액. 화면에 보이는 값과 같아야 한다 ──────────────────────────────
+
+const WELCOME_POINTS = 10_000;
+const FEEDBACK_POINTS = 5_000;
+const MISSION_POINTS = 5_000;
+const CLOVER_GOLDEN = { min: 2_000, max: 3_000 };
+const CLOVER_NORMAL = { min: 800, max: 1_500 };
+
+/** 1~7일차 도장. 8일차 이후는 {@link streakPoints}가 규칙으로 만든다. */
+const FIRST_WEEK_STREAK_POINTS = [2_000, 5_000, 2_000, 5_000, 2_000, 5_000, 10_000];
+
+export const MAX_STREAK_DAY = 100;
+
+/** 1~7일차는 표, 100일차 100,000, 10의 배수 30,000, 나머지 10,000. */
+export function streakPoints(day: number): number {
+  const firstWeek = FIRST_WEEK_STREAK_POINTS[day - 1];
+  if (firstWeek !== undefined) return firstWeek;
+  if (day === MAX_STREAK_DAY) return 100_000;
+  return day % 10 === 0 ? 30_000 : 10_000;
+}
+
+// ─── 수령 기록(멱등) ────────────────────────────────────────────────────────
+
+const WELCOME_GRANTED_KEY = "att-points-welcome-granted";
+const FEEDBACK_GRANTED_KEY = "att-points-feedback-rewarded";
+const MISSION_GRANTED_KEY = "att-mission-rewarded";
+const CLOVER_GRANTED_KEY = "att-clover-rewarded";
+
+function readList(key: string): string[] {
+  try {
+    const parsed = JSON.parse(readStore(key) ?? "[]");
+    return Array.isArray(parsed) ? parsed.map(String) : [];
+  } catch {
+    return [];
+  }
+}
+
+function appendToList(key: string, value: string, keep = 50) {
+  const next = [...readList(key).filter((item) => item !== value), value].slice(-keep);
+  writeStore(key, JSON.stringify(next));
+}
+
+// ─── 잔액 ──────────────────────────────────────────────────────────────────
 
 let balance: number | null = null;
-let migrated = false;
-let syncing: Promise<void> | null = null;
 
 function publish(next: number) {
-  balance = next;
-  window.dispatchEvent(new CustomEvent(ATTENDANCE_POINTS_EVENT, { detail: next }));
+  const normalized = Math.max(0, Math.floor(next));
+  balance = normalized;
+  writeStore(POINTS_TOTAL_KEY, String(normalized));
+  window.dispatchEvent(new CustomEvent(ATTENDANCE_POINTS_EVENT, { detail: normalized }));
 }
 
-/** 아직 서버 값을 못 받았으면 null. 화면은 null일 때 숫자 대신 자리표시를 보여준다. */
+/** 아직 저장소를 읽지 않았으면 null. 화면은 null일 때 숫자 대신 자리표시를 보여준다. */
 export function getAttendancePoints(): number | null {
   return balance;
 }
 
-export function isMigrated(): boolean {
-  return migrated;
+/** 저장소 값을 메모리로 올린다. nativeStore를 당겨온 뒤에 불러야 한다. */
+export function loadAttendancePoints(): number {
+  const stored = readNumber(POINTS_TOTAL_KEY, 0);
+  publish(stored);
+  return stored;
 }
 
-/** 이관 전 기기에 남아 있던 로컬 잔액. 없으면 0. */
-function readLegacyLocalPoints(): number {
-  const raw = Number(localStorage.getItem(LEGACY_TOTAL_POINTS_KEY) ?? "0");
-  return Number.isFinite(raw) && raw > 0 ? Math.floor(raw) : 0;
+/** 점수를 더한다. 보상 지급의 공통 경로다. */
+export function addPoints(amount: number): number {
+  const next = Math.max(0, readNumber(POINTS_TOTAL_KEY, 0) + Math.floor(amount));
+  publish(next);
+  return next;
 }
 
 /**
- * 서버 잔액을 가져오고, 아직 이관하지 않았으면 로컬 잔액을 1회 신고한다.
+ * 점수를 쓴다(복권 구매 등). 잔액이 부족하면 쓰지 않고 null.
  *
- * 이관은 사용자당 한 번뿐이다(서버 `POINT_MIGRATION_AUDITS`의 행이 그 증거). 이후에는
- * `migrated=true`가 내려와 다시 신고하지 않는다. 재설치해서 로컬이 0이 된 사용자도
- * 서버가 `max(신고액, 서버잔액)`을 쓰므로 손해가 없다.
+ * 저장소에서 바로 읽어 계산하므로, 모달 두 개가 떠 있어도 오래된 잔액으로 덮어쓰지 않는다.
+ */
+export function spendPoints(amount: number): number | null {
+  const current = readNumber(POINTS_TOTAL_KEY, 0);
+  if (amount <= 0 || current < amount) return null;
+  const next = current - Math.floor(amount);
+  publish(next);
+  return next;
+}
+
+const randomInt = (min: number, max: number) => min + Math.floor(Math.random() * (max - min + 1));
+
+/**
+ * 저장소 값을 메모리로 올린다. **서버를 보지 않는다.**
  *
- * 동시에 여러 화면이 호출해도 요청은 한 번만 나간다.
+ * 한때 서버 잔액을 1회 당겨와 큰 쪽을 택했는데, 그 이관을 거친 사용자가 한 명뿐이라
+ * 남길 이유가 없었다. 출석점수는 기기에만 있다.
+ *
+ * 화면이 `await`로 부르던 자리를 그대로 쓰도록 Promise를 돌려준다.
  */
 export function syncAttendancePoints(): Promise<void> {
-  if (syncing) return syncing;
-  syncing = (async () => {
-    try {
-      let result = await api<BalanceResponse>("/points/balance");
-      if (!result.migrated) {
-        result = await api<BalanceResponse>("/points/migrate", {
-          method: "POST",
-          body: JSON.stringify({ claimedPoints: readLegacyLocalPoints() }),
-        });
-      }
-      migrated = result.migrated;
-      publish(result.totalPoints);
-      if (migrated) {
-        // 이관이 끝났으면 옛 잔액 키는 혼동만 준다. 서버가 진실이다.
-        localStorage.removeItem(LEGACY_TOTAL_POINTS_KEY);
-      }
-    } finally {
-      syncing = null;
-    }
-  })();
-  return syncing;
+  loadAttendancePoints();
+  return Promise.resolve();
+}
+
+// ─── 보상 ──────────────────────────────────────────────────────────────────
+
+function settled(amount: number, alreadyGiven: boolean): ClaimRewardResult {
+  return { amount, totalPoints: readNumber(POINTS_TOTAL_KEY, 0), alreadyGiven };
 }
 
 /**
- * 보상을 적립한다. **금액은 서버가 정한다** — 클라이언트는 종류와 참조값만 보낸다.
- * 이미 받은 보상이면 `amount: 0`, `alreadyGiven: true`가 돌아온다.
+ * 보상을 적립한다. 이미 받은 보상이면 `amount: 0`, `alreadyGiven: true`.
+ *
+ * Promise를 돌려주지만 네트워크를 쓰지 않는다 — 호출부가 await 형태라 시그니처를 유지했다.
  */
-export async function claimReward(reward: RewardKind, ref?: string): Promise<ClaimRewardResult> {
-  const result = await api<ClaimRewardResult>("/points/rewards", {
-    method: "POST",
-    body: JSON.stringify({ reward, ref: ref ?? null }),
-  });
-  publish(result.totalPoints);
-  return result;
+export async function claimReward(
+  reward: RewardKind,
+  ref?: string,
+  options?: ClaimRewardOptions,
+): Promise<ClaimRewardResult> {
+  switch (reward) {
+    case "WELCOME": {
+      if (readStore(WELCOME_GRANTED_KEY) === "1") return settled(0, true);
+      writeStore(WELCOME_GRANTED_KEY, "1");
+      addPoints(WELCOME_POINTS);
+      return settled(WELCOME_POINTS, false);
+    }
+    case "FEEDBACK": {
+      if (readStore(FEEDBACK_GRANTED_KEY) === "1") return settled(0, true);
+      writeStore(FEEDBACK_GRANTED_KEY, "1");
+      addPoints(FEEDBACK_POINTS);
+      return settled(FEEDBACK_POINTS, false);
+    }
+    case "MISSION": {
+      if (!ref) return settled(0, true);
+      if (readList(MISSION_GRANTED_KEY).includes(ref)) return settled(0, true);
+      appendToList(MISSION_GRANTED_KEY, ref);
+      addPoints(MISSION_POINTS);
+      return settled(MISSION_POINTS, false);
+    }
+    case "CLOVER": {
+      if (!ref) return settled(0, true);
+      if (readList(CLOVER_GRANTED_KEY).includes(ref)) return settled(0, true);
+      appendToList(CLOVER_GRANTED_KEY, ref);
+      const range = options?.golden ? CLOVER_GOLDEN : CLOVER_NORMAL;
+      const amount = randomInt(range.min, range.max);
+      addPoints(amount);
+      return settled(amount, false);
+    }
+    case "STREAK": {
+      // 도장은 연속일 주기와 함께 관리해야 해서 localStreak가 담당한다.
+      const day = Number(ref);
+      if (!Number.isInteger(day) || day < 1 || day > MAX_STREAK_DAY) return settled(0, true);
+      const { claimStreakDay } = await import("./localStreak");
+      return claimStreakDay(day);
+    }
+  }
 }
 
-/** 방별 출석 선물. 금액과 하루 상한 모두 서버가 판단한다. */
-export async function claimAttendanceGift(classroomId: number): Promise<{ amount: number; totalPoints: number }> {
-  const result = await api<{ amount: number; totalPoints: number }>(
-    `/classrooms/${classroomId}/attendance/points/claim-gift`,
-    { method: "POST" },
-  );
-  publish(result.totalPoints);
-  return result;
+// ─── 출석 보상(등수 보너스 · 선물) ─────────────────────────────────────────
+
+/** 방과 종류를 가리지 않고, 보상을 받는 출석은 하루 이 횟수까지만. */
+const DAILY_REWARD_LIMIT = 3;
+const DAILY_REWARD_COUNT_KEY = "att-reward-daily";
+const GIFT_CLAIMED_KEY = "att-gift-claimed";
+
+/** KST 기준 날짜. `toISOString()`은 UTC라 자정~오전 9시에 하루가 밀린다. */
+const todayKey = () => new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Seoul" });
+
+interface DailyCount {
+  date: string;
+  count: number;
 }
 
-/** 출석 도장 화면 상태. 연속일과 이번 주기 수령 내역 모두 서버 기준이다. */
-export function fetchStreakRewardStatus(): Promise<StreakRewardStatus> {
-  return api<StreakRewardStatus>("/points/streak-rewards");
+function readDailyCount(): DailyCount {
+  try {
+    const parsed = JSON.parse(readStore(DAILY_REWARD_COUNT_KEY) ?? "null");
+    if (!parsed || parsed.date !== todayKey()) return { date: todayKey(), count: 0 };
+    return { date: String(parsed.date), count: Number(parsed.count) || 0 };
+  } catch {
+    return { date: todayKey(), count: 0 };
+  }
 }
 
-/** 잔액이 서버에서 바뀐 뒤(복권 구매 등) 화면에 반영한다. */
+/** 오늘 보상을 더 받을 수 있는지. */
+export function hasRewardQuotaLeft(): boolean {
+  return readDailyCount().count < DAILY_REWARD_LIMIT;
+}
+
+function consumeRewardQuota(): boolean {
+  const current = readDailyCount();
+  if (current.count >= DAILY_REWARD_LIMIT) return false;
+  writeStore(DAILY_REWARD_COUNT_KEY, JSON.stringify({ date: current.date, count: current.count + 1 }));
+  return true;
+}
+
+/** 등수별 즉시 보너스 범위. 4등부터는 없다. */
+function rankBonusRange(dailyRank: number): { min: number; max: number } | null {
+  if (dailyRank === 1) return { min: 500, max: 600 };
+  if (dailyRank === 2) return { min: 400, max: 500 };
+  if (dailyRank === 3) return { min: 300, max: 400 };
+  return null;
+}
+
+/**
+ * 1~3등 즉시 보너스를 적립한다. 1~3등이 아니거나 하루 상한을 넘겼으면 null.
+ *
+ * **등수만 서버에서 온다** — "내가 오늘 이 방에서 몇 번째인지"는 다른 사람의 출석
+ * 기록이 있어야 알 수 있다. 금액과 하루 상한은 기기에서 판단한다.
+ */
+export function awardRankBonus(classroomId: number, dailyRank: number): number | null {
+  const range = rankBonusRange(dailyRank);
+  if (!range) return null;
+  if (readList(GIFT_CLAIMED_KEY).includes(rankKey(classroomId))) return null;
+  if (!consumeRewardQuota()) return null;
+  appendToList(GIFT_CLAIMED_KEY, rankKey(classroomId));
+  const amount = randomInt(range.min, range.max);
+  addPoints(amount);
+  return amount;
+}
+
+const rankKey = (classroomId: number) => `rank:${classroomId}:${todayKey()}`;
+const giftKey = (classroomId: number) => `gift:${classroomId}:${todayKey()}`;
+
+/** 그 방에서 오늘 선물을 이미 열었는지. */
+export function hasClaimedGiftToday(classroomId: number): boolean {
+  return readList(GIFT_CLAIMED_KEY).includes(giftKey(classroomId));
+}
+
+/**
+ * 방별 출석 선물. 같은 방에서는 하루 1번, 방을 넘나들어도 등수 보너스와 합쳐서
+ * 하루 {@link DAILY_REWARD_LIMIT}번까지다(방을 만들고 지우는 식의 무제한 수령 방지).
+ *
+ * 받을 수 없으면 null — 모달이 안내 문구를 보여준다.
+ */
+export function claimAttendanceGift(classroomId: number): { amount: number; totalPoints: number } | null {
+  if (hasClaimedGiftToday(classroomId)) return null;
+  if (!consumeRewardQuota()) return null;
+  appendToList(GIFT_CLAIMED_KEY, giftKey(classroomId));
+  const amount = randomInt(200, 800);
+  return { amount, totalPoints: addPoints(amount) };
+}
+
+/** 잔액을 특정 값으로 맞춘다. 미리보기·초기화용. */
 export function setAttendancePoints(next: number) {
   publish(next);
 }
 
-/** 로그아웃·미리보기 초기화에서 캐시를 비운다. */
+/** 로그아웃·미리보기 초기화에서 캐시를 비운다. 저장소 값은 지우지 않는다. */
 export function resetAttendancePoints() {
   balance = null;
-  migrated = false;
-  syncing = null;
 }

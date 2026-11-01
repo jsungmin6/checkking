@@ -1,5 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { getStreakMilestoneRewards } from "../hooks/useAttendancePoints";
+import { isTossRewardDay } from "../utils/localStreak";
+import { STREAK_REWARD_WON } from "../utils/tossPromotion";
 
 const DAYS_PER_PAGE = 8;
 
@@ -9,11 +11,9 @@ const DAYS_PER_PAGE = 8;
  * 조건과 금액이 **서버 StreakTossRewardService와 같아야 한다** — 화면에 적힌 금액과
  * 실제 지급액이 다르면 안 된다. 금액은 콘솔 프로모션 "출석왕_출석"의 지급액(10원)이다.
  */
-const TOSS_REWARD_FIRST_DAY = 7;
-const TOSS_REWARD_INTERVAL = 5;
-const TOSS_REWARD_WON = 10;
-const isTossRewardDay = (days: number) =>
-  days >= TOSS_REWARD_FIRST_DAY && (days - TOSS_REWARD_FIRST_DAY) % TOSS_REWARD_INTERVAL === 0;
+// 지급 조건과 금액은 실제 지급 경로와 같은 곳에서 가져온다 — 화면에 보이는 금액과
+// 실제 지급액이 달라지면 안 된다.
+const TOSS_REWARD_WON = STREAK_REWARD_WON;
 
 /** 포인트 탭 아이콘과 같은 P 코인. 작은 크기에서 뭉개지지 않게 면으로 채운다. */
 function TossPointCoin() {

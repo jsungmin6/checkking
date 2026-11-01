@@ -199,8 +199,8 @@ export default function CloverFinderScreen({
         method: "POST",
         body: JSON.stringify({ penaltySeconds: activeAttempt.penaltySeconds }),
       });
-      // 금액은 서버가 정한다. 서버가 기록한 마지막 완료 attemptId와 일치해야 적립된다.
-      const reward = await claimPointReward("CLOVER", activeAttempt.attemptId);
+      // 황금 클로버는 보상이 더 크다. 같은 attemptId로는 한 번만 적립된다.
+      const reward = await claimPointReward("CLOVER", activeAttempt.attemptId, { golden: found.golden });
       const pointsAwarded = reward.amount;
       countCompletedRound(activeAttempt.attemptId);
       incrementMissionProgress("clover-finder");

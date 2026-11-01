@@ -1,52 +1,117 @@
-import { api } from "./api";
+import { isTossApp } from "./platform";
+import { TOSS_RECEIVED_KEY, readNumber, writeStore } from "./nativeStore";
+import { spendPoints, addPoints } from "./attendancePoints";
 
 /**
- * 토스포인트 관련 — **지급은 서버가 한다. 클라이언트는 조회와 요청만 한다.**
+ * 실제 토스포인트 지급. **클라이언트가 직접 지급한다.**
  *
- * 예전에는 이 파일에 `grantTossPromotionReward`가 있어서 클라이언트가
- * `Promotion.grantReward`로 직접 지급하고, 지급 사실을 `POST /points/toss-grants`로
- * 서버에 "알렸다". 두 가지가 문제였다.
+ * 서버 mTLS Open API로 옮겼다가 되돌렸다. 서버 지급은 지급 키 발급·PENDING 정산·
+ * 재시도·원장 테이블을 전부 직접 떠안아야 하는데, 앱인토스 SDK의
+ * `Promotion.grantReward`는 그 일을 토스가 해 준다. 금액 상한(1회·1일)도 콘솔이
+ * 강제하므로, 기기 값이 조작돼도 손해는 콘솔에 등록한 한도를 넘지 않는다.
  *
- *  1. 지급 금액을 클라이언트가 정했다. 서버 추첨액은 권고값일 뿐이었다.
- *  2. 지급 원장에 임의의 내역을 넣을 수 있었다. 그 원장은 자체포인트 발행 신고와
- *     "받은 토스포인트" 표시의 근거라 틀어지면 안 된다.
- *
- * 지금은 서버가 지급하면서 직접 기록한다. 여기 남은 것은 조회뿐이다.
- * 포인트 교환을 다시 열 때도 클라이언트 지급으로 만들지 말고 서버 지급으로 만든다.
+ * 받은 누적액은 표시 전용이고 {@link ./nativeStore}에 남는다.
  */
 
-export const TOSS_POINTS_RECEIVED_KEY = "att-toss-points-received";
+/** 출석복권 "출석왕_대박찬스" (2026-11-01 승인). 지급 금액 상한 1,000원. */
+export const LOTTERY_PROMOTION_CODE = "01M6ARBV4R45AMMCAVR9701MED";
+/** 연속 출석 7·12·17…일차 "출석왕_출석". 지급 금액 10원 고정. */
+export const STREAK_PROMOTION_CODE = "01M6ATHKDT3QNJT8ZXZY16J99W";
+
+/** 연속 출석 보상 1회 지급액. 콘솔 등록값과 달라지면 4114로 거부된다. */
+export const STREAK_REWARD_WON = 10;
+
+export const TOSS_POINTS_RECEIVED_KEY = TOSS_RECEIVED_KEY;
 export const TOSS_POINTS_RECEIVED_EVENT = "att-toss-points-received-change";
 
-/** 이관 전 클라이언트가 쌓아 두던 지급 대기 큐. 이제 서버가 기록하므로 남은 값은 버린다. */
-const LEGACY_PENDING_GRANTS_KEY = "att-toss-points-pending-grants";
-const LEGACY_PENDING_LOTTERY_WINS_KEY = "att-lottery-pending-server-records";
-
-interface TossPointTotalResponse {
-  totalReceivedWon: number;
-}
+export type GrantRewardOutcome =
+  | { ok: true; key: string }
+  | { ok: false; code: string };
 
 function publishTossPointsReceived(total: number) {
   const normalized = Number.isFinite(total) && total > 0 ? Math.floor(total) : 0;
-  localStorage.setItem(TOSS_POINTS_RECEIVED_KEY, String(normalized));
+  writeStore(TOSS_RECEIVED_KEY, String(normalized));
   window.dispatchEvent(new CustomEvent(TOSS_POINTS_RECEIVED_EVENT, { detail: normalized }));
 }
 
-/**
- * 출석왕에서 받은 토스포인트 누적액을 서버에서 읽는다.
- * 네트워크가 끊기면 마지막으로 표시한 값을 유지한다.
- */
-export async function syncTossPointLedger(): Promise<void> {
-  // 구버전이 남긴 대기 큐는 더 이상 보내지 않는다. 서버가 이미 기록을 갖고 있다.
-  localStorage.removeItem(LEGACY_PENDING_GRANTS_KEY);
-  localStorage.removeItem(LEGACY_PENDING_LOTTERY_WINS_KEY);
+/** 받은 토스포인트 누적액(원). */
+export function getTossPointsReceived(): number {
+  return readNumber(TOSS_RECEIVED_KEY, 0);
+}
 
+/** 저장된 누적액을 화면에 다시 알린다. 서버를 보지 않는다. */
+export function syncTossPointLedger(): Promise<void> {
+  publishTossPointsReceived(getTossPointsReceived());
+  return Promise.resolve();
+}
+
+function addTossPointsReceived(amountWon: number) {
+  publishTossPointsReceived(getTossPointsReceived() + amountWon);
+}
+
+/**
+ * 토스 프로모션으로 실제 토스포인트를 지급한다. `amount` 단위는 원.
+ *
+ * 구버전 토스 앱에서는 `isSupported()`가 false다 — 던지지 않고 코드로 돌려준다.
+ */
+export async function grantTossPromotionReward(promotionCode: string, amount: number): Promise<GrantRewardOutcome> {
+  if (!isTossApp()) return { ok: false, code: "NOT_TOSS_APP" };
+  const { Promotion } = await import("@apps-in-toss/web-framework");
+  if (!Promotion.grantReward.isSupported()) return { ok: false, code: "UNSUPPORTED_VERSION" };
   try {
-    const total = await api<TossPointTotalResponse>("/points/toss-grants/total");
-    publishTossPointsReceived(total.totalReceivedWon);
-  } catch {
-    /* 서버에 연결할 수 없으면 마지막으로 저장한 값 유지 */
+    const result = await Promotion.grantReward({ promotionCode, amount });
+    return { ok: true, key: result.key };
+  } catch (e) {
+    const code = (e as { code?: string } | null)?.code ?? "UNKNOWN_ERROR";
+    return { ok: false, code };
   }
+}
+
+/**
+ * 연속 출석 보상 10원을 지급한다. 지급에 성공하면 누적액에 더하고 수령 기록을 남긴다.
+ *
+ * 이미 받은 일차면 아무것도 하지 않는다. 실패하면 기록을 남기지 않으므로 다음에
+ * 다시 시도된다 — 하루 지급 한도를 넘겨 실패한 경우(4110) 다음 날 받을 수 있다.
+ */
+export async function grantStreakReward(day: number): Promise<number> {
+  const { isTossRewardDay, hasTossRewardPaid, markTossRewardPaid } = await import("./localStreak");
+  if (!isTossRewardDay(day) || hasTossRewardPaid(day)) return 0;
+
+  const outcome = await grantTossPromotionReward(STREAK_PROMOTION_CODE, STREAK_REWARD_WON);
+  if (!outcome.ok) return 0;
+  markTossRewardPaid(day);
+  addTossPointsReceived(STREAK_REWARD_WON);
+  return STREAK_REWARD_WON;
+}
+
+// ─── 복권 ──────────────────────────────────────────────────────────────────
+
+/** 복권 한 장 값(출석점수). */
+export const LOTTERY_TICKET_PRICE = 5_000;
+/** 최대 당첨 금액. 콘솔 프로모션의 지급 금액(1,000원)을 넘기면 4114로 거부된다. */
+export const LOTTERY_MAX_PRIZE_WON = 1_000;
+
+/**
+ * 당첨 금액을 뽑는다. **꽝은 없다** — 긁으면 반드시 1원 이상 받는다.
+ *
+ * <pre>
+ *     1원  25%        2원  20%        3원  43.9009%
+ *     5원  10%       10원   1%       50원   0.08%
+ *   100원   0.015%  1000원   0.0041%
+ * </pre>
+ *
+ * 장당 기대값은 약 2.663원이고, 한 장 값은 5,000점 + 광고 1회다.
+ */
+export function rollLotteryPrize(): number {
+  const roll = Math.floor(Math.random() * 1_000_000);
+  if (roll < 250_000) return 1;
+  if (roll < 450_000) return 2;
+  if (roll < 889_009) return 3;
+  if (roll < 989_009) return 5;
+  if (roll < 999_009) return 10;
+  if (roll < 999_809) return 50;
+  if (roll < 999_959) return 100;
+  return LOTTERY_MAX_PRIZE_WON;
 }
 
 export interface AttendanceLotteryScratchResult {
@@ -54,19 +119,26 @@ export interface AttendanceLotteryScratchResult {
   amountWon: number;
 }
 
+export class LotteryError extends Error {}
+
 /**
- * 복권을 긁는다. **한 번의 호출로 차감·추첨·토스포인트 지급·기록이 모두 끝난다.**
+ * 복권을 긁는다. **긁는 순간 차감·추첨·지급이 한 번에 끝난다.**
  *
- * 금액을 미리 받지 않으므로 금액을 보고 닫아 공짜로 재추첨할 수 없고, 지급액을
- * 클라이언트가 정할 수도 없다.
- *
- * `drawId`는 이 시도의 멱등 키다. 재시도해도 차감과 지급이 한 번만 일어난다.
+ * 금액을 미리 보여주지 않으므로 금액을 보고 닫아 공짜로 다시 뽑을 수 없다.
+ * 지급이 실패하면 차감한 점수를 되돌려준다 — 돈도 점수도 잃으면 안 된다.
  */
-export function scratchAttendanceLottery(drawId: string): Promise<AttendanceLotteryScratchResult> {
-  return api<AttendanceLotteryScratchResult>("/labs/attendance-lottery/scratch", {
-    method: "POST",
-    body: JSON.stringify({ drawId }),
-  });
+export async function scratchAttendanceLottery(drawId: string): Promise<AttendanceLotteryScratchResult> {
+  if (spendPoints(LOTTERY_TICKET_PRICE) === null) {
+    throw new LotteryError("출석점수가 모자라요.");
+  }
+  const amountWon = rollLotteryPrize();
+  const outcome = await grantTossPromotionReward(LOTTERY_PROMOTION_CODE, amountWon);
+  if (!outcome.ok) {
+    addPoints(LOTTERY_TICKET_PRICE);   // 지급 실패 — 차감을 되돌린다.
+    throw new LotteryError("지금은 지급이 안 돼요. 잠시 후 다시 시도해주세요.");
+  }
+  addTossPointsReceived(amountWon);
+  return { drawId, amountWon };
 }
 
 /** 시도마다 새로 만든다. crypto.randomUUID가 없는 구형 웹뷰를 위한 폴백을 둔다. */

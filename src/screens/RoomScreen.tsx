@@ -23,8 +23,8 @@ import {
   shouldAskSatisfaction, isTossReviewSupported, markSatisfactionAsked,
   reportSatisfaction, requestTossReview,
 } from "../utils/review";
-import { useAttendancePoints } from "../hooks/useAttendancePoints";
-import { claimAttendanceGift } from "../utils/attendancePoints";
+import { awardRankBonus, claimAttendanceGift } from "../utils/attendancePoints";
+import { recordAttendance } from "../utils/localStreak";
 import type { TabName } from "../components/TabBar";
 import type { Classroom, TodayAttendance, CheckInResponse, CheckInRequest, User } from "../types";
 import { hasUnreadGreeting, rememberLatestGreetingId } from "../utils/unreadGreetings";
@@ -57,7 +57,6 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
   const [photoCaptureBusy, setPhotoCaptureBusy] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const { toastMessage, showToast } = useToast();
-  const { refresh: refreshPoints } = useAttendancePoints();
 
   const handleInvite = async () => {
     if (!classroom) return;
@@ -199,9 +198,10 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
         markMissionDone("greeting");
         incrementMissionProgress("photo-attendance", checkInResult.attendanceId);
       }
-      // 하루 보상 상한(방을 넘나들어도 3번)과 등수 보너스는 모두 서버가 판단한다.
-      // 선물은 열어볼 때 서버에 요청하고, 상한을 넘겼으면 모달이 "모두 받았어요"를 보여준다.
-      const rankBonus = checkInResult.rankBonusPoints ?? null;
+      // 연속일수는 기기에서 올린다. 하루에 여러 방에 출석해도 한 번만 올라간다.
+      recordAttendance();
+      // 등수만 서버에서 온다. 금액과 하루 상한(방을 넘나들어도 3번)은 기기가 판단한다.
+      const rankBonus = awardRankBonus(classroomId, checkInResult.dailyRank);
       setTimeout(() => launchConfetti(rankBonus !== null), 300);
       setRewardModal({ rank: checkInResult.dailyRank, rankBonus });
     } catch (e) {
@@ -343,16 +343,10 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
           rank={rewardModal.rank}
           rankBonus={rewardModal.rankBonus}
           onClaimGift={async () => {
-            try {
-              const gift = await claimAttendanceGift(classroomId);
-              return gift.amount;
-            } catch {
-              return null;   // 이미 받았거나 하루 상한 초과 — 모달이 안내 문구를 보여준다
-            }
+            // 이미 받았거나 하루 상한을 넘기면 null — 모달이 안내 문구를 보여준다.
+            return claimAttendanceGift(classroomId)?.amount ?? null;
           }}
           onClose={() => {
-            // 적립은 서버가 이미 했다. 화면 잔액만 다시 읽는다.
-            void refreshPoints();
             setRewardModal(null);
             playCheckInCelebration();
           }}

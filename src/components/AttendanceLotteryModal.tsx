@@ -151,7 +151,7 @@ export default function AttendanceLotteryModal({ totalPoints, onPointsChanged, o
       setPrize(result.amountWon);
       setStep("result");
     } catch (scratchError) {
-      // 서버가 거절하면 차감도 일어나지 않는다(지급 실패 시 서버가 역분개한다).
+      // 지급이 실패하면 차감한 점수를 되돌려준다 — 돈도 점수도 잃으면 안 된다.
       setStep("ready");
       setError(scratchError instanceof Error
         ? scratchError.message

@@ -3,12 +3,24 @@ import { useLocalStorage } from "./useLocalStorage";
 import {
   ATTENDANCE_POINTS_EVENT,
   claimReward,
-  fetchStreakRewardStatus,
   getAttendancePoints,
+  loadAttendancePoints,
+  streakPoints,
   syncAttendancePoints,
+  MAX_STREAK_DAY,
+  type ClaimRewardOptions,
   type ClaimRewardResult,
   type RewardKind,
 } from "../utils/attendancePoints";
+import {
+  STREAK_PROGRESS_EVENT,
+  getStreakProgress,
+  hasTossRewardPaid,
+  isTossRewardDay,
+  syncStreakOnce,
+  type StreakProgress,
+} from "../utils/localStreak";
+import { grantStreakReward } from "../utils/tossPromotion";
 
 export const POINTS_TO_WON_RATE = 1000; // 출석점수 1,000점 = 토스포인트 1P (현금 1원)
 
@@ -17,75 +29,67 @@ export interface StreakMilestoneReward {
   points: number | null;
 }
 
-/**
- * 보상표. **서버 PointRewardService.streakPoints()와 값이 같아야 한다** —
- * 화면에 보이는 금액과 실제 지급액이 달라지면 안 된다. 서버에 같은 표를 대조하는
- * 테스트가 있다(PointRewardServiceTest).
- */
-const FIRST_WEEK_STREAK_REWARDS: StreakMilestoneReward[] = [
-  { days: 1, points: 2_000 },
-  { days: 2, points: 5_000 },
-  { days: 3, points: 2_000 },
-  { days: 4, points: 5_000 },
-  { days: 5, points: 2_000 },
-  { days: 6, points: 5_000 },
-  { days: 7, points: 10_000 },
-];
-
-/** 1~7일차는 위 표, 8~100일차는 10의 배수 30,000 / 100일차 100,000 / 나머지 10,000. */
+/** 1~100일차 보상표. 금액은 {@link streakPoints}가 정한다. */
 export function getStreakMilestoneRewards(_currentStreak?: number) {
-  const rewards: StreakMilestoneReward[] = [...FIRST_WEEK_STREAK_REWARDS];
-  for (let days = 8; days <= 100; days += 1) {
-    const points = days === 100 ? 100_000 : days % 10 === 0 ? 30_000 : 10_000;
-    rewards.push({ days, points });
+  const rewards: StreakMilestoneReward[] = [];
+  for (let days = 1; days <= MAX_STREAK_DAY; days += 1) {
+    rewards.push({ days, points: streakPoints(days) });
   }
   return rewards;
 }
 
 /**
- * 출석 도장 상태. 연속일과 "이번 주기에 받은 일차"를 **서버에서** 받는다.
+ * 출석 도장 상태. 연속일과 수령 내역을 **기기에서** 읽는다.
  *
- * 예전에는 localStorage에 수령 기록을 두어 기기를 바꾸면 연속 출석과 수령 내역이
- * 전부 날아갔다. 지금은 서버가 출석 기록으로 연속일을 계산하고, 수령 내역도
- * 원장의 멱등 키(streak:<일차>:<주기시작일>)로 관리한다.
+ * 서버에서 받아오던 구조였는데, 화면을 열 때마다 서버를 보고 수령 내역을 원장
+ * 멱등 키로 역추적해야 했다. 지금은 최초 1회만 서버 값을 당겨와 심는다.
  */
 export function useStreakMilestoneRewards() {
-  const [currentStreak, setCurrentStreak] = useState<number | null>(null);
-  const [claimedDays, setClaimedDays] = useState<number[]>([]);
+  const [progress, setProgress] = useState<StreakProgress>(getStreakProgress);
   const rewards = getStreakMilestoneRewards();
 
   const refresh = useCallback(async () => {
-    const status = await fetchStreakRewardStatus();
-    setCurrentStreak(status.currentStreak);
-    setClaimedDays(status.claimedDays);
+    const next = await syncStreakOnce();
+    setProgress(next);
+    // 도장은 받았는데 토스포인트 지급만 실패한 일차를 메운다. 지급 한도를 넘겨
+    // 실패했으면(4110) 다음 날 여기서 다시 받는다.
+    for (const day of next.claimedDays) {
+      if (isTossRewardDay(day) && !hasTossRewardPaid(day)) {
+        await grantStreakReward(day).catch(() => 0);
+      }
+    }
   }, []);
 
   useEffect(() => {
-    void refresh().catch(() => { /* 네트워크 실패 시 마지막 값 유지 */ });
+    const onChange = (event: Event) => setProgress((event as CustomEvent<StreakProgress>).detail);
+    window.addEventListener(STREAK_PROGRESS_EVENT, onChange);
+    void refresh().catch(() => { /* 네트워크 실패 시 기기 값 유지 */ });
+    return () => window.removeEventListener(STREAK_PROGRESS_EVENT, onChange);
   }, [refresh]);
 
-  const streak = currentStreak ?? 0;
+  const streak = progress.streak;
+  const claimedDays = progress.claimedDays;
   const claimableRewards = rewards.filter(
     ({ days, points }) => points !== null && streak >= days && !claimedDays.includes(days),
   );
 
-  /** 서버가 금액을 정한다. 성공하면 적립액을 돌려준다(이미 받았으면 0). */
+  /** 도장을 받는다. 지급 대상 일차면 토스포인트도 함께 지급한다. */
   const claim = useCallback(async (days: number): Promise<number | null> => {
-    try {
-      const result = await claimReward("STREAK", String(days));
-      setClaimedDays((previous) => (previous.includes(days) ? previous : [...previous, days]));
-      return result.amount;
-    } catch {
-      return null;
+    const result = await claimReward("STREAK", String(days));
+    setProgress(getStreakProgress());
+    if (result.amount > 0 || result.alreadyGiven) {
+      // 지급 실패가 도장 수령을 막지 않는다. 실패하면 기록이 남지 않아 다음에 다시 시도된다.
+      void grantStreakReward(days).catch(() => 0);
     }
+    return result.amount;
   }, []);
 
-  return { currentStreak, claimedDays, rewards, claimableRewards, claim, refresh };
+  return { currentStreak: streak, claimedDays, rewards, claimableRewards, claim, refresh };
 }
 
 /**
  * 출석인사 미션 — 인사를 한 번 남기면 보상을 받을 수 있다.
- * 완료/수령 플래그는 배지 표시용 UI 상태이고, 실제 지급과 중복 방지는 서버가 한다.
+ * 완료/수령 플래그는 배지 표시용이고, 중복 지급은 attendancePoints가 막는다.
  */
 const GREETING_MISSION_DONE_KEY = "att-mission-greeting-done";
 
@@ -110,10 +114,7 @@ export function useGreetingMission() {
   };
 }
 
-/**
- * "문의하기" 완료 보상. 중복 방지는 서버가 한다(사용자당 1회 + 문의 기록 존재 확인).
- * 여기 플래그는 버튼 문구를 바꾸는 UI 용도다.
- */
+/** "문의하기" 완료 보상. 중복 지급은 attendancePoints가 막고, 여기 플래그는 버튼 문구용이다. */
 export function useFeedbackReward() {
   const [rewarded, setRewarded] = useLocalStorage<boolean>("att-points-feedback-rewarded", false);
   const markRewarded = () => setRewarded(true);
@@ -121,9 +122,9 @@ export function useFeedbackReward() {
 }
 
 /**
- * 누적 출석점수. **서버 잔액을 그대로 보여준다.**
+ * 누적 출석점수. **기기에 저장된 값을 보여준다.**
  *
- * `totalPoints`가 `null`이면 아직 서버 값을 못 받은 상태다. 화면은 0이 아니라
+ * `totalPoints`가 `null`이면 아직 저장소를 읽지 않은 상태다. 화면은 0이 아니라
  * 자리표시(`-`)를 보여줘야 한다 — 0을 보여주면 "점수가 사라졌다"로 읽힌다.
  */
 export function useAttendancePoints() {
@@ -132,13 +133,14 @@ export function useAttendancePoints() {
   useEffect(() => {
     const onChange = (event: Event) => setTotalPoints((event as CustomEvent<number>).detail);
     window.addEventListener(ATTENDANCE_POINTS_EVENT, onChange);
+    loadAttendancePoints();
     void syncAttendancePoints().catch(() => { /* 실패해도 화면은 떠야 한다 */ });
     return () => window.removeEventListener(ATTENDANCE_POINTS_EVENT, onChange);
   }, []);
 
-  /** 보상 적립. 금액은 서버가 정하므로 종류만 넘긴다. */
   const claim = useCallback(
-    (reward: RewardKind, ref?: string): Promise<ClaimRewardResult> => claimReward(reward, ref),
+    (reward: RewardKind, ref?: string, options?: ClaimRewardOptions): Promise<ClaimRewardResult> =>
+      claimReward(reward, ref, options),
     [],
   );
 
