@@ -87,8 +87,8 @@ const STEPS: Step[] = [
   {
     image: "/guide/guide-challenge.png",
     alt: "토끼와 거북이가 함께 챌린지 출석 달력을 만들어요",
-    title: "방을 만들고 함께 출석해 보세요",
-    desc: "모임이나 챌린지 방을 만들고, 함께 출석을 기록할 수 있어요.",
+    title: "다양한 챌린지를 함께하고 토스포인트를 받아가요",
+    desc: "모임이나 챌린지 방을 만들어 함께 출석하고, 쌓인 기록으로 토스포인트까지 받아요.",
   },
   {
     visual: <StreakStampPreview />,
