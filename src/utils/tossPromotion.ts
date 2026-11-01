@@ -166,7 +166,8 @@ export async function scratchAttendanceLottery(drawId: string): Promise<Attendan
   const outcome = await grantTossPromotionReward(LOTTERY_PROMOTION_CODE, amountWon);
   if (!outcome.ok) {
     addPoints(LOTTERY_TICKET_PRICE);   // 지급 실패 — 차감을 되돌린다.
-    throw new LotteryError("지금은 지급이 안 돼요. 잠시 후 다시 시도해주세요.");
+    // 왜 안 됐는지 그대로 보여준다. "잠시 후 다시"라고만 하면 원인을 알 수 없다.
+    throw new LotteryError(describeGrantFailure(outcome.code));
   }
   addTossPointsReceived(amountWon);
   return { drawId, amountWon };
