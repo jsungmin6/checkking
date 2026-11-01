@@ -95,7 +95,7 @@ const STEPS: Step[] = [
     desc: (
       <>
         하루도 빠지지 않으면 도장마다 출석점수가 쌓여요. {FIRST_TOSS_REWARD_DAY}일차부터는{" "}
-        <strong>{TOSS_REWARD_INTERVAL}일마다 토스포인트 {STREAK_REWARD_WON}원</strong>도 함께 들어와요.
+        <strong className="onboarding-accent">{TOSS_REWARD_INTERVAL}일마다 토스포인트 {STREAK_REWARD_WON}원</strong>도 함께 들어와요.
       </>
     ),
   },
@@ -105,7 +105,7 @@ const STEPS: Step[] = [
     desc: (
       <>
         출석점수 {LOTTERY_TICKET_PRICE.toLocaleString()}점을 모으면 복권 한 장을 긁을 수 있어요.{" "}
-        <strong>꽝 없이 최소 1원, 최대 {LOTTERY_MAX_PRIZE_WON.toLocaleString()}원</strong>이 바로 들어와요.
+        <strong className="onboarding-accent">최대 {LOTTERY_MAX_PRIZE_WON.toLocaleString()}원</strong>이 바로 들어와요.
       </>
     ),
   },
