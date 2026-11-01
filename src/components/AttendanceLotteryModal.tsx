@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { showTossRewardedAd, reportAdLoadFailed } from "../utils/tossRewardedAd";
+import TossBannerAd, { BANNER_AD_GROUPS } from "./TossBannerAd";
 import { newLotteryDrawId, scratchAttendanceLottery } from "../utils/tossPromotion";
 
 const TICKET_PRICE = 5_000;
@@ -202,6 +203,12 @@ export default function AttendanceLotteryModal({ totalPoints, onPointsChanged, o
               당첨된 토스포인트는 긁는 즉시 들어와요. 부정한 방법으로 참여하면 지급되지 않고,
               이 이벤트는 사전 안내 없이 중단될 수 있어요.
             </p>
+            {/* 구매 버튼 아래. 긁는 중에는 띄우지 않는다 — 결과에서 시선을 뺏으면 안 된다. */}
+            <TossBannerAd
+              adGroupId={BANNER_AD_GROUPS.text}
+              variant="card"
+              className="attendance-lottery-ad"
+            />
           </>
         ) : (
           <>

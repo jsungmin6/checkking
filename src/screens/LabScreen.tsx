@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import HomeTabBar from "../components/HomeTabBar";
-import TossBannerAd from "../components/TossBannerAd";
+import TossBannerAd, { BANNER_AD_GROUPS } from "../components/TossBannerAd";
 import AdMobBanner from "../components/AdMobBanner";
 import type { HomeTab } from "../components/HomeTabBar";
 import { api } from "../utils/api";
@@ -140,10 +140,15 @@ export default function LabScreen({
             </span>
           )}
         </button>
+        {/* 클로버 카드 바로 아래. 하단 고정 배너 대신 이미지 강조형을 쓴다. */}
+        <TossBannerAd
+          adGroupId={BANNER_AD_GROUPS.imageEmphasis}
+          variant="expanded"
+          className="lab-inline-ad"
+        />
         <p className="lab-footnote">포인트 기능을 계속 추가할게요.</p>
       </main>
 
-      <TossBannerAd />
       <HomeTabBar active="lab" onSelect={handleTabChange} />
       <AdMobBanner />
       {showLotteryModal && (

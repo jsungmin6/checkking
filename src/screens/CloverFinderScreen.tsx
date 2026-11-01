@@ -10,6 +10,7 @@ import { CLOVER_FORTUNES, GOLDEN_CLOVER_MESSAGE } from "../lab/clover/fortunes";
 import type { ActiveField } from "../lab/clover/domain";
 import { incrementMissionProgress } from "../hooks/useMissions";
 import { api } from "../utils/api";
+import TossBannerAd, { BANNER_AD_GROUPS } from "../components/TossBannerAd";
 import "../styles/lab.css";
 
 interface Props {
@@ -374,6 +375,13 @@ export default function CloverFinderScreen({
             </div>
           )}
         </section>
+
+        {/* 게임판과 랭킹 사이. 게임 중에는 시선을 끌지 않도록 텍스트형을 쓴다. */}
+        <TossBannerAd
+          adGroupId={BANNER_AD_GROUPS.text}
+          variant="card"
+          className="clover-inline-ad"
+        />
 
         <section className="clover-ranking-section">
           <div className="clover-ranking-heading">

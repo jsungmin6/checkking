@@ -173,3 +173,8 @@
   .lab-game-content { padding-top: 0; }
   .lab-meadow-stage .meadow { height: min(45dvh, 400px); min-height: 280px; }
 }
+
+/* 본문 안에 들어가는 배너. 하단 고정형과 달리 카드 사이 간격을 맞춘다. */
+.lab-inline-ad { margin: 14px 0 0; border-radius: 14px; overflow: hidden; }
+.clover-inline-ad { margin: 14px 0 4px; border-radius: 14px; overflow: hidden; }
+.attendance-lottery-ad { margin: 12px 0 0; border-radius: 12px; overflow: hidden; }
