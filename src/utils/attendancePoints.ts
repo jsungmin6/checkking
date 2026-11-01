@@ -45,8 +45,30 @@ const FIRST_WEEK_STREAK_POINTS = [2_000, 5_000, 2_000, 5_000, 2_000, 5_000, 10_0
 
 export const MAX_STREAK_DAY = 100;
 
-/** 1~7일차는 표, 100일차 100,000, 10의 배수 30,000, 나머지 10,000. */
+/** 토스포인트를 처음 받는 일차. */
+export const FIRST_TOSS_REWARD_DAY = 7;
+/** 첫 지급 이후 이 간격으로 받는다 — 7·12·17… */
+export const TOSS_REWARD_INTERVAL = 5;
+
+/**
+ * 토스포인트를 함께 받는 일차인지. 7일차가 처음이고 그 뒤로 5일마다다(7·12·17…97).
+ *
+ * 지급 조건이자 보상 종류를 가르는 기준이라 {@link streakPoints}와 같은 곳에 둔다.
+ */
+export function isTossRewardDay(day: number): boolean {
+  return day >= FIRST_TOSS_REWARD_DAY && (day - FIRST_TOSS_REWARD_DAY) % TOSS_REWARD_INTERVAL === 0;
+}
+
+/**
+ * 그 일차에 받는 출석점수.
+ *
+ * **토스포인트를 받는 날에는 출석점수를 주지 않는다.** 둘 다 주면 보상이 겹쳐
+ * 그날만 과하게 커진다. 그날의 보상은 현금성인 토스포인트 쪽이다.
+ *
+ * 나머지는 1~7일차 표를 따르고, 100일차 100,000 / 10의 배수 30,000 / 그 외 10,000이다.
+ */
 export function streakPoints(day: number): number {
+  if (isTossRewardDay(day)) return 0;
   const firstWeek = FIRST_WEEK_STREAK_POINTS[day - 1];
   if (firstWeek !== undefined) return firstWeek;
   if (day === MAX_STREAK_DAY) return 100_000;

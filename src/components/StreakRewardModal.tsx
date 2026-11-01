@@ -120,8 +120,10 @@ export default function StreakRewardModal({
                       className={`streak-reward-card${canClaim ? " is-claimable" : ""}${attended ? " is-stamped" : ""}${isClaimed ? " is-claimed" : ""}${isTossRewardDay(days) ? " is-toss-reward" : ""}`}
                       key={days}
                       disabled={!canClaim || claiming}
-                      aria-label={`${days}일차 ${points === null ? "출석 도장" : `${points.toLocaleString()}점`}`
-                        + `${isTossRewardDay(days) ? `, 토스포인트 ${TOSS_REWARD_WON}원 추가` : ""}`
+                      aria-label={`${days}일차 `
+                        + (isTossRewardDay(days)
+                          ? `토스포인트 ${TOSS_REWARD_WON}원`
+                          : points === null ? "출석 도장" : `${points.toLocaleString()}점`)
                         + ` ${canClaim ? "받기" : isClaimed ? "받음" : attended ? "완료" : remaining(days)}`}
                       onClick={() => { void handleClaim(days); }}
                     >
@@ -133,6 +135,9 @@ export default function StreakRewardModal({
                             src="/출석왕_로고_배경제거.png"
                             alt=""
                           />
+                        ) : isTossRewardDay(days) ? (
+                          // 토스포인트를 받는 날은 일차 숫자 대신 코인을 크게 보여준다.
+                          <TossPointCoin />
                         ) : (
                           <>
                             <span>{attended ? "출석" : "도장"}</span>
@@ -140,7 +145,12 @@ export default function StreakRewardModal({
                           </>
                         )}
                       </span>
-                      <strong className={`streak-reward-points ${pointsTone}`}>{points === null ? "도장만" : `${points.toLocaleString()}점`}</strong>
+                      {/* 토스포인트를 받는 날은 출석점수를 주지 않는다. 0점을 적지 않고 비운다. */}
+                      {!isTossRewardDay(days) && (
+                        <strong className={`streak-reward-points ${pointsTone}`}>
+                          {points === null ? "도장만" : `${points.toLocaleString()}점`}
+                        </strong>
+                      )}
                       {isTossRewardDay(days) && (
                         <span className="streak-reward-toss">
                           <TossPointCoin />

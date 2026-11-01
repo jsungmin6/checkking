@@ -155,15 +155,9 @@ export function claimStreakDay(day: number): ClaimRewardResult {
 
 // ─── 토스포인트 지급 대상 일차 ──────────────────────────────────────────────
 
-/** 처음 받는 일차. */
-export const FIRST_TOSS_REWARD_DAY = 7;
-/** 첫 지급 이후 이 간격으로 받는다 — 7·12·17… */
-export const TOSS_REWARD_INTERVAL = 5;
-
-/** 7일차가 첫 지급이고 그 뒤로 5일마다 — 7·12·17·22…97. */
-export function isTossRewardDay(day: number): boolean {
-  return day >= FIRST_TOSS_REWARD_DAY && (day - FIRST_TOSS_REWARD_DAY) % TOSS_REWARD_INTERVAL === 0;
-}
+// 조건은 보상 금액을 정하는 곳(attendancePoints)에 있다 — 그날은 출석점수를 주지
+// 않으므로 두 규칙이 떨어져 있으면 한쪽만 고치는 실수가 난다. 여기서는 다시 내보낸다.
+export { FIRST_TOSS_REWARD_DAY, TOSS_REWARD_INTERVAL, isTossRewardDay } from "./attendancePoints";
 
 interface TossPaidRecord {
   cycleStart: string;

@@ -47,7 +47,7 @@ function StreakStampPreview() {
   const days = [
     { day: 5, points: 2_000, tone: "is-bronze" },
     { day: 6, points: 5_000, tone: "is-bronze" },
-    { day: 7, points: 10_000, tone: "is-silver" },
+    { day: 7, points: 0, tone: "is-silver" },   // 토스포인트를 받는 날 — 출석점수는 없다
   ];
   return (
     <div className="onboarding-stamps" aria-hidden="true">
@@ -58,14 +58,15 @@ function StreakStampPreview() {
         >
           <span className="streak-reward-day">{day}일차</span>
           <span className="streak-reward-stamp">
-            <span>도장</span><strong>{day}</strong>
+            {day === 7 ? <TossPointCoin /> : <><span>도장</span><strong>{day}</strong></>}
           </span>
-          <strong className={`streak-reward-points ${tone}`}>{points.toLocaleString()}점</strong>
-          {day === 7 && (
+          {day === 7 ? (
             <span className="streak-reward-toss">
               <TossPointCoin />
               {STREAK_REWARD_WON}원
             </span>
+          ) : (
+            <strong className={`streak-reward-points ${tone}`}>{points.toLocaleString()}점</strong>
           )}
         </div>
       ))}

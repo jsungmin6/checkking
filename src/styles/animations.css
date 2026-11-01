@@ -436,3 +436,7 @@
 .onboarding-speech p strong { color: var(--text-primary); font-weight: 750; }
 /* 금액처럼 눈에 먼저 들어와야 하는 값. 본문 강조보다 한 단계 위다. */
 .onboarding-speech p strong.onboarding-accent { color: var(--accent-blue); font-weight: 800; }
+/* 토스포인트를 받는 날의 도장 자리 — 일차 숫자 대신 코인을 원 크기에 맞춘다. */
+.streak-reward-card.is-toss-reward .streak-reward-stamp .streak-reward-toss-coin { width: 34px; height: 34px; }
+.streak-reward-card.is-toss-reward .streak-reward-toss { font-size: 12px; }
+.streak-reward-card.is-toss-reward .streak-reward-toss .streak-reward-toss-coin { width: 13px; height: 13px; }

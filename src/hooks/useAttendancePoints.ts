@@ -87,10 +87,10 @@ export function useStreakMilestoneRewards() {
     setGrantFailure(null);
     const result = await claimReward("STREAK", String(days));
     setProgress(getStreakProgress());
-    if (result.amount > 0 || result.alreadyGiven) {
-      const outcome = await grantStreakReward(days).catch((): StreakRewardOutcome => ({ amountWon: 0 }));
-      if (outcome.errorCode) setGrantFailure(describeGrantFailure(outcome.errorCode));
-    }
+    // 금액으로 거르지 않는다. 토스포인트를 주는 날은 출석점수가 0이라, 0을 "못 받음"으로
+    // 읽으면 정작 돈이 나가는 날에 지급을 건너뛴다. 중복은 hasTossRewardPaid가 막는다.
+    const outcome = await grantStreakReward(days).catch((): StreakRewardOutcome => ({ amountWon: 0 }));
+    if (outcome.errorCode) setGrantFailure(describeGrantFailure(outcome.errorCode));
     return result.amount;
   }, []);
 
