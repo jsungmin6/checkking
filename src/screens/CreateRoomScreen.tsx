@@ -208,7 +208,7 @@ export default function CreateRoomScreen({ accountType, onBack, onCreated }: Cre
         setWatchingAd(true);
         let result: boolean;
         try {
-          result = await showTossRewardedAd(CREATE_ROOM_AD_GROUP_ID);
+          result = await showTossRewardedAd(CREATE_ROOM_AD_GROUP_ID, "CREATE_ROOM");
         } catch (adError) {
           setWatchingAd(false);
           reportAdLoadFailed(CREATE_ROOM_AD_GROUP_ID, adError instanceof Error ? adError.message : "unknown_error");

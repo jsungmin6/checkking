@@ -1,6 +1,29 @@
 import { isTossApp } from "./platform";
 import { api } from "./api";
 
+/**
+ * 광고를 보여준 자리. 텔레그램 알림에 그대로 찍히므로 **서버가 아는 값만** 쓴다.
+ * 서버 AdRewardNotificationController의 라벨 표와 같아야 한다.
+ */
+export type AdPlacement =
+  | "AVATAR_CHANGE"
+  | "CLOVER_CONTINUE"
+  | "CLOVER_BOX_DOUBLE"
+  | "POINTS_CONVERSION"
+  | "ATTENDANCE_LOTTERY"
+  | "CREATE_ROOM"
+  | "MISSION_REWARD"
+  | "CLOVER_RETRY";
+
+/** 광고를 끝까지 본 사실을 서버에 알린다(텔레그램 집계용). 본 흐름을 막지 않는다. */
+function reportAdWatched(adGroupId: string, placement: AdPlacement | undefined, adType: "REWARDED" | "INTERSTITIAL") {
+  if (placement === "POINTS_CONVERSION") return;   // 전환 흐름은 따로 알린다
+  void api("/notifications/ad-rewarded", {
+    method: "POST",
+    body: JSON.stringify({ adGroupId, placement, adType }),
+  }).catch(() => {});
+}
+
 /** 광고 로딩/재생 실패를 서버에 보고한다(로그 집계용). 실패해도 UI에 영향 없는 best-effort 호출. */
 export async function reportAdLoadFailed(adGroupId: string, reason: string) {
   const errorCodeMatch = reason.match(/code=(-?\d+)/);
@@ -63,7 +86,7 @@ async function loadAdOnce(
  * **실패해도 던지지 않는다.** 광고가 안 떴다고 받을 보상을 막으면 사용자만 손해다.
  * 실패 사유는 집계로만 남긴다.
  */
-export async function showTossInterstitialAd(adGroupId: string): Promise<void> {
+export async function showTossInterstitialAd(adGroupId: string, placement?: AdPlacement): Promise<void> {
   if (!isTossApp()) return;
 
   try {
@@ -94,6 +117,8 @@ export async function showTossInterstitialAd(adGroupId: string): Promise<void> {
       cleanup = showFullScreenAd({
         options: { adGroupId },
         onEvent: (event) => {
+          // 전면 광고는 보상 조건이 없다. 실제로 떴다(impression)는 것만 집계한다.
+          if (event.type === "impression") reportAdWatched(adGroupId, placement, "INTERSTITIAL");
           if (event.type === "dismissed" || event.type === "failedToShow") finish();
         },
         onError: () => finish(),
@@ -107,7 +132,7 @@ export async function showTossInterstitialAd(adGroupId: string): Promise<void> {
 /** Returns true only after the SDK reports that the user earned the reward. */
 export async function showTossRewardedAd(
   adGroupId: string,
-  placement?: "AVATAR_CHANGE" | "CLOVER_CONTINUE" | "CLOVER_BOX_DOUBLE" | "POINTS_CONVERSION" | "ATTENDANCE_LOTTERY",
+  placement?: AdPlacement,
 ): Promise<boolean> {
   if (!isTossApp()) return true;
 
@@ -146,12 +171,7 @@ export async function showTossRewardedAd(
         if (event.type === "userEarnedReward") earnedReward = true;
         if (event.type === "dismissed") {
           window.clearTimeout(timeout);
-          if (earnedReward && placement !== "POINTS_CONVERSION") {
-            void api("/notifications/ad-rewarded", {
-              method: "POST",
-              body: JSON.stringify({ adGroupId, placement }),
-            }).catch(() => {});
-          }
+          if (earnedReward) reportAdWatched(adGroupId, placement, "REWARDED");
           finish(earnedReward);
         } else if (event.type === "failedToShow") {
           window.clearTimeout(timeout);

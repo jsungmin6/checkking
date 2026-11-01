@@ -41,7 +41,7 @@ export default function MissionModal({ missions, onClose, onRewarded }: MissionM
     if (loadingAdFor) return;
     setLoadingAdFor(mission.id);
     try {
-      await showTossInterstitialAd(MISSION_REWARD_AD_GROUP_ID);
+      await showTossInterstitialAd(MISSION_REWARD_AD_GROUP_ID, "MISSION_REWARD");
     } finally {
       setLoadingAdFor(null);
       setOpened(false);

@@ -199,7 +199,7 @@ export default function CloverFinderScreen({
     if (loadingRetryAd) return;
     setLoadingRetryAd(true);
     try {
-      await showTossInterstitialAd(CLOVER_RETRY_AD_GROUP_ID);
+      await showTossInterstitialAd(CLOVER_RETRY_AD_GROUP_ID, "CLOVER_RETRY");
     } finally {
       setLoadingRetryAd(false);
       void startAttempt();
