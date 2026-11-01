@@ -42,8 +42,14 @@ export default function CloverContinueModal({ onClose, onRewarded }: Props) {
           <p>리워드 광고를 끝까지 시청하면 3판 더 할 수 있어요.</p>
         </div>
         {error && <p className="clover-continue-error" role="alert">{error}</p>}
-        <button className="onboarding-next" onClick={() => void handleWatch()} disabled={watchingAd}>
-          {watchingAd ? "광고를 준비하고 있어요" : "광고 보고 3판 더 하기"}
+        <button
+          className="onboarding-next"
+          onClick={() => void handleWatch()}
+          disabled={watchingAd}
+          style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
+        >
+          {watchingAd && <span className="ad-loading-spinner" aria-hidden="true" />}
+          {watchingAd ? "광고 불러오는 중" : "광고 보고 3판 더 하기"}
         </button>
         {!watchingAd && <button className="clover-continue-later" onClick={onClose}>나중에</button>}
       </section>

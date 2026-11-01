@@ -167,11 +167,7 @@ export default function AvatarChangeModal({ userId, currentIndex, onClose, onCha
               }}
             >
               {step === "watchingAd" && (
-                <span style={{
-                  display: "inline-block", width: 16, height: 16, borderRadius: "50%",
-                  border: "2px solid rgba(255,255,255,0.4)", borderTopColor: "#fff",
-                  animation: "spin 0.8s linear infinite",
-                }} />
+                <span className="ad-loading-spinner" aria-hidden="true" />
               )}
               {step === "watchingAd" ? "광고 불러오는 중" : "광고 보고 바꾸기"}
             </button>

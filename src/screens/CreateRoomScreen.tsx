@@ -472,11 +472,7 @@ export default function CreateRoomScreen({ accountType, onBack, onCreated }: Cre
 
             <button onClick={handleCreate} disabled={loading || !!timeInvalid || roomLimitReached} style={{ width: "100%", padding: 16, borderRadius: "var(--radius-button)", background: "var(--accent-blue)", color: "#fff", fontSize: 16, fontWeight: 700, opacity: loading || timeInvalid || roomLimitReached ? 0.5 : 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
               {watchingAd && (
-                <span style={{
-                  display: "inline-block", width: 16, height: 16, borderRadius: "50%",
-                  border: "2px solid rgba(255,255,255,0.4)", borderTopColor: "#fff",
-                  animation: "spin 0.8s linear infinite",
-                }} />
+                <span className="ad-loading-spinner" aria-hidden="true" />
               )}
               {watchingAd ? "광고 불러오는 중" : loading ? "방 만드는 중..." : isTossApp() ? "광고 보고 방 만들기" : "방 만들기"}
             </button>

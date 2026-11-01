@@ -161,9 +161,9 @@ export default function HomeScreen({
             onClick={() => setShowStreakRewardModal(true)}
             aria-label={streakRewards.claimableRewards.length > 0
               ? "연속 출석 보상 확인"
-              : `연속 출석 ${appCurrentStreak ?? 0}일`}
+              : `연속 출석 보상 ${appCurrentStreak ?? 0}일`}
           >
-            <span>연속 출석 <strong>{appCurrentStreak ?? 0}일</strong></span>
+            <span>연속 출석 보상 <strong>{appCurrentStreak ?? 0}일</strong></span>
             {streakRewards.claimableRewards.length > 0 && <span className="streak-reward-dot" aria-label="받을 보상이 있어요" />}
           </button>
         </div>

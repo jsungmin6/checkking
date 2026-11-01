@@ -171,7 +171,7 @@ export default function AttendanceLotteryModal({ totalPoints, onPointsChanged, o
         onClick={(event) => event.stopPropagation()}
       >
         <button className="attendance-gift-close" onClick={close} aria-label="닫기" disabled={step === "watchingAd" || step === "granting"}>×</button>
-        {step === "ready" ? (
+        {step === "ready" || step === "watchingAd" ? (
           <>
             <h2 className="attendance-gift-title">출석복권</h2>
             <div className="attendance-gift-rank attendance-lottery-description">
@@ -187,10 +187,14 @@ export default function AttendanceLotteryModal({ totalPoints, onPointsChanged, o
             {error && <div className="attendance-lottery-error">{error}</div>}
             <button
               className="attendance-gift-confirm"
-              disabled={totalPoints < TICKET_PRICE}
+              disabled={totalPoints < TICKET_PRICE || step === "watchingAd"}
               onClick={() => { void handlePurchase(); }}
+              style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
             >
-              {`광고 보고 ${TICKET_PRICE.toLocaleString()}점으로 복권 긁기`}
+              {step === "watchingAd" && <span className="ad-loading-spinner" aria-hidden="true" />}
+              {step === "watchingAd"
+                ? "광고 불러오는 중"
+                : `광고 보고 ${TICKET_PRICE.toLocaleString()}점으로 복권 긁기`}
             </button>
             {totalPoints < TICKET_PRICE && <p className="attendance-lottery-hint">10,000점부터 구매할 수 있어요.</p>}
           </>
