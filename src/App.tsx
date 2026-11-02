@@ -19,6 +19,7 @@ import LabScreen from "./screens/LabScreen";
 import CloverFinderScreen from "./screens/CloverFinderScreen";
 import OnboardingModal from "./components/OnboardingModal";
 import type { ScreenName, User } from "./types";
+import { reportEntryReferrerWithUser } from "./utils/reportAppEntryReferrer";
 
 /**
  * 딥링크로 바로 열 수 있는 화면.
@@ -120,6 +121,17 @@ export default function App() {
       }
     })();
   }, [loading, user, needsTermsAgreement]);
+
+  /**
+   * 로그인한 뒤 진입 경로를 한 번 더 남긴다.
+   *
+   * 앱을 열 때 보낸 기록에는 userId가 없다(로그인 전이라 알 수 없다). 토큰이 생긴
+   * 뒤에 한 번 더 보내야 "이 경로로 들어온 사람이 무엇을 했는지"를 이을 수 있다.
+   */
+  useEffect(() => {
+    if (loading || !user) return;
+    reportEntryReferrerWithUser();
+  }, [loading, user]);
 
   // 앱인토스 네이티브 뒤로가기를 SPA 화면 이동에 연결한다.
   useEffect(() => {
