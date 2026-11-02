@@ -97,8 +97,13 @@ select {
   font-family: inherit;
 }
 
+/*
+ * 1fr은 minmax(auto, 1fr)이라 **콘텐츠 최소 폭 아래로 줄지 않는다.** 방 이름이 길거나
+ * 태그(연속·인증·방장)가 많으면 칼럼이 화면보다 넓어져 카드가 오른쪽으로 잘렸다.
+ * 좁은 기기에서 특히 잘 터진다. minmax(0, 1fr)이라야 안에서 말줄임이 걸린다.
+ */
 .room-grid {
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .attendance-box-promo {
