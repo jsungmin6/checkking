@@ -203,3 +203,24 @@
 .other-apps-item.is-visited .other-apps-reward { color: var(--text-muted); }
 .other-apps-message { margin: 10px 0 0; color: var(--accent-red); font-size: 12px; }
 .other-apps-ad { margin: 14px 0 12px; border-radius: 12px; overflow: hidden; }
+
+/* 있는 기능을 한눈에 보여주는 세 칸. 정사각형으로 가로 정렬한다. */
+.lab-quick-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; margin-bottom: 14px; }
+.lab-quick-tile { position: relative; display: flex; aspect-ratio: 1; flex-direction: column; align-items: center; justify-content: center; gap: 5px; padding: 10px 6px; border: 1px solid transparent; border-radius: var(--radius-card); background: var(--bg-card); box-shadow: var(--shadow-card); color: var(--text-primary); cursor: pointer; }
+.lab-quick-tile.is-ready { border-color: #cfe0fb; background: #f6faff; }
+.lab-quick-tile:active { transform: scale(.98); }
+.lab-quick-emoji { font-size: 30px; line-height: 1; }
+.lab-quick-tile strong { font-size: 13px; font-weight: 800; }
+.lab-quick-state { color: var(--text-secondary); font-size: 11px; line-height: 1.3; text-align: center; word-break: keep-all; }
+.lab-quick-tile.is-ready .lab-quick-state { color: var(--accent-blue); font-weight: 700; }
+.lab-quick-dot { position: absolute; top: 9px; right: 9px; width: 7px; height: 7px; border-radius: 50%; background: #fa4b55; }
+
+/* 오늘의 출석 보상 안내 */
+.daily-reward-dialog { gap: 0; }
+.daily-reward-dots { display: flex; justify-content: center; gap: 10px; margin: 20px 0 12px; }
+.daily-reward-dot { display: grid; width: 46px; height: 46px; place-items: center; border: 1.5px dashed var(--border-color); border-radius: 50%; color: var(--text-muted); font-size: 16px; font-weight: 800; }
+.daily-reward-dot.is-done { border-style: solid; border-color: var(--accent-blue); background: #e8f3ff; color: var(--accent-blue); }
+.daily-reward-left { margin: 0 0 18px; color: var(--text-secondary); font-size: 14px; }
+.daily-reward-left strong { color: var(--text-primary); }
+.daily-reward-notes { display: grid; gap: 10px; margin: 0 0 20px; padding: 14px 16px 14px 32px; border-radius: 14px; background: var(--bg-secondary); color: var(--text-secondary); font-size: 13px; line-height: 1.55; text-align: left; }
+.daily-reward-notes strong { color: var(--text-primary); }

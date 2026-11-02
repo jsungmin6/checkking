@@ -9,6 +9,10 @@ import TossPointsReceivedModal from "../components/TossPointsReceivedModal";
 import { useAttendancePoints, useStreakMilestoneRewards } from "../hooks/useAttendancePoints";
 import StreakRewardModal from "../components/StreakRewardModal";
 import OtherAppsModal from "../components/OtherAppsModal";
+import DailyRewardModal from "../components/DailyRewardModal";
+import MissionModal from "../components/MissionModal";
+import { useMissions } from "../hooks/useMissions";
+import { DAILY_REWARD_LIMIT, getDailyRewardCount } from "../utils/attendancePoints";
 import { OTHER_APP_VISIT_POINTS, unvisitedCount } from "../utils/otherApps";
 import { STREAK_REWARD_WON, syncTossPointLedger, TOSS_POINTS_RECEIVED_EVENT, TOSS_POINTS_RECEIVED_KEY } from "../utils/tossPromotion";
 import { nextTossRewardDay } from "../utils/attendancePoints";
@@ -38,6 +42,11 @@ export default function LabScreen({
   const [showTossPointsDetail, setShowTossPointsDetail] = useState(false);
   const [showStreakRewardModal, setShowStreakRewardModal] = useState(false);
   const [showOtherApps, setShowOtherApps] = useState(false);
+  const [showDailyReward, setShowDailyReward] = useState(false);
+  const [showMissions, setShowMissions] = useState(false);
+  const { missions, markSeen: markMissionSeen, claim: claimMission } = useMissions();
+  const dailyUsed = getDailyRewardCount();
+  const claimableMissions = missions.filter((m) => m.done).length;
   // 아직 점수를 안 받은 앱 수. 모달에서 받고 나오면 줄어든다.
   const [unvisitedApps, setUnvisitedApps] = useState(unvisitedCount);
   const [tossPointsReceived, setTossPointsReceived] = useState(() => {
@@ -134,40 +143,56 @@ export default function LabScreen({
           </button>
         </div>
         <p className="lab-activity-intro">다양한 활동을 통해 빠르게 출석 점수를 모아 봐요!</p>
-        {/* 클로버와 같은 카드. 출석 도장은 점수를 모으는 가장 큰 경로라 나란히 둔다. */}
-        <button
-          className="lab-clover-card lab-streak-card"
-          onClick={() => setShowStreakRewardModal(true)}
-          aria-label={streakRewards.claimableRewards.length > 0
-            ? "연속 출석 보상 확인 — 받을 보상이 있어요"
-            : "연속 출석 보상 확인"}
-        >
-          <span className="lab-clover-card-icon" aria-hidden="true">
-            <img src="/출석왕_로고_배경제거.png" alt="" />
-          </span>
-          <span className="lab-clover-card-copy">
-            <strong>연속 출석 보상 확인</strong>
-          </span>
-          <span className="lab-clover-card-meta">
-            <span>연속 {streakRewards.currentStreak}일</span>
-          </span>
-          <span className="lab-clover-card-arrow" aria-hidden="true">›</span>
-          <span className="lab-clover-card-progress">
-            {streakRewards.claimableRewards.length > 0 ? (
-              <>
-                <span className="lab-streak-card-ready">받을 보상이 있어요</span>
-                <span className="lab-clover-card-dot" aria-hidden="true" />
-              </>
-            ) : tossRewardCountdown !== null ? (
-              <span>
-                <strong className="lab-streak-card-ready">{tossRewardCountdown}일</strong>만 더 출석하면 토스포인트{" "}
-                <strong className="lab-streak-card-ready">{STREAK_REWARD_WON}원</strong>
-              </span>
-            ) : (
-              <span>도장을 모아 출석점수를 받아요</span>
-            )}
-          </span>
-        </button>
+        {/*
+          있는 기능을 한눈에 보여주는 세 칸. 세로로 쌓으면 화면이 길어지기만 해서
+          정사각형 버튼으로 나란히 둔다.
+        */}
+        <div className="lab-quick-grid">
+          <button
+            type="button"
+            className={`lab-quick-tile${streakRewards.claimableRewards.length > 0 ? " is-ready" : ""}`}
+            onClick={() => setShowStreakRewardModal(true)}
+            aria-label={streakRewards.claimableRewards.length > 0
+              ? "연속 출석 보상 — 받을 보상이 있어요"
+              : "연속 출석 보상"}
+          >
+            <span className="lab-quick-emoji" aria-hidden="true">👑</span>
+            <strong>연속 출석</strong>
+            <span className="lab-quick-state">
+              {streakRewards.claimableRewards.length > 0
+                ? "받을 보상 있음"
+                : tossRewardCountdown !== null
+                  ? `${tossRewardCountdown}일 뒤 ${STREAK_REWARD_WON}원`
+                  : `${streakRewards.currentStreak}일째`}
+            </span>
+            {streakRewards.claimableRewards.length > 0 && <span className="lab-quick-dot" aria-hidden="true" />}
+          </button>
+
+          <button
+            type="button"
+            className="lab-quick-tile"
+            onClick={() => setShowDailyReward(true)}
+            aria-label={`오늘의 출석 보상 — ${DAILY_REWARD_LIMIT}번 중 ${dailyUsed}번 받음`}
+          >
+            <span className="lab-quick-emoji" aria-hidden="true">🎁</span>
+            <strong>오늘 출석</strong>
+            <span className="lab-quick-state">{dailyUsed} / {DAILY_REWARD_LIMIT}번</span>
+          </button>
+
+          <button
+            type="button"
+            className={`lab-quick-tile${claimableMissions > 0 ? " is-ready" : ""}`}
+            onClick={() => { markMissionSeen(); setShowMissions(true); }}
+            aria-label={claimableMissions > 0 ? `미션 — ${claimableMissions}개 받을 수 있어요` : "미션"}
+          >
+            <span className="lab-quick-emoji" aria-hidden="true">🎯</span>
+            <strong>미션</strong>
+            <span className="lab-quick-state">
+              {claimableMissions > 0 ? `${claimableMissions}개 받기` : `${missions.length}개 남음`}
+            </span>
+            {claimableMissions > 0 && <span className="lab-quick-dot" aria-hidden="true" />}
+          </button>
+        </div>
         <button className="lab-clover-card" onClick={onOpenCloverFinder}>
           <span className="lab-clover-card-icon" aria-hidden="true">
             <img src="/emojis/redrawn/wellwish-chick.png" alt="" />
@@ -234,6 +259,14 @@ export default function LabScreen({
           grantFailure={streakRewards.grantFailure}
           onClaim={streakRewards.claim}
           onClose={() => { setShowStreakRewardModal(false); void refreshPoints(); }}
+        />
+      )}
+      {showDailyReward && <DailyRewardModal onClose={() => setShowDailyReward(false)} />}
+      {showMissions && (
+        <MissionModal
+          missions={missions}
+          onClose={() => setShowMissions(false)}
+          onRewarded={(missionId) => { claimMission(missionId); void refreshPoints(); }}
         />
       )}
       {showOtherApps && (

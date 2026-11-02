@@ -226,7 +226,7 @@ export async function claimReward(
 // ─── 출석 보상(등수 보너스 · 선물) ─────────────────────────────────────────
 
 /** 방과 종류를 가리지 않고, 보상을 받는 출석은 하루 이 횟수까지만. */
-const DAILY_REWARD_LIMIT = 3;
+export const DAILY_REWARD_LIMIT = 3;
 const DAILY_REWARD_COUNT_KEY = "att-reward-daily";
 const GIFT_CLAIMED_KEY = "att-gift-claimed";
 
@@ -246,6 +246,11 @@ function readDailyCount(): DailyCount {
   } catch {
     return { date: todayKey(), count: 0 };
   }
+}
+
+/** 오늘 보상을 받은 횟수. 0 ~ {@link DAILY_REWARD_LIMIT}. */
+export function getDailyRewardCount(): number {
+  return Math.min(DAILY_REWARD_LIMIT, readDailyCount().count);
 }
 
 /** 오늘 보상을 더 받을 수 있는지. */
