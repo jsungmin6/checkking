@@ -1,11 +1,11 @@
 import { isTossApp } from "./platform";
-import { addPoints, readList, appendToList } from "./attendancePoints";
+import { addPoints, readList, appendToList, todayKey } from "./attendancePoints";
 
 /**
  * 같은 워크스페이스의 다른 미니앱으로 보내고 출석점수를 준다.
  *
- * 앱마다 **한 번만** 준다. 다녀왔는지는 확인할 방법이 없으므로 "열었다"를 기준으로
- * 한다 — 토스가 다른 앱을 띄우면 우리 웹뷰는 그대로 남아 돌아왔는지 알 수 없다.
+ * 앱마다 **하루에 한 번** 준다. 다녀왔는지는 확인할 방법이 없으므로 "열었다"를
+ * 기준으로 한다 — 토스가 다른 앱을 띄우면 우리 웹뷰는 그대로 남아 돌아왔는지 알 수 없다.
  *
  * `appName`은 각 앱 설정의 값과 글자까지 같아야 한다. 틀리면 토스가 아무 반응 없이
  * 무시한다.
@@ -56,17 +56,25 @@ export const OTHER_APP_VISIT_MAX = 2_000;
 const VISITED_KEY = "att-other-app-visited";
 const OPENED_KEY = "att-other-app-opened";
 
-/** 이미 점수를 받은 앱인지. */
+/**
+ * 날짜를 키에 박아 하루가 지나면 저절로 풀리게 한다.
+ *
+ * 출석 선물·등수 보너스와 같은 방식이다(`gift:방:날짜`). 목록은 최근 50개만
+ * 남으므로 따로 비우지 않아도 늘어나지 않는다.
+ */
+const dayKey = (appName: string) => `${appName}:${todayKey()}`;
+
+/** 오늘 이미 점수를 받은 앱인지. */
 export function hasVisited(appName: string): boolean {
-  return readList(VISITED_KEY).includes(appName);
+  return readList(VISITED_KEY).includes(dayKey(appName));
 }
 
-/** 열어는 봤지만 아직 보상을 받지 않은 앱인지. */
+/** 오늘 열어는 봤지만 아직 보상을 받지 않은 앱인지. */
 export function isRewardReady(appName: string): boolean {
-  return !hasVisited(appName) && readList(OPENED_KEY).includes(appName);
+  return !hasVisited(appName) && readList(OPENED_KEY).includes(dayKey(appName));
 }
 
-/** 아직 점수를 받지 않은 앱 수. 카드에 배지를 띄울지 판단한다. */
+/** 오늘 아직 점수를 받지 않은 앱 수. 카드에 배지를 띄울지 판단한다. */
 export function unvisitedCount(): number {
   return OTHER_APPS.filter((app) => !hasVisited(app.appName)).length;
 }
@@ -93,7 +101,7 @@ export async function openOtherApp(appName: string): Promise<OpenResult> {
     // **실제로 앱을 열지는 않는다** — 토스 SDK를 부르지 않는다.
     if (import.meta.env.DEV) {
       console.info("[출석왕] 개발 모드 가짜 앱 열기", { appName });
-      if (!hasVisited(appName)) appendToList(OPENED_KEY, appName);
+      if (!hasVisited(appName)) appendToList(OPENED_KEY, dayKey(appName));
       return { unsupported: false };
     }
     return { unsupported: true };
@@ -105,18 +113,18 @@ export async function openOtherApp(appName: string): Promise<OpenResult> {
   } catch {
     return { unsupported: true };
   }
-  if (!hasVisited(appName)) appendToList(OPENED_KEY, appName);
+  if (!hasVisited(appName)) appendToList(OPENED_KEY, dayKey(appName));
   return { unsupported: false };
 }
 
 /**
- * 열어본 앱의 보상을 받는다. 아직 안 열었거나 이미 받았으면 0.
+ * 열어본 앱의 보상을 받는다. 아직 안 열었거나 오늘 이미 받았으면 0.
  *
  * @returns 적립한 점수(원이 아니라 출석점수).
  */
 export function claimVisitReward(appName: string): number {
   if (!isRewardReady(appName)) return 0;
-  appendToList(VISITED_KEY, appName);
+  appendToList(VISITED_KEY, dayKey(appName));
   const earned = randomInt(OTHER_APP_VISIT_MIN, OTHER_APP_VISIT_MAX);
   addPoints(earned);
   return earned;

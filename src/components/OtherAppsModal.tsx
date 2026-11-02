@@ -21,7 +21,7 @@ interface Props {
  * 다른 미니앱을 둘러보고 출석점수를 받는 목록.
  *
  * 앱을 열면 토스가 그 앱으로 넘어가고 우리 웹뷰는 뒤에 남는다. 돌아왔는지 알 방법이
- * 없어 **여는 순간** 점수를 준다. 앱마다 한 번뿐이다.
+ * 없어 열어본 뒤 직접 받기를 누르게 한다. 앱마다 하루 한 번이다.
  *
  * 받은 점수는 출석 선물과 같은 상자 연출로 보여준다 — 금액이 1,000~2,000점으로
  * 매번 다르므로 열어보는 재미가 있다.
@@ -105,7 +105,7 @@ export default function OtherAppsModal({ onClose, onEarned }: Props) {
         <button className="attendance-gift-close" onClick={onClose} aria-label="닫기">×</button>
         <h2 className="attendance-gift-title">다른 앱 둘러보기</h2>
         <div className="attendance-gift-rank">
-          처음 열어보는 앱마다{" "}
+          하루에 한 번, 앱마다{" "}
           <strong>{OTHER_APP_VISIT_MIN.toLocaleString()}~{OTHER_APP_VISIT_MAX.toLocaleString()}점</strong>을 드려요.
         </div>
 
@@ -121,7 +121,7 @@ export default function OtherAppsModal({ onClose, onEarned }: Props) {
                   onClick={() => { ready ? handleClaim(app.appName) : void handleOpen(app.appName); }}
                   disabled={opening !== null || visited}
                   aria-label={visited
-                    ? `${app.title} (이미 받음)`
+                    ? `${app.title} (오늘 받음)`
                     : ready
                       ? `${app.title} 선물상자 받기`
                       : `${app.title} 열기 — 둘러보면 선물상자 1개`}

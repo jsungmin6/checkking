@@ -231,7 +231,7 @@ const DAILY_REWARD_COUNT_KEY = "att-reward-daily";
 const GIFT_CLAIMED_KEY = "att-gift-claimed";
 
 /** KST 기준 날짜. `toISOString()`은 UTC라 자정~오전 9시에 하루가 밀린다. */
-const todayKey = () => new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Seoul" });
+export const todayKey = () => new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Seoul" });
 
 interface DailyCount {
   date: string;
