@@ -16,6 +16,19 @@ if (import.meta.env.DEV) {
     localStorage.removeItem("att-gift-claimed");
   }
   forceStreakFromQuery();
+  forceCloverPlaysFromQuery();
+}
+
+/**
+ * `?cloverPlays=0`으로 클로버 찾기가 잠긴 상태를, `?cloverPlays=7`로 가득 찬 상태를
+ * 만든다. **개발 서버 전용.**
+ */
+function forceCloverPlaysFromQuery() {
+  const raw = new URLSearchParams(window.location.search).get("cloverPlays");
+  if (raw === null) return;
+  const left = Number(raw);
+  if (!Number.isInteger(left) || left < 0 || left > 7) return;
+  void import("./utils/cloverPlays").then(({ devSetPlaysLeft }) => devSetPlaysLeft(left));
 }
 
 /**

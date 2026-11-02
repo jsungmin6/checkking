@@ -12,6 +12,8 @@ import { api } from "../utils/api";
 import { isTossApp } from "../utils/platform";
 import TossBannerAd, { BANNER_AD_GROUPS } from "../components/TossBannerAd";
 import { showTossInterstitialAd } from "../utils/tossRewardedAd";
+import { consumePlay, readPlayStatus } from "../utils/cloverPlays";
+import type { PlayStatus } from "../utils/cloverPlays";
 import "../styles/lab.css";
 
 interface Props {
@@ -58,6 +60,17 @@ const CLOVER_RETRY_AD_GROUP_ID = "ait.v2.live.3e114abe2d31408c";
 
 const formatElapsed = (ms: number) => `${(ms / 1000).toFixed(2)}초`;
 
+/** 남은 대기 시간. "1시간 0분" → "32분 14초" → "9초" 로 점점 촘촘해진다. */
+function formatCountdown(ms: number): string {
+  const total = Math.ceil(ms / 1000);
+  const hours = Math.floor(total / 3600);
+  const minutes = Math.floor((total % 3600) / 60);
+  const seconds = total % 60;
+  if (hours > 0) return `${hours}시간 ${minutes}분`;
+  if (minutes > 0) return `${minutes}분 ${seconds}초`;
+  return `${seconds}초`;
+}
+
 export default function CloverFinderScreen({
   onBack, onNavigateHome, onNavigatePublicRooms, onNavigateProfile, onNavigateLab,
 }: Props) {
@@ -73,6 +86,8 @@ export default function CloverFinderScreen({
   const [guideOpen, setGuideOpen] = useState(false);
   /** 다음 판 전면 광고를 불러오는 중. 버튼을 잠가 두 번 눌리지 않게 한다. */
   const [loadingRetryAd, setLoadingRetryAd] = useState(false);
+  /** 남은 판 수와 잠금 시간. 기기에 저장된 값이라 서버를 거치지 않는다. */
+  const [plays, setPlays] = useState<PlayStatus>(() => readPlayStatus());
   const phaseRef = useRef<FinderPhase>("ready");
   const attemptRef = useRef<CloverAttempt | null>(null);
   const inspectTimeoutRef = useRef<number | null>(null);
@@ -94,6 +109,18 @@ export default function CloverFinderScreen({
       setRankingLoading(false);
     }
   }, []);
+
+  /** 잠겨 있는 동안만 1초마다 다시 읽어 카운트다운을 그린다. */
+  useEffect(() => {
+    if (plays.lockedForMs <= 0) return;
+    const id = window.setInterval(() => setPlays(readPlayStatus()), 1_000);
+    return () => window.clearInterval(id);
+  }, [plays.lockedForMs]);
+
+  const lockRemainingMs = plays.lockedForMs;
+  const locked = lockRemainingMs > 0;
+  const playsLeft = plays.playsLeft;
+  const playLimit = plays.playLimit;
 
   const revealMissedClover = useCallback(() => {
     if (phaseRef.current !== "playing" && phaseRef.current !== "submitting") return;
@@ -138,6 +165,15 @@ export default function CloverFinderScreen({
 
   const startAttempt = async () => {
     if (phaseRef.current === "starting" || phaseRef.current === "playing" || phaseRef.current === "submitting") return;
+
+    // 서버에 판을 요청하기 전에 한 판을 쓴다. 실패하거나 중간에 나가도 되돌려주지 않는다 —
+    // 되돌려주면 1분을 안 기다리고 나가 다시 시작하는 것이 공짜가 된다.
+    if (!consumePlay()) {
+      setPlays(readPlayStatus());
+      return;
+    }
+    setPlays(readPlayStatus());
+
     setError("");
     setResult(null);
     setHintSignal(0);
@@ -301,11 +337,28 @@ export default function CloverFinderScreen({
           {inspectMessage && <div className="clover-inspect-message" role="status">{inspectMessage}</div>}
           {phase === "timeoutReveal" && <div className="clover-timeout-reveal-toast" role="status">네잎클로버가 여기 있었어요!</div>}
 
-          {(phase === "ready" || phase === "starting") && (
+          {locked && (phase === "ready" || phase === "starting" || phase === "success" || phase === "timeout" || phase === "failed") && (
+            <div className="clover-stage-overlay">
+              <section className="clover-stage-modal-card clover-locked-card" role="dialog" aria-modal="true" aria-labelledby="clover-locked-title">
+                <div className="clover-locked-art" aria-hidden="true">🌙</div>
+                <h2 id="clover-locked-title">클로버가 쉬고 있어요</h2>
+                <p>{playLimit}판을 모두 했어요. 잠시 뒤에 {playLimit}판이 다시 채워져요.</p>
+                <div className="clover-locked-countdown" role="timer" aria-live="polite">
+                  {formatCountdown(lockRemainingMs)}
+                </div>
+                <p className="clover-locked-note">그동안 다른 활동으로 출석점수를 모아보세요.</p>
+              </section>
+            </div>
+          )}
+
+          {!locked && (phase === "ready" || phase === "starting") && (
             <div className="clover-stage-overlay">
               <section className="clover-stage-modal-card clover-start-card">
                 <strong>1분 안에 네잎클로버를 찾아보세요</strong>
                 <p>풀밭을 살펴보고 네잎클로버를 탭하세요.</p>
+                {(
+                  <p className="clover-plays-left">남은 판 <strong>{playsLeft}</strong>/{playLimit}</p>
+                )}
                 {error && <p className="clover-error" role="alert">{error}</p>}
                 <button className="clover-start-button" onClick={() => void startAttempt()} disabled={phase === "starting"}>
                   {phase === "starting" ? "풀밭을 준비하고 있어요" : "도전"}
@@ -314,7 +367,7 @@ export default function CloverFinderScreen({
             </div>
           )}
 
-          {phase === "success" && result && (
+          {!locked && phase === "success" && result && (
             <div className="clover-stage-overlay">
               <section className={`clover-stage-modal-card clover-found-modal${result.golden ? " clover-found-modal-golden" : ""}`} role="dialog" aria-modal="true" aria-labelledby="clover-result-title">
                 <div className="clover-found-art" aria-hidden="true">
@@ -338,11 +391,16 @@ export default function CloverFinderScreen({
                   {loadingRetryAd && <span className="ad-loading-spinner" aria-hidden="true" />}
                   {loadingRetryAd ? "광고 불러오는 중" : "광고 보고 다시 도전"}
                 </button>
+                {(
+                  <p className="clover-plays-left">
+                    {playsLeft === 1 ? <>이번이 <strong>마지막 판</strong>이에요</> : <>남은 판 <strong>{playsLeft}</strong>/{playLimit}</>}
+                  </p>
+                )}
               </section>
             </div>
           )}
 
-          {phase === "timeout" && (
+          {!locked && phase === "timeout" && (
             <div className="clover-stage-overlay">
               <section className="clover-stage-modal-card" role="dialog" aria-modal="true" aria-labelledby="clover-timeout-title">
                 <h2 id="clover-timeout-title">이번 판은 여기까지예요</h2>
@@ -351,11 +409,16 @@ export default function CloverFinderScreen({
                   {loadingRetryAd && <span className="ad-loading-spinner" aria-hidden="true" />}
                   {loadingRetryAd ? "광고 불러오는 중" : "광고 보고 다음 판"}
                 </button>
+                {(
+                  <p className="clover-plays-left">
+                    {playsLeft === 1 ? <>이번이 <strong>마지막 판</strong>이에요</> : <>남은 판 <strong>{playsLeft}</strong>/{playLimit}</>}
+                  </p>
+                )}
               </section>
             </div>
           )}
 
-          {phase === "failed" && (
+          {!locked && phase === "failed" && (
             <div className="clover-stage-overlay">
               <section className="clover-stage-modal-card" role="dialog" aria-modal="true" aria-labelledby="clover-failed-title">
                 <h2 id="clover-failed-title">기록을 저장하지 못했어요</h2>

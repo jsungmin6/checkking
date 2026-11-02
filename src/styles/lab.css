@@ -240,3 +240,12 @@
 /* 둘러보고 돌아오면 받기 버튼으로 바뀐다. */
 .other-apps-item.is-ready { border-color: #cfe0fb; background: #f6faff; }
 .other-apps-claim { display: inline-grid; min-width: 52px; place-items: center; padding: 7px 12px; border-radius: 10px; background: var(--accent-blue); color: #fff; font-size: 13px; font-weight: 800; }
+
+/* 클로버 횟수 제한 — 7판 쓰면 잠기고 1시간 뒤 다시 찬다. */
+.clover-plays-left { margin-top: 10px !important; color: #56864a !important; font-size: 12px !important; font-weight: 650; }
+.clover-plays-left strong { color: #328344; font-variant-numeric: tabular-nums; font-weight: 800; }
+.clover-locked-card { background: rgba(255,255,255,.97); }
+.clover-locked-art { margin-bottom: 2px; font-size: 34px; line-height: 1; }
+/* 숫자가 바뀔 때 폭이 흔들리지 않게 tabular-nums 를 쓴다. */
+.clover-locked-countdown { margin: 12px 0 0; color: #328344; font-size: 30px; font-variant-numeric: tabular-nums; font-weight: 850; letter-spacing: -.5px; }
+.clover-locked-note { margin-top: 10px !important; font-size: 12px !important; }

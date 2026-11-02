@@ -43,6 +43,8 @@ const MANAGED_KEYS: Record<string, MergeRule> = {
   "att-lottery-first-done": "flag",
   "att-other-app-visited": "native",
   "att-other-app-opened": "native",
+  // 네이티브 쪽을 따른다. 기기에 남은 사용 횟수가 기준이어야 제한이 유지된다.
+  "att-clover-plays": "native",
 };
 
 let hydrated = false;
