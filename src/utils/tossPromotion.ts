@@ -42,6 +42,16 @@ function publishTossPointsReceived(total: number) {
  *
  * **실패해도 본 흐름을 막지 않는다.** 기록이 안 됐다고 받은 돈을 되돌릴 수는 없다.
  */
+/**
+ * 지금 시각을 KST `YYYY-MM-DDTHH:mm:ss`로. 서버의 `LocalDateTime`이 그대로 받는다.
+ *
+ * 기기 시계가 틀어져 있으면 값도 틀어지지만, 서버가 너무 어긋난 값은 버리고 자기
+ * 시각을 쓴다. 여기서는 시간대만 맞춰 준다.
+ */
+function grantedAtKst(): string {
+  return new Date().toLocaleString("sv-SE", { timeZone: "Asia/Seoul" }).replace(" ", "T");
+}
+
 function reportGrant(
   source: "ATTENDANCE_LOTTERY" | "ATTENDANCE_STREAK",
   amountWon: number,
@@ -56,8 +66,9 @@ function reportGrant(
         amountWon,
         promotionKey,
         source,
-        // 서버는 기기 시각을 그대로 믿지 않고 너무 어긋나면 자기 시각을 쓴다.
-        grantedAt: new Date().toISOString().slice(0, 19),
+        // 서버는 KST로 비교한다. toISOString()은 UTC라 9시간 과거로 보여, 서버의
+        // 허용 오차(6시간)를 매번 넘겨 보낸 값이 항상 버려졌다.
+        grantedAt: grantedAtKst(),
         drawId,
       }),
     }))
