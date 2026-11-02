@@ -23,7 +23,8 @@ export const OTHER_APPS: OtherApp[] = [
   {
     appName: "animal-keeper",
     title: "숲속 사육사",
-    description: "동물을 키우고 돌보는 느긋한 게임",
+    description: "알을 부화시켜 동물을 키워요",
+    logo: "/apps/animal-keeper.png",
     emoji: "🐾",
   },
   {
