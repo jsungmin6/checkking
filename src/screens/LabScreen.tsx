@@ -14,7 +14,7 @@ import MissionModal from "../components/MissionModal";
 import { MissionIcon } from "../components/MissionButton";
 import { useMissions } from "../hooks/useMissions";
 import { DAILY_REWARD_LIMIT, getDailyRewardCount } from "../utils/attendancePoints";
-import { OTHER_APP_VISIT_MIN, OTHER_APP_VISIT_MAX, unvisitedCount } from "../utils/otherApps";
+import { unvisitedCount } from "../utils/otherApps";
 import { STREAK_REWARD_WON, syncTossPointLedger, TOSS_POINTS_RECEIVED_EVENT, TOSS_POINTS_RECEIVED_KEY } from "../utils/tossPromotion";
 import { nextTossRewardDay } from "../utils/attendancePoints";
 import "../styles/lab.css";
@@ -216,23 +216,18 @@ export default function LabScreen({
           )}
         </button>
         {/* 클로버 다음. 다른 미니앱으로 보내고 처음 여는 앱마다 점수를 준다. */}
+        {/* 점수 범위는 모달 안에 적혀 있다. 여기서는 무엇을 주는지만 그림으로 보여준다. */}
         <button className="lab-clover-card lab-other-apps-card" onClick={() => setShowOtherApps(true)}>
-          <span className="lab-clover-card-icon" aria-hidden="true">🧭</span>
+          <span className="lab-clover-card-icon" aria-hidden="true">
+            <img src="/rewards/gift-box-closed.png" alt="" />
+          </span>
           <span className="lab-clover-card-copy">
-            <strong>다른 앱 둘러보고 출석점수 받기</strong>
+            <strong>다른 앱 둘러보고 출석박스 열기</strong>
           </span>
           <span className="lab-clover-card-meta">
             {unvisitedApps > 0 && <span>{unvisitedApps}개 남음</span>}
           </span>
           <span className="lab-clover-card-arrow" aria-hidden="true">›</span>
-          {unvisitedApps > 0 && (
-            <span className="lab-clover-card-progress">
-              <span className="lab-streak-card-ready">
-                처음 열어보는 앱마다 {OTHER_APP_VISIT_MIN.toLocaleString()}~{OTHER_APP_VISIT_MAX.toLocaleString()}점
-              </span>
-              <span className="lab-clover-card-dot" aria-hidden="true" />
-            </span>
-          )}
         </button>
         {/*
           클로버 카드 아래. 이미지 강조형은 세로로 길어서 높이를 고정하면 잘린다 —
