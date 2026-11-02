@@ -75,7 +75,8 @@
 .attendance-lottery-prize-underlay > small { color: #6887a1; font-size: 11px; }
 .attendance-lottery-scratch-ticket.is-revealed .attendance-lottery-prize-underlay > span { color: #2789d8; }
 .attendance-lottery-scratch-surface { position: absolute; inset: 0; width: 100%; height: 100%; border-radius: inherit; touch-action: none; cursor: crosshair; }
-.clover-start-button { width: 100%; min-height: 43px; margin-top: 10px; border: 0; border-radius: 12px; background: #438747; color: #fff; font-size: 14px; font-weight: 750; cursor: pointer; }
+/* 광고를 불러오는 동안 스피너와 글자를 나란히 둔다. */
+.clover-start-button { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 43px; margin-top: 10px; border: 0; border-radius: 12px; background: #438747; color: #fff; font-size: 14px; font-weight: 750; cursor: pointer; }
 .clover-start-button:disabled { opacity: .6; cursor: default; }
 .clover-result-copy { margin: 10px 0 0; color: #39803c; font-size: 13px; font-weight: 700; }
 .clover-found-modal { width: min(100%, 300px); overflow: visible; padding: 14px 16px 16px; border: 1px solid #cfe2c2; box-shadow: 0 0 0 1px #a9cc9666, 0 0 24px 5px #a5d98555, 0 18px 48px #19251c26; }

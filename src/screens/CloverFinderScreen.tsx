@@ -335,6 +335,7 @@ export default function CloverFinderScreen({
                 </div>
                 <p className="clover-result-fortune">{result.golden ? GOLDEN_CLOVER_MESSAGE : CLOVER_FORTUNES[result.fortuneIndex]?.text ?? "오늘도 행운이 함께해요!"}</p>
                 <button className="clover-start-button" onClick={() => void handleContinue()} disabled={loadingRetryAd}>
+                  {loadingRetryAd && <span className="ad-loading-spinner" aria-hidden="true" />}
                   {loadingRetryAd ? "광고 불러오는 중" : "광고 보고 다시 도전"}
                 </button>
               </section>
@@ -347,6 +348,7 @@ export default function CloverFinderScreen({
                 <h2 id="clover-timeout-title">이번 판은 여기까지예요</h2>
                 <p>다음 판에서 새 밭을 열고 다시 찾아보세요.</p>
                 <button className="clover-start-button" onClick={() => void handleContinue()} disabled={loadingRetryAd}>
+                  {loadingRetryAd && <span className="ad-loading-spinner" aria-hidden="true" />}
                   {loadingRetryAd ? "광고 불러오는 중" : "광고 보고 다음 판"}
                 </button>
               </section>
