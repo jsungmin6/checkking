@@ -34,6 +34,36 @@ function publishTossPointsReceived(total: number) {
   window.dispatchEvent(new CustomEvent(TOSS_POINTS_RECEIVED_EVENT, { detail: normalized }));
 }
 
+/**
+ * 지급한 사실을 서버에 남긴다. **돈은 이미 나갔다 — 사후 기록이다.**
+ *
+ * 지급을 기기로 옮기면서 서버 기록이 끊겼고, 홈의 당첨자 표시가 멈추고 발행 총액을
+ * 집계할 근거도 사라졌다. 그래서 지급이 끝난 뒤 금액·키·시각을 보낸다.
+ *
+ * **실패해도 본 흐름을 막지 않는다.** 기록이 안 됐다고 받은 돈을 되돌릴 수는 없다.
+ */
+function reportGrant(
+  source: "ATTENDANCE_LOTTERY" | "ATTENDANCE_STREAK",
+  amountWon: number,
+  promotionKey: string,
+  drawId?: string,
+) {
+  // api를 정적으로 들이면 constants가 window를 읽어 테스트(node)에서 터진다.
+  void import("./api")
+    .then(({ api }) => api("/points/toss-grants", {
+      method: "POST",
+      body: JSON.stringify({
+        amountWon,
+        promotionKey,
+        source,
+        // 서버는 기기 시각을 그대로 믿지 않고 너무 어긋나면 자기 시각을 쓴다.
+        grantedAt: new Date().toISOString().slice(0, 19),
+        drawId,
+      }),
+    }))
+    .catch(() => {});
+}
+
 /** 받은 토스포인트 누적액(원). */
 export function getTossPointsReceived(): number {
   return readNumber(TOSS_RECEIVED_KEY, 0);
@@ -102,6 +132,7 @@ export async function grantStreakReward(day: number): Promise<StreakRewardOutcom
   if (!outcome.ok) return { amountWon: 0, errorCode: outcome.code };
   markTossRewardPaid(day);
   addTossPointsReceived(STREAK_REWARD_WON);
+  reportGrant("ATTENDANCE_STREAK", STREAK_REWARD_WON, outcome.key);
   return { amountWon: STREAK_REWARD_WON };
 }
 
@@ -201,6 +232,7 @@ export async function scratchAttendanceLottery(drawId: string): Promise<Attendan
   // 지급이 끝난 뒤에 표시한다. 실패했으면 다음에도 첫 장으로 친다.
   if (firstScratch) writeStore(FIRST_SCRATCH_KEY, "1");
   addTossPointsReceived(amountWon);
+  reportGrant("ATTENDANCE_LOTTERY", amountWon, outcome.key, drawId);
   return { drawId, amountWon };
 }
 

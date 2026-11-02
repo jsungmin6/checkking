@@ -8,6 +8,13 @@ import "./styles/animations.css";
 // 복권 로컬 시연을 위해 개발 서버를 새로 열 때마다 구매 잔액을 초기화한다.
 if (import.meta.env.DEV) {
   localStorage.setItem("att-points-total", "10000");
+  // 출석 보상 상한(하루 3번)과 방별 수령 기록을 비운다. 그러지 않으면 세 번 받고
+  // 나서는 선물상자 대신 등수 모달만 떠서 연출을 다시 볼 수 없다.
+  // ?keepDaily=1 을 붙이면 유지해서 상한에 걸린 화면을 확인할 수 있다.
+  if (new URLSearchParams(window.location.search).get("keepDaily") !== "1") {
+    localStorage.removeItem("att-reward-daily");
+    localStorage.removeItem("att-gift-claimed");
+  }
   forceStreakFromQuery();
 }
 
