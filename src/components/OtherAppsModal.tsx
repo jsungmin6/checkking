@@ -5,8 +5,10 @@ import {
   OTHER_APPS,
   OTHER_APP_VISIT_MIN,
   OTHER_APP_VISIT_MAX,
+  claimVisitReward,
   hasVisited,
-  visitOtherApp,
+  isRewardReady,
+  openOtherApp,
 } from "../utils/otherApps";
 
 interface Props {
@@ -33,26 +35,30 @@ export default function OtherAppsModal({ onClose, onEarned }: Props) {
   // 열고 나서도 목록이 "받음"으로 바뀌어 보이도록 다시 그린다.
   const [, forceRender] = useState(0);
 
-  const handleVisit = async (appName: string) => {
+  /** 앱을 연다. 보상은 여기서 주지 않고, 돌아와서 "받기"를 눌러야 준다. */
+  const handleOpen = async (appName: string) => {
     if (opening) return;
     setOpening(appName);
     setMessage(null);
     try {
-      const result = await visitOtherApp(appName);
+      const result = await openOtherApp(appName);
       if (result.unsupported) {
         setMessage("토스 앱에서만 열 수 있어요.");
-        return;
-      }
-      if (result.earned > 0) {
-        setBoxOpened(false);
-        setReward(result.earned);
-        onEarned();
         return;
       }
       forceRender((n) => n + 1);
     } finally {
       setOpening(null);
     }
+  };
+
+  /** 열어본 앱의 선물상자를 받는다. */
+  const handleClaim = (appName: string) => {
+    const earned = claimVisitReward(appName);
+    if (earned <= 0) return;
+    setBoxOpened(false);
+    setReward(earned);
+    onEarned();
   };
 
   // 보상 화면 — 출석 선물과 같은 연출을 재사용한다.
@@ -106,14 +112,19 @@ export default function OtherAppsModal({ onClose, onEarned }: Props) {
         <ul className="other-apps-list">
           {OTHER_APPS.map((app) => {
             const visited = hasVisited(app.appName);
+            const ready = isRewardReady(app.appName);
             return (
               <li key={app.appName}>
                 <button
                   type="button"
-                  className={`other-apps-item${visited ? " is-visited" : ""}`}
-                  onClick={() => { void handleVisit(app.appName); }}
-                  disabled={opening !== null}
-                  aria-label={`${app.title} 열기${visited ? " (이미 받음)" : " — 선물상자 1개 받기"}`}
+                  className={`other-apps-item${visited ? " is-visited" : ""}${ready ? " is-ready" : ""}`}
+                  onClick={() => { ready ? handleClaim(app.appName) : void handleOpen(app.appName); }}
+                  disabled={opening !== null || visited}
+                  aria-label={visited
+                    ? `${app.title} (이미 받음)`
+                    : ready
+                      ? `${app.title} 선물상자 받기`
+                      : `${app.title} 열기 — 둘러보면 선물상자 1개`}
                 >
                   <span className="other-apps-emoji" aria-hidden="true">
                     {app.logo
@@ -122,17 +133,19 @@ export default function OtherAppsModal({ onClose, onEarned }: Props) {
                   </span>
                   <span className="other-apps-copy">
                     <strong>{app.title}</strong>
-                    <span>{app.description}</span>
+                    <span>{ready ? "둘러봤어요! 선물상자를 받으세요" : app.description}</span>
                   </span>
                   <span className="other-apps-reward">
                     {opening === app.appName
                       ? "여는 중"
                       : visited
                         ? <><span aria-hidden="true">✓</span> 받음</>
-                        : <>
-                            <img className="other-apps-box" src="/rewards/gift-box-closed.png" alt="" aria-hidden="true" />
-                            ×1
-                          </>}
+                        : ready
+                          ? <span className="other-apps-claim">받기</span>
+                          : <>
+                              <img className="other-apps-box" src="/rewards/gift-box-closed.png" alt="" aria-hidden="true" />
+                              ×1
+                            </>}
                   </span>
                 </button>
               </li>

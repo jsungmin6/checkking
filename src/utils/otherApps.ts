@@ -54,10 +54,16 @@ export const OTHER_APP_VISIT_MIN = 1_000;
 export const OTHER_APP_VISIT_MAX = 2_000;
 
 const VISITED_KEY = "att-other-app-visited";
+const OPENED_KEY = "att-other-app-opened";
 
 /** 이미 점수를 받은 앱인지. */
 export function hasVisited(appName: string): boolean {
   return readList(VISITED_KEY).includes(appName);
+}
+
+/** 열어는 봤지만 아직 보상을 받지 않은 앱인지. */
+export function isRewardReady(appName: string): boolean {
+  return !hasVisited(appName) && readList(OPENED_KEY).includes(appName);
 }
 
 /** 아직 점수를 받지 않은 앱 수. 카드에 배지를 띄울지 판단한다. */
@@ -65,9 +71,7 @@ export function unvisitedCount(): number {
   return OTHER_APPS.filter((app) => !hasVisited(app.appName)).length;
 }
 
-export interface VisitResult {
-  /** 이번에 적립한 점수. 이미 받은 앱이면 0. */
-  earned: number;
+export interface OpenResult {
   /** 토스 앱이 아니어서 열지 못했는지. */
   unsupported: boolean;
 }
@@ -75,24 +79,36 @@ export interface VisitResult {
 const randomInt = (min: number, max: number) => min + Math.floor(Math.random() * (max - min + 1));
 
 /**
- * 다른 앱을 열고, 처음이면 점수를 준다.
+ * 다른 앱을 연다. **여기서는 점수를 주지 않는다.**
  *
- * **여는 데 실패하면 점수를 주지 않는다.** 열리지도 않았는데 적립하면 한 번뿐인
- * 기회를 잃는다.
+ * 열렸는지 확인할 방법이 없다 — `Device.openURL`은 잘못된 식별자에도 실패를
+ * 알려주지 않는다. 열자마자 적립하면 앱이 안 떠도 한 번뿐인 기회가 사라진다.
+ * 실제로 식별자가 틀렸을 때 그런 일이 있었다.
+ *
+ * 그래서 "열었다"만 남기고, 돌아와서 직접 **받기**를 눌러야 지급한다.
  */
-export async function visitOtherApp(appName: string): Promise<VisitResult> {
-  if (!isTossApp()) return { earned: 0, unsupported: true };
+export async function openOtherApp(appName: string): Promise<OpenResult> {
+  if (!isTossApp()) return { unsupported: true };
 
   try {
     const { Device } = await import("@apps-in-toss/web-framework");
     await Device.openURL(`intoss://${appName}`);
   } catch {
-    return { earned: 0, unsupported: true };
+    return { unsupported: true };
   }
+  if (!hasVisited(appName)) appendToList(OPENED_KEY, appName);
+  return { unsupported: false };
+}
 
-  if (hasVisited(appName)) return { earned: 0, unsupported: false };
+/**
+ * 열어본 앱의 보상을 받는다. 아직 안 열었거나 이미 받았으면 0.
+ *
+ * @returns 적립한 점수(원이 아니라 출석점수).
+ */
+export function claimVisitReward(appName: string): number {
+  if (!isRewardReady(appName)) return 0;
   appendToList(VISITED_KEY, appName);
   const earned = randomInt(OTHER_APP_VISIT_MIN, OTHER_APP_VISIT_MAX);
   addPoints(earned);
-  return { earned, unsupported: false };
+  return earned;
 }
