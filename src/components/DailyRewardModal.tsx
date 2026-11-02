@@ -26,12 +26,16 @@ export default function DailyRewardModal({ onClose }: Props) {
         <button className="attendance-gift-close" onClick={onClose} aria-label="닫기">×</button>
         <h2 className="attendance-gift-title">오늘의 출석 보상</h2>
 
-        <div className="daily-reward-dots" aria-label={`${DAILY_REWARD_LIMIT}번 중 ${used}번 받음`}>
-          {Array.from({ length: DAILY_REWARD_LIMIT }, (_, i) => (
-            <span key={i} className={`daily-reward-dot${i < used ? " is-done" : ""}`} aria-hidden="true">
-              {i < used ? "✓" : i + 1}
-            </span>
-          ))}
+        {/* 받은 만큼 열린 상자, 남은 만큼 닫힌 상자. 숫자보다 한눈에 들어온다. */}
+        <div className="daily-reward-boxes" aria-label={`${DAILY_REWARD_LIMIT}번 중 ${used}번 받음`}>
+          {Array.from({ length: DAILY_REWARD_LIMIT }, (_, i) => {
+            const opened = i < used;
+            return (
+              <span key={i} className={`daily-reward-box${opened ? " is-opened" : ""}`} aria-hidden="true">
+                <img src={opened ? "/rewards/gift-box-open.png" : "/rewards/gift-box-closed.png"} alt="" />
+              </span>
+            );
+          })}
         </div>
         <p className="daily-reward-left">
           {left > 0

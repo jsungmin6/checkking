@@ -196,7 +196,7 @@
 .other-apps-item { display: flex; width: 100%; align-items: center; gap: 11px; padding: 12px 13px; border: 1px solid var(--border-light); border-radius: 14px; background: var(--bg-card); color: var(--text-primary); text-align: left; cursor: pointer; }
 .other-apps-item:disabled { cursor: default; opacity: .6; }
 .other-apps-item.is-visited { background: var(--bg-secondary); }
-.other-apps-emoji { display: grid; width: 42px; height: 42px; flex: 0 0 42px; place-items: center; border-radius: 13px; background: #f3f6fa; font-size: 23px; }
+.other-apps-emoji { display: grid; width: 42px; height: 42px; flex: 0 0 42px; place-items: center; overflow: hidden; border-radius: 13px; background: #f3f6fa; font-size: 23px; }
 .other-apps-copy { display: flex; min-width: 0; flex: 1; flex-direction: column; gap: 2px; }
 .other-apps-copy strong { font-size: 15px; font-weight: 750; }
 .other-apps-copy > span { color: var(--text-secondary); font-size: 12px; }
@@ -220,9 +220,14 @@
 
 /* 오늘의 출석 보상 안내 */
 .daily-reward-dialog { gap: 0; }
-.daily-reward-dots { display: flex; justify-content: center; gap: 10px; margin: 20px 0 12px; }
-.daily-reward-dot { display: grid; width: 46px; height: 46px; place-items: center; border: 1.5px dashed var(--border-color); border-radius: 50%; color: var(--text-muted); font-size: 16px; font-weight: 800; }
-.daily-reward-dot.is-done { border-style: solid; border-color: var(--accent-blue); background: #e8f3ff; color: var(--accent-blue); }
+.daily-reward-boxes { display: flex; justify-content: center; gap: 6px; margin: 18px 0 12px; }
+.daily-reward-box { display: grid; width: 62px; height: 62px; place-items: center; border-radius: 16px; background: var(--bg-secondary); }
+.daily-reward-box img { width: 50px; height: 50px; object-fit: contain; opacity: .45; filter: grayscale(.5); }
+/* 받은 칸만 또렷하게. 남은 칸은 흐리게 둬서 차이가 바로 보인다. */
+.daily-reward-box.is-opened { background: #e8f3ff; }
+.daily-reward-box.is-opened img { opacity: 1; filter: none; }
+/* 앱 로고는 이모지 자리에 꽉 차게 넣는다. */
+.other-apps-logo { width: 100%; height: 100%; border-radius: 11px; object-fit: cover; }
 .daily-reward-left { margin: 0 0 18px; color: var(--text-secondary); font-size: 14px; }
 .daily-reward-left strong { color: var(--text-primary); }
 .daily-reward-notes { display: grid; gap: 10px; margin: 0 0 20px; padding: 14px 16px 14px 32px; border-radius: 14px; background: var(--bg-secondary); color: var(--text-secondary); font-size: 13px; line-height: 1.55; text-align: left; }

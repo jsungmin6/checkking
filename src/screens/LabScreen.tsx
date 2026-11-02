@@ -13,7 +13,7 @@ import DailyRewardModal from "../components/DailyRewardModal";
 import MissionModal from "../components/MissionModal";
 import { useMissions } from "../hooks/useMissions";
 import { DAILY_REWARD_LIMIT, getDailyRewardCount } from "../utils/attendancePoints";
-import { OTHER_APP_VISIT_POINTS, unvisitedCount } from "../utils/otherApps";
+import { OTHER_APP_VISIT_MIN, OTHER_APP_VISIT_MAX, unvisitedCount } from "../utils/otherApps";
 import { STREAK_REWARD_WON, syncTossPointLedger, TOSS_POINTS_RECEIVED_EVENT, TOSS_POINTS_RECEIVED_KEY } from "../utils/tossPromotion";
 import { nextTossRewardDay } from "../utils/attendancePoints";
 import "../styles/lab.css";
@@ -226,7 +226,7 @@ export default function LabScreen({
           {unvisitedApps > 0 && (
             <span className="lab-clover-card-progress">
               <span className="lab-streak-card-ready">
-                처음 열어보는 앱마다 {OTHER_APP_VISIT_POINTS.toLocaleString()}점
+                처음 열어보는 앱마다 {OTHER_APP_VISIT_MIN.toLocaleString()}~{OTHER_APP_VISIT_MAX.toLocaleString()}점
               </span>
               <span className="lab-clover-card-dot" aria-hidden="true" />
             </span>

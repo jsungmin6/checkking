@@ -14,13 +14,15 @@ export interface OtherApp {
   appName: string;
   title: string;
   description: string;
+  /** 앱 로고. 없으면 이모지로 대신한다. */
+  logo?: string;
   emoji: string;
 }
 
 export const OTHER_APPS: OtherApp[] = [
   {
     appName: "animal-keeper",
-    title: "동물 키우기",
+    title: "숲속 사육사",
     description: "동물을 키우고 돌보는 느긋한 게임",
     emoji: "🐾",
   },
@@ -28,18 +30,25 @@ export const OTHER_APPS: OtherApp[] = [
     appName: "lucky-clover-find",
     title: "행복 클로바 찾기",
     description: "네잎클로버를 찾아 행운을 모아요",
+    logo: "/apps/lucky-clover-find.png",
     emoji: "🍀",
   },
   {
     appName: "fishsudang",
     title: "낚시했수당",
     description: "물고기를 낚아 도감을 채워요",
+    logo: "/apps/fishsudang.png",
     emoji: "🎣",
   },
 ];
 
-/** 앱 하나를 둘러볼 때 주는 출석점수. */
-export const OTHER_APP_VISIT_POINTS = 3_000;
+/**
+ * 앱 하나를 둘러볼 때 주는 출석점수 범위. 선물상자를 열어 받는다.
+ *
+ * 고정 금액이면 상자를 열 이유가 없다. 다른 출석 보상과 같은 연출을 쓰려고 폭을 둔다.
+ */
+export const OTHER_APP_VISIT_MIN = 1_000;
+export const OTHER_APP_VISIT_MAX = 2_000;
 
 const VISITED_KEY = "att-other-app-visited";
 
@@ -60,6 +69,8 @@ export interface VisitResult {
   unsupported: boolean;
 }
 
+const randomInt = (min: number, max: number) => min + Math.floor(Math.random() * (max - min + 1));
+
 /**
  * 다른 앱을 열고, 처음이면 점수를 준다.
  *
@@ -78,6 +89,7 @@ export async function visitOtherApp(appName: string): Promise<VisitResult> {
 
   if (hasVisited(appName)) return { earned: 0, unsupported: false };
   appendToList(VISITED_KEY, appName);
-  addPoints(OTHER_APP_VISIT_POINTS);
-  return { earned: OTHER_APP_VISIT_POINTS, unsupported: false };
+  const earned = randomInt(OTHER_APP_VISIT_MIN, OTHER_APP_VISIT_MAX);
+  addPoints(earned);
+  return { earned, unsupported: false };
 }
