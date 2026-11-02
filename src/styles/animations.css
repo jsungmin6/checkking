@@ -444,3 +444,7 @@
 .streak-reward-card.is-toss-reward .streak-reward-toss .streak-reward-toss-coin { width: 13px; height: 13px; }
 /* 실제 화면을 찍은 가로 이미지. 캐릭터 그림과 달리 넓게 깔고 카드처럼 보이게 둔다. */
 .onboarding-character.onboarding-shot { width: min(100%, 330px); height: auto; max-height: 245px; margin: 6px auto 10px; border-radius: 14px; }
+
+/* 하루 상한을 다 쓴 날의 출석 선물 — 금액 대신 체크만 보여준다. */
+.attendance-gift-done-mark { display: grid; width: 72px; height: 72px; place-items: center; margin: 16px auto 4px; border-radius: 50%; background: #e8f3ff; color: var(--accent-blue); font-size: 38px; font-weight: 800; line-height: 1; }
+.attendance-gift-done-copy { margin: 10px 0 20px; color: var(--text-secondary); font-size: 14px; line-height: 1.6; }

@@ -28,6 +28,17 @@ export default function AttendanceGiftModal({ rank, rankBonus, onClaimGift, onCl
             {rank <= 3 && <div className="attendance-gift-rank">오늘 {rank}등으로 출석했어요</div>}
             <GiftBox onOpened={() => { void handleOpened(); }} />
           </>
+        ) : result.gift === null && rankBonus === null ? (
+          // 하루 상한(3번)을 다 쓴 날. "+0점"을 적으면 못 받은 것처럼 보여서,
+          // 받을 게 없다는 사실만 알리고 금액 줄은 띄우지 않는다.
+          <>
+            <div className="attendance-gift-done-mark" aria-hidden="true">✓</div>
+            <h2 className="attendance-gift-title attendance-gift-result-title">출석 완료!</h2>
+            <p className="attendance-gift-done-copy">
+              오늘 받을 수 있는 출석 선물을 모두 받았어요.<br />내일 다시 열어볼 수 있어요.
+            </p>
+            <button className="attendance-gift-confirm" onClick={() => onClose(0)}>확인</button>
+          </>
         ) : (
           <>
             <img className="attendance-gift-open-image" src="/rewards/gift-box-open.png" alt="포인트 동전이 나온 열린 선물 상자" />

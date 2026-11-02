@@ -225,12 +225,21 @@ export default function CloverFinderScreen({
   };
 
   const remainingSeconds = Math.ceil(Math.max(0, remainingMs) / 1000);
+  /**
+   * 서버가 준 랭킹을 그대로 보여준다. **여기서 또 거르지 않는다.**
+   *
+   * 예전에는 `rank <= 3 || rank > participantCount - 3 || mine`으로 걸렀는데,
+   * participantCount는 전체 참여자고 rank는 기록이 있는 사람 기준이라 둘이 맞지
+   * 않는다. 성공한 사람이 적으면 하위권 순위가 3·4·5처럼 작게 나와 조건에서 전부
+   * 탈락했고, 상위 3명만 보였다.
+   *
+   * 서버가 이미 상위 3 · 하위 3 · 최근 실패 3 · 나만 추려서 보낸다(중복 순위도
+   * 거기서 걸러진다). 순위대로 정렬만 한다.
+   */
   const rankingRows = useMemo(() => {
     if (!overview) return [];
     const rows = new Map<number, CloverOverview["ranking"][number]>();
-    overview.ranking
-      .filter((item) => item.rank <= 3 || item.rank > overview.participantCount - 3 || item.mine)
-      .forEach((item) => rows.set(item.rank, item));
+    overview.ranking.forEach((item) => rows.set(item.rank, item));
     return [...rows.values()].sort((a, b) => a.rank - b.rank);
   }, [overview]);
 

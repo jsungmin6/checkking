@@ -71,6 +71,8 @@ export default function HomeScreen({
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [showStreakRewardModal, setShowStreakRewardModal] = useState(false);
   // 개발 서버에서는 가이드를 고칠 때마다 봐야 하므로 "봤음" 플래그를 무시한다.
+  // 방 목록을 못 불러왔는지. 빈 목록과 구분해야 한다.
+  const [roomsError, setRoomsError] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(
     () => import.meta.env.DEV || localStorage.getItem("att-onboarding-seen") !== "1",
   );
@@ -94,15 +96,32 @@ export default function HomeScreen({
     onNavigateCreateRoom();
   };
 
+  /**
+   * 내 방 목록. **실패를 "방 없음"으로 처리하지 않는다.**
+   *
+   * 예전에는 요청이 실패하면 빈 배열을 넣어서, 서버 재시작(배포 때 10~15초)
+   * 구간에 홈을 열면 방이 통째로 사라진 것처럼 보였다. 실제로 그렇게 신고가 왔다.
+   * 한 번 더 시도하고, 그래도 안 되면 못 불러왔다고 알린다.
+   */
   useEffect(() => {
-    api<{ classrooms: ClassroomListItem[] }>("/classrooms/my")
-      .then((data) => {
-        setRooms(data.classrooms);
-      })
-      .catch(() => {
-        setRooms([]);
-      })
-      .finally(() => setLoading(false));
+    let alive = true;
+    const load = async () => {
+      for (let attempt = 0; attempt < 2; attempt += 1) {
+        try {
+          const data = await api<{ classrooms: ClassroomListItem[] }>("/classrooms/my");
+          if (!alive) return;
+          setRooms(data.classrooms);
+          setRoomsError(false);
+          return;
+        } catch {
+          // 재시작 직후면 몇 초 안에 돌아온다. 한 번만 쉬었다 다시 본다.
+          if (attempt === 0) await new Promise((r) => setTimeout(r, 1200));
+        }
+      }
+      if (alive) setRoomsError(true);
+    };
+    void load().finally(() => { if (alive) setLoading(false); });
+    return () => { alive = false; };
   }, []);
 
 
@@ -199,6 +218,18 @@ export default function HomeScreen({
       <div style={{ padding: "12px 16px", flex: 1, minHeight: 0, overflowY: "auto", overscrollBehavior: "contain" }}>
         {loading ? (
           <div style={{ textAlign: "center", padding: 40, color: "var(--text-secondary)" }}>불러오는 중...</div>
+        ) : roomsError ? (
+          // 못 불러온 것과 "방이 없는 것"은 다르다. 다시 시도할 길을 준다.
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 60, textAlign: "center" }}>
+            <div style={{ fontSize: 17, fontWeight: 600, marginBottom: 8 }}>방 목록을 불러오지 못했어요</div>
+            <div style={{ color: "var(--text-secondary)", fontSize: 14, marginBottom: 28 }}>잠시 후 다시 시도해 주세요. 방은 그대로 있어요.</div>
+            <button
+              onClick={() => window.location.reload()}
+              style={{ padding: "12px 24px", borderRadius: "var(--radius-button)", background: "var(--accent-blue)", color: "#fff", fontSize: 15, fontWeight: 600 }}
+            >
+              다시 불러오기
+            </button>
+          </div>
         ) : rooms.length === 0 ? (
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 60, textAlign: "center" }}>
             <div style={{ fontSize: 17, fontWeight: 600, marginBottom: 8 }}>아직 참여한 방이 없어요</div>
