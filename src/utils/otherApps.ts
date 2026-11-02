@@ -22,7 +22,7 @@ export interface OtherApp {
 export const OTHER_APPS: OtherApp[] = [
   {
     appName: "animal-keeper",
-    title: "숲속 사육사",
+    title: "동물 키우기",
     description: "알을 부화시켜 동물을 키워요",
     logo: "/apps/animal-keeper.png",
     emoji: "🐾",
