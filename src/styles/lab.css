@@ -190,10 +190,8 @@
 .lab-streak-card-ready { color: var(--accent-blue); font-weight: 700; }
 
 /* 다른 앱 둘러보기 */
-/* 하단 줄이 없는 카드라 아이콘을 줄여 높이를 낮춘다. */
-.lab-other-apps-card { padding: 12px 16px; }
-.lab-other-apps-card .lab-clover-card-icon { width: 52px; height: 52px; border-radius: 16px; background: #fff4e5; }
-.lab-other-apps-card .lab-clover-card-icon img { width: 42px; height: 42px; }
+/* 아이콘 크기는 클로버 카드와 같게 둔다. 배경만 선물상자 색에 맞춰 하늘색으로. */
+.lab-other-apps-card .lab-clover-card-icon { background: #e8f3ff; }
 .other-apps-dialog { gap: 0; }
 .other-apps-list { display: flex; width: 100%; flex-direction: column; gap: 8px; margin: 16px 0 4px; padding: 0; list-style: none; }
 .other-apps-item { display: flex; width: 100%; align-items: center; gap: 11px; padding: 12px 13px; border: 1px solid var(--border-light); border-radius: 14px; background: var(--bg-card); color: var(--text-primary); text-align: left; cursor: pointer; }
