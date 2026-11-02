@@ -200,7 +200,9 @@
 .other-apps-copy { display: flex; min-width: 0; flex: 1; flex-direction: column; gap: 2px; }
 .other-apps-copy strong { font-size: 15px; font-weight: 750; }
 .other-apps-copy > span { color: var(--text-secondary); font-size: 12px; }
-.other-apps-reward { flex-shrink: 0; color: var(--accent-blue); font-size: 13px; font-weight: 800; white-space: nowrap; }
+.other-apps-reward { display: inline-flex; align-items: center; gap: 2px; flex-shrink: 0; color: var(--accent-blue); font-size: 13px; font-weight: 800; white-space: nowrap; }
+/* 받을 선물상자 개수. 글자보다 그림이 뭘 주는지 바로 보여준다. */
+.other-apps-box { width: 26px; height: 26px; object-fit: contain; }
 .other-apps-item.is-visited .other-apps-reward { color: var(--text-muted); }
 .other-apps-message { margin: 10px 0 0; color: var(--accent-red); font-size: 12px; }
 .other-apps-ad { margin: 14px 0 12px; border-radius: 12px; overflow: hidden; }

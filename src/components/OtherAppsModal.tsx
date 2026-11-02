@@ -113,7 +113,7 @@ export default function OtherAppsModal({ onClose, onEarned }: Props) {
                   className={`other-apps-item${visited ? " is-visited" : ""}`}
                   onClick={() => { void handleVisit(app.appName); }}
                   disabled={opening !== null}
-                  aria-label={`${app.title} 열기${visited ? " (이미 받음)" : " — 출석점수 받기"}`}
+                  aria-label={`${app.title} 열기${visited ? " (이미 받음)" : " — 선물상자 1개 받기"}`}
                 >
                   <span className="other-apps-emoji" aria-hidden="true">
                     {app.logo
@@ -129,7 +129,10 @@ export default function OtherAppsModal({ onClose, onEarned }: Props) {
                       ? "여는 중"
                       : visited
                         ? <><span aria-hidden="true">✓</span> 받음</>
-                        : "선물상자"}
+                        : <>
+                            <img className="other-apps-box" src="/rewards/gift-box-closed.png" alt="" aria-hidden="true" />
+                            ×1
+                          </>}
                   </span>
                 </button>
               </li>
