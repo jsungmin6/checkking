@@ -21,10 +21,12 @@ export interface OtherApp {
 
 export const OTHER_APPS: OtherApp[] = [
   {
-    appName: "animal-keeper",
+    // 설정 파일에는 animal-keeper로 적혀 있지만 콘솔에 등록된 식별자는 pet-raising이다.
+    // 스킴은 **콘솔 값**을 따라야 한다 — 틀리면 아무 반응 없이 무시된다.
+    appName: "pet-raising",
     title: "동물 키우기",
     description: "알을 부화시켜 동물을 키워요",
-    logo: "/apps/animal-keeper.png",
+    logo: "/apps/pet-raising.png",
     emoji: "🐾",
   },
   {
