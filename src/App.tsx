@@ -21,10 +21,12 @@ import OnboardingModal from "./components/OnboardingModal";
 import type { ScreenName, User } from "./types";
 
 /**
- * 딥링크로 바로 열 수 있는 화면. `intoss://checkking?tab=points` 형태로 쓴다.
+ * 딥링크로 바로 열 수 있는 화면.
  *
- * 프로모션 링크를 홈이 아니라 포인트 탭으로 보내기 위한 것이다. 아는 값만 받는다 —
- * 임의의 화면 이름을 외부에서 넣게 하면 안 된다.
+ * 두 형태를 모두 받는다 — 콘솔 프로모션은 `intoss://checkking/points`처럼 **경로**를
+ * 요구하고, 우리가 만드는 링크는 `?tab=points` 쿼리를 쓴다.
+ *
+ * 아는 값만 받는다. 임의의 화면 이름을 외부에서 넣게 하면 안 된다.
  */
 const ENTRY_TABS: Record<string, ScreenName | undefined> = {
   points: "lab",
@@ -32,6 +34,15 @@ const ENTRY_TABS: Record<string, ScreenName | undefined> = {
   rooms: "publicRooms",
   profile: "profile",
 };
+
+/** `intoss://checkking/points` 또는 `?tab=points`에서 화면을 고른다. 없으면 undefined. */
+function entryScreenFrom(url: { pathname?: string; search?: string }): ScreenName | undefined {
+  const fromQuery = new URLSearchParams(url.search ?? "").get("tab");
+  if (fromQuery && ENTRY_TABS[fromQuery]) return ENTRY_TABS[fromQuery];
+  // 경로는 앞뒤 슬래시를 떼고 첫 조각만 본다. "/points" · "points/" 모두 같게 다룬다.
+  const first = (url.pathname ?? "").split("/").filter(Boolean)[0];
+  return first ? ENTRY_TABS[first] : undefined;
+}
 
 export default function App() {
   const { user: authUser, loading, authError, needsTermsAgreement, loginWithKakaoToken, loginWithApple, loginWithToss, acceptTerms, logout, updateNickname, updateAvatar } = useAuth();
@@ -77,9 +88,10 @@ export default function App() {
       setScreen("joinRoom");
       return;
     }
-    if (ENTRY_TABS[params.get("tab") ?? ""]) {
+    const screenFromLocation = entryScreenFrom(window.location);
+    if (screenFromLocation) {
       inviteLinkHandledRef.current = true;
-      setScreen(ENTRY_TABS[params.get("tab")!]!);
+      setScreen(screenFromLocation);
       return;
     }
 
@@ -87,17 +99,18 @@ export default function App() {
     (async () => {
       try {
         const { Environment } = await import("@apps-in-toss/web-framework");
-        const initial = new URL(Environment.initialURL).searchParams;
+        const initial = new URL(Environment.initialURL);
         if (inviteLinkHandledRef.current) return;
 
-        const code = initial.get("inviteCode");
+        const code = initial.searchParams.get("inviteCode");
         if (code) {
           inviteLinkHandledRef.current = true;
           setPendingInviteCode(code);
           setScreen("joinRoom");
           return;
         }
-        const tab = ENTRY_TABS[initial.get("tab") ?? ""];
+        // 스킴 URL은 호스트가 앱 이름이라 경로가 "/points"로 들어온다.
+        const tab = entryScreenFrom(initial);
         if (tab) {
           inviteLinkHandledRef.current = true;
           setScreen(tab);
