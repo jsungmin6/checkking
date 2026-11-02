@@ -11,6 +11,7 @@ import StreakRewardModal from "../components/StreakRewardModal";
 import OtherAppsModal from "../components/OtherAppsModal";
 import DailyRewardModal from "../components/DailyRewardModal";
 import MissionModal from "../components/MissionModal";
+import { MissionIcon } from "../components/MissionButton";
 import { useMissions } from "../hooks/useMissions";
 import { DAILY_REWARD_LIMIT, getDailyRewardCount } from "../utils/attendancePoints";
 import { OTHER_APP_VISIT_MIN, OTHER_APP_VISIT_MAX, unvisitedCount } from "../utils/otherApps";
@@ -185,7 +186,8 @@ export default function LabScreen({
             onClick={() => { markMissionSeen(); setShowMissions(true); }}
             aria-label={claimableMissions > 0 ? `미션 — ${claimableMissions}개 받을 수 있어요` : "미션"}
           >
-            <span className="lab-quick-emoji" aria-hidden="true">🎯</span>
+            {/* 홈의 미션 버튼과 같은 그림을 써야 같은 기능으로 읽힌다. */}
+            <span className="lab-quick-mission-icon" aria-hidden="true"><MissionIcon size={22} /></span>
             <strong>미션</strong>
             <span className="lab-quick-state">
               {claimableMissions > 0

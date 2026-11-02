@@ -1,3 +1,20 @@
+/**
+ * 미션 아이콘 — 체크리스트. 미션 목록을 하나씩 해치우는 느낌이다.
+ *
+ * 홈의 둥근 버튼과 포인트 탭의 칸이 **같은 그림**을 써야 같은 기능으로 읽힌다.
+ */
+export function MissionIcon({ size = 28 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 100 100" fill="none" aria-hidden="true">
+      <rect x="20" y="14" width="60" height="72" rx="10" fill="#fff" />
+      <path d="M32 36 L39 43 L52 29" stroke="var(--accent-orange, #FF9500)" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" />
+      <rect x="58" y="32" width="14" height="6" rx="3" fill="var(--accent-orange, #FF9500)" />
+      <path d="M32 60 L39 67 L52 53" stroke="var(--accent-orange, #FF9500)" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" />
+      <rect x="58" y="56" width="14" height="6" rx="3" fill="var(--accent-orange, #FF9500)" />
+    </svg>
+  );
+}
+
 interface MissionButtonProps {
   /** 아직 확인하지 않은 변화(최초 노출·미션 완료)가 있으면 배지를 띄운다. */
   hasUpdate: boolean;
@@ -24,14 +41,7 @@ export default function MissionButton({ hasUpdate, onClick }: MissionButtonProps
         padding: 0,
       }}
     >
-      {/* 체크리스트 — 미션 목록을 하나씩 해치우는 느낌 */}
-      <svg width="28" height="28" viewBox="0 0 100 100" fill="none" aria-hidden="true">
-        <rect x="20" y="14" width="60" height="72" rx="10" fill="#fff" />
-        <path d="M32 36 L39 43 L52 29" stroke="var(--accent-orange, #FF9500)" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" />
-        <rect x="58" y="32" width="14" height="6" rx="3" fill="var(--accent-orange, #FF9500)" />
-        <path d="M32 60 L39 67 L52 53" stroke="var(--accent-orange, #FF9500)" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" />
-        <rect x="58" y="56" width="14" height="6" rx="3" fill="var(--accent-orange, #FF9500)" />
-      </svg>
+      <MissionIcon />
       {hasUpdate && (
         <span style={{
           position: "absolute",

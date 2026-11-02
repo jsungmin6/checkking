@@ -232,3 +232,5 @@
 .daily-reward-left strong { color: var(--text-primary); }
 .daily-reward-notes { display: grid; gap: 10px; margin: 0 0 20px; padding: 14px 16px 14px 32px; border-radius: 14px; background: var(--bg-secondary); color: var(--text-secondary); font-size: 13px; line-height: 1.55; text-align: left; }
 .daily-reward-notes strong { color: var(--text-primary); }
+/* 미션 칸 아이콘 — 홈의 둥근 버튼과 같은 주황 원에 담는다. */
+.lab-quick-mission-icon { display: grid; width: 34px; height: 34px; place-items: center; border-radius: 50%; background: var(--accent-orange, #FF9500); }
