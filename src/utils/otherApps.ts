@@ -88,7 +88,16 @@ const randomInt = (min: number, max: number) => min + Math.floor(Math.random() *
  * 그래서 "열었다"만 남기고, 돌아와서 직접 **받기**를 눌러야 지급한다.
  */
 export async function openOtherApp(appName: string): Promise<OpenResult> {
-  if (!isTossApp()) return { unsupported: true };
+  if (!isTossApp()) {
+    // 개발 서버에서는 연 것처럼 흉내 낸다. 그러지 않으면 "받기" 단계를 볼 수 없다.
+    // **실제로 앱을 열지는 않는다** — 토스 SDK를 부르지 않는다.
+    if (import.meta.env.DEV) {
+      console.info("[출석왕] 개발 모드 가짜 앱 열기", { appName });
+      if (!hasVisited(appName)) appendToList(OPENED_KEY, appName);
+      return { unsupported: false };
+    }
+    return { unsupported: true };
+  }
 
   try {
     const { Device } = await import("@apps-in-toss/web-framework");
