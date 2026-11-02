@@ -29,7 +29,7 @@ export const OTHER_APPS: OtherApp[] = [
   },
   {
     appName: "lucky-clover-find",
-    title: "행복 클로바 찾기",
+    title: "행운의 클로바 찾기",
     description: "네잎클로버를 찾아 행운을 모아요",
     logo: "/apps/lucky-clover-find.png",
     emoji: "🍀",
