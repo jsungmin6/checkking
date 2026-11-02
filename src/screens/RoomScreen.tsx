@@ -23,7 +23,7 @@ import {
   shouldAskSatisfaction, isTossReviewSupported, markSatisfactionAsked,
   reportSatisfaction, requestTossReview,
 } from "../utils/review";
-import { awardRankBonus, claimAttendanceGift } from "../utils/attendancePoints";
+import { awardRankBonus, claimAttendanceGift, hasRewardQuotaLeft } from "../utils/attendancePoints";
 import { recordAttendance } from "../utils/localStreak";
 import type { TabName } from "../components/TabBar";
 import type { Classroom, TodayAttendance, CheckInResponse, CheckInRequest, User } from "../types";
@@ -200,10 +200,16 @@ export default function RoomScreen({ classroomId, user, onBack, onTabChange }: R
       }
       // 연속일수는 기기에서 올린다. 하루에 여러 방에 출석해도 한 번만 올라간다.
       recordAttendance();
-      // 등수만 서버에서 온다. 금액과 하루 상한(방을 넘나들어도 3번)은 기기가 판단한다.
-      const rankBonus = awardRankBonus(classroomId, checkInResult.dailyRank);
-      setTimeout(() => launchConfetti(rankBonus !== null), 300);
-      setRewardModal({ rank: checkInResult.dailyRank, rankBonus });
+      // 하루 보상 상한(방을 넘나들어도 3번)을 다 쓴 날은 선물상자를 띄우지 않는다.
+      // 열어도 받을 게 없어 "+0점"만 보여주게 된다. 등수만 알리는 모달로 보낸다.
+      if (!hasRewardQuotaLeft()) {
+        setRankOnlyModal(checkInResult.dailyRank);
+      } else {
+        // 등수만 서버에서 온다. 금액과 하루 상한은 기기가 판단한다.
+        const rankBonus = awardRankBonus(classroomId, checkInResult.dailyRank);
+        setTimeout(() => launchConfetti(rankBonus !== null), 300);
+        setRewardModal({ rank: checkInResult.dailyRank, rankBonus });
+      }
     } catch (e) {
       if (e instanceof ApiError) {
         setCheckInError(e.message);
