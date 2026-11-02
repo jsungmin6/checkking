@@ -156,7 +156,7 @@ export default function LabScreen({
               ? "연속 출석 보상 — 받을 보상이 있어요"
               : "연속 출석 보상"}
           >
-            <span className="lab-quick-emoji" aria-hidden="true">👑</span>
+            <img className="lab-quick-icon" src="/출석왕_로고_배경제거.png" alt="" aria-hidden="true" />
             <strong>연속 출석</strong>
             <span className="lab-quick-state">
               {streakRewards.claimableRewards.length > 0
@@ -174,7 +174,7 @@ export default function LabScreen({
             onClick={() => setShowDailyReward(true)}
             aria-label={`오늘의 출석 보상 — ${DAILY_REWARD_LIMIT}번 중 ${dailyUsed}번 받음`}
           >
-            <span className="lab-quick-emoji" aria-hidden="true">🎁</span>
+            <img className="lab-quick-icon" src="/rewards/gift-box-closed.png" alt="" aria-hidden="true" />
             <strong>오늘 출석</strong>
             <span className="lab-quick-state">{dailyUsed} / {DAILY_REWARD_LIMIT}번</span>
           </button>
@@ -188,7 +188,9 @@ export default function LabScreen({
             <span className="lab-quick-emoji" aria-hidden="true">🎯</span>
             <strong>미션</strong>
             <span className="lab-quick-state">
-              {claimableMissions > 0 ? `${claimableMissions}개 받기` : `${missions.length}개 남음`}
+              {claimableMissions > 0
+                ? `${claimableMissions}개 받기`
+                : missions.length > 0 ? `${missions.length}개 남음` : "준비 중"}
             </span>
             {claimableMissions > 0 && <span className="lab-quick-dot" aria-hidden="true" />}
           </button>

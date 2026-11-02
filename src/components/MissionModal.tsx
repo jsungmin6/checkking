@@ -128,6 +128,16 @@ export default function MissionModal({ missions, onClose, onRewarded }: MissionM
           이벤트 미션
         </div>
 
+        {missions.length === 0 && (
+          // 포인트 탭에서는 남은 미션이 없어도 버튼이 보인다. 빈 모달 대신 이유를 알린다.
+          <div style={{ padding: "28px 8px 20px", textAlign: "center" }}>
+            <div style={{ fontSize: 34, marginBottom: 10 }} aria-hidden="true">🎯</div>
+            <div style={{ fontSize: 15, fontWeight: 750, marginBottom: 6 }}>지금은 할 수 있는 미션이 없어요</div>
+            <div style={{ color: "var(--text-secondary)", fontSize: 13, lineHeight: 1.6 }}>
+              미션은 수시로 새로 열려요.<br />다음에 다시 확인해 주세요.
+            </div>
+          </div>
+        )}
         {missions.map((mission, index) => {
           const expanded = expandedId === mission.id;
           return (
