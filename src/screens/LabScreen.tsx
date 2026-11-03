@@ -4,6 +4,7 @@ import TossBannerAd, { BANNER_AD_GROUPS } from "../components/TossBannerAd";
 import AdMobBanner from "../components/AdMobBanner";
 import type { HomeTab } from "../components/HomeTabBar";
 import { api } from "../utils/api";
+import { reportActivity } from "../utils/reportActivity";
 import AttendanceLotteryModal from "../components/AttendanceLotteryModal";
 import TossPointsReceivedModal from "../components/TossPointsReceivedModal";
 import { useAttendancePoints, useStreakMilestoneRewards } from "../hooks/useAttendancePoints";
@@ -72,6 +73,59 @@ export default function LabScreen({
 
   useEffect(() => {
     void syncTossPointLedger();
+  }, []);
+
+  /**
+   * 이 탭에 얼마나 머무는지 남긴다. **나갈 때 보내지 않는다** — 앱을 완전히 닫으면
+   * 웹뷰가 죽으면서 요청이 잘린다. 임계값을 지나는 순간에 한 번씩 쏜다.
+   *
+   * 10초는 프로모션의 "10초 구경" 조건과 같은 값이다. 그래야 "5원 조건만 채우고
+   * 나갔는지"를 정확히 가를 수 있다.
+   *
+   * 화면이 가려진 동안은 세지 않는다. 덮어두고 다른 앱을 봐도 타이머는 돌기 때문이다.
+   */
+  useEffect(() => {
+    const thresholds = [10, 30, 60];
+    let elapsedMs = 0;
+    let startedAt = document.visibilityState === "visible" ? Date.now() : null;
+    let nextIndex = 0;
+    let timer: number | null = null;
+
+    const clear = () => {
+      if (timer !== null) window.clearTimeout(timer);
+      timer = null;
+    };
+
+    const schedule = () => {
+      clear();
+      if (nextIndex >= thresholds.length || startedAt === null) return;
+      const remainMs = thresholds[nextIndex]! * 1_000 - elapsedMs;
+      timer = window.setTimeout(() => {
+        reportActivity("points_tab_dwell", { value: thresholds[nextIndex]! });
+        elapsedMs = thresholds[nextIndex]! * 1_000;
+        nextIndex++;
+        startedAt = Date.now();
+        schedule();
+      }, Math.max(0, remainMs));
+    };
+
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") {
+        startedAt = Date.now();
+        schedule();
+      } else {
+        if (startedAt !== null) elapsedMs += Date.now() - startedAt;
+        startedAt = null;
+        clear();
+      }
+    };
+
+    schedule();
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      clear();
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
   }, []);
 
   useEffect(() => {

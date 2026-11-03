@@ -148,6 +148,7 @@ export function claimStreakDay(day: number): ClaimRewardResult {
   if (progress.claimedDays.includes(day)) return settled(0, true);
 
   save({ ...progress, claimedDays: [...progress.claimedDays, day] });
+  void import("./reportActivity").then(({ reportActivity }) => reportActivity("streak_claim", { value: day }));
   const amount = streakPoints(day);
   addPoints(amount);
   return settled(amount, false);

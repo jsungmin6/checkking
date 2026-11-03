@@ -309,6 +309,7 @@ export function claimAttendanceGift(classroomId: number): { amount: number; tota
   if (!consumeRewardQuota()) return null;
   appendToList(GIFT_CLAIMED_KEY, giftKey(classroomId));
   const amount = randomInt(1_500, 2_000);
+  void import("./reportActivity").then(({ reportActivity }) => reportActivity("gift_open"));
   return { amount, totalPoints: addPoints(amount) };
 }
 

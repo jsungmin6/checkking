@@ -1,5 +1,6 @@
 import { isTossApp } from "./platform";
 import { addPoints, readList, appendToList, todayKey } from "./attendancePoints";
+import { reportActivity } from "./reportActivity";
 
 /**
  * 같은 워크스페이스의 다른 미니앱으로 보내고 출석점수를 준다.
@@ -114,6 +115,7 @@ export async function openOtherApp(appName: string): Promise<OpenResult> {
     return { unsupported: true };
   }
   if (!hasVisited(appName)) appendToList(OPENED_KEY, dayKey(appName));
+  reportActivity("other_app_open", { target: appName });
   return { unsupported: false };
 }
 
@@ -127,5 +129,7 @@ export function claimVisitReward(appName: string): number {
   appendToList(VISITED_KEY, dayKey(appName));
   const earned = randomInt(OTHER_APP_VISIT_MIN, OTHER_APP_VISIT_MAX);
   addPoints(earned);
+  // 금액은 보내지 않는다. 돈은 기기가 관리한다.
+  reportActivity("other_app_claim", { target: appName });
   return earned;
 }

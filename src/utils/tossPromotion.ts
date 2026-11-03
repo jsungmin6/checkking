@@ -232,6 +232,9 @@ export async function scratchAttendanceLottery(drawId: string): Promise<Attendan
   if (spendPoints(LOTTERY_TICKET_PRICE) === null) {
     throw new LotteryError("출석점수가 모자라요.");
   }
+  // 지급 성공 여부와 무관하게 "긁었다"를 남긴다. 실패도 시도로 세야 전환율이 맞는다.
+  void import("./reportActivity").then(({ reportActivity }) => reportActivity("lottery_scratch"));
+
   const firstScratch = isFirstLotteryScratch();
   const amountWon = firstScratch ? FIRST_SCRATCH_PRIZE_WON : rollLotteryPrize();
   const outcome = await grantTossPromotionReward(LOTTERY_PROMOTION_CODE, amountWon);
