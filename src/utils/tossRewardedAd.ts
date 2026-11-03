@@ -15,9 +15,16 @@ export type AdPlacement =
   | "MISSION_REWARD"
   | "CLOVER_RETRY";
 
-/** 광고를 끝까지 본 사실을 서버에 알린다(텔레그램 집계용). 본 흐름을 막지 않는다. */
+/**
+ * 광고를 끝까지 본 사실을 서버에 알린다. 본 흐름을 막지 않는다.
+ *
+ * 자리(placement)는 요청 본문에만 있어 요청 로그에는 안 남는다. 서버가 이걸 받아
+ * `kind=ad`로 남겨야 "포인트탭에 온 사람 중 몇 명이 복권을 긁었나"를 셀 수 있다.
+ *
+ * 포인트 교환 광고도 보낸다. 전에는 텔레그램이 시끄러워서 빼 놨는데, 그러면 집계에서도
+ * 통째로 빠진다. 서버가 이 자리만 알림 없이 로그만 남긴다.
+ */
 function reportAdWatched(adGroupId: string, placement: AdPlacement | undefined, adType: "REWARDED" | "INTERSTITIAL") {
-  if (placement === "POINTS_CONVERSION") return;   // 전환 흐름은 따로 알린다
   void api("/notifications/ad-rewarded", {
     method: "POST",
     body: JSON.stringify({ adGroupId, placement, adType }),
